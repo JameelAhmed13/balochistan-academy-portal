@@ -181,7 +181,7 @@ const messages = ref([])
 const input = ref('')
 const loading = ref(false)
 const historyVisible = ref(true)
-const sessions = ref(JSON.parse(localStorage.getItem(`estudy_chat_${props.subject}`) || '[]'))
+const sessions = ref(JSON.parse(localStorage.getItem(`bap_chat_${props.subject}`) || '[]'))
 const activeSession = ref(null)
 const messagesEl = ref(null)
 
@@ -300,11 +300,11 @@ function saveSessions() {
     sessions.value.unshift(s)
     activeSession.value = s.id
   }
-  localStorage.setItem(`estudy_chat_${props.subject}`, JSON.stringify(sessions.value.slice(0, 20)))
+  localStorage.setItem(`bap_chat_${props.subject}`, JSON.stringify(sessions.value.slice(0, 20)))
 }
 
 function loadSession(s) { messages.value = s.messages; activeSession.value = s.id }
-function clearHistory() { sessions.value = []; localStorage.removeItem(`estudy_chat_${props.subject}`) }
+function clearHistory() { sessions.value = []; localStorage.removeItem(`bap_chat_${props.subject}`) }
 </script>
 
 <style scoped>

@@ -1,10 +1,11 @@
 {
-  "name": "eStudy — Announcement Broadcast (Groups · Chats · Email)",
+  "id": "BapBroadcastMsg1",
+  "name": "Balochistan Academy Portal — Announcement Broadcast (Groups · Chats · Email)",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "estudy-broadcast",
+        "path": "bap-broadcast",
         "responseMode": "responseNode",
         "options": {
           "allowedOrigins": "*"
@@ -15,7 +16,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [-220, 320],
-      "webhookId": "estudy-broadcast"
+      "webhookId": "bap-broadcast"
     },
     {
       "parameters": {
@@ -24,7 +25,7 @@
             { "id": "b-title",  "name": "title",          "type": "string", "value": "={{ $json.body.title || 'Balochistan Academy Update' }}" },
             { "id": "b-body",   "name": "body",           "type": "string", "value": "={{ $json.body.body }}" },
             { "id": "b-tg",     "name": "telegramChatId", "type": "string", "value": "={{ $json.body.telegramChatId || 'YOUR_TELEGRAM_GROUP_CHAT_ID' }}" },
-            { "id": "b-wa",     "name": "whatsappTo",     "type": "string", "value": "={{ ($json.body.whatsappTo || '').toString().replace(/[^0-9]/g, '') }}" },
+            { "id": "b-wa",     "name": "whatsappTo",     "type": "string", "value": "={{ ($json.body.whatsappTo || '').toString().replace(/[^0-9]/g, '').replace(/^0/, '92') }}" },
             { "id": "b-email",  "name": "emailTo",        "type": "string", "value": "={{ $json.body.emailTo || '' }}" },
             { "id": "b-at",     "name": "sentAt",         "type": "string", "value": "={{ $now.toISO() }}" }
           ]
@@ -61,7 +62,8 @@
       "name": "Telegram Group / Channel",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [240, 320]
+      "position": [240, 320],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -76,7 +78,8 @@
       "name": "WhatsApp Broadcast",
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1,
-      "position": [240, 500]
+      "position": [240, 500],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -92,7 +95,8 @@
       "name": "Email Blast",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [240, 680]
+      "position": [240, 680],
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {

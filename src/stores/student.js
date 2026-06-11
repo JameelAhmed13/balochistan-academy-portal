@@ -2,10 +2,10 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useStudentStore = defineStore('student', () => {
-  const testRecords = ref(JSON.parse(localStorage.getItem('estudy_tests') || '[]'))
-  const coinTransactions = ref(JSON.parse(localStorage.getItem('estudy_coins') || '[]'))
-  const withdrawals = ref(JSON.parse(localStorage.getItem('estudy_withdrawals') || '[]'))
-  const payoutAccount = ref(JSON.parse(localStorage.getItem('estudy_payout') || 'null'))
+  const testRecords = ref(JSON.parse(localStorage.getItem('bap_tests') || '[]'))
+  const coinTransactions = ref(JSON.parse(localStorage.getItem('bap_coins') || '[]'))
+  const withdrawals = ref(JSON.parse(localStorage.getItem('bap_withdrawals') || '[]'))
+  const payoutAccount = ref(JSON.parse(localStorage.getItem('bap_payout') || 'null'))
 
   const totalTests    = computed(() => testRecords.value.length)
   const passedTests   = computed(() => testRecords.value.filter(t => (t.score / t.total) >= 0.5).length)
@@ -22,12 +22,12 @@ export const useStudentStore = defineStore('student', () => {
 
   function saveTest(record) {
     testRecords.value.unshift({ ...record, id: Date.now(), date: new Date().toISOString() })
-    localStorage.setItem('estudy_tests', JSON.stringify(testRecords.value.slice(0, 200)))
+    localStorage.setItem('bap_tests', JSON.stringify(testRecords.value.slice(0, 200)))
   }
 
   function addCoinTransaction(tx) {
     coinTransactions.value.unshift({ ...tx, id: Date.now(), date: new Date().toISOString() })
-    localStorage.setItem('estudy_coins', JSON.stringify(coinTransactions.value))
+    localStorage.setItem('bap_coins', JSON.stringify(coinTransactions.value))
   }
 
   function requestWithdrawal(amount, account) {
@@ -37,13 +37,13 @@ export const useStudentStore = defineStore('student', () => {
     const req = { id: Date.now(), amount, account, status: 'pending', date: new Date().toISOString() }
     withdrawals.value.unshift(req)
     addCoinTransaction({ amount: -amount, type: 'withdrawal', label: 'Withdrawal Request' })
-    localStorage.setItem('estudy_withdrawals', JSON.stringify(withdrawals.value))
+    localStorage.setItem('bap_withdrawals', JSON.stringify(withdrawals.value))
     return req
   }
 
   function updatePayoutAccount(info) {
     payoutAccount.value = info
-    localStorage.setItem('estudy_payout', JSON.stringify(info))
+    localStorage.setItem('bap_payout', JSON.stringify(info))
   }
 
   // Score chart data

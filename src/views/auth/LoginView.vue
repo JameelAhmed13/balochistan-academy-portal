@@ -292,7 +292,7 @@ const netCanvas = ref(null)
 
 // ── Registration (wired to n8n) ──
 const mode = ref('login') // 'login' | 'register'
-const registerUrl = import.meta.env.VITE_N8N_REGISTER_URL || 'http://localhost:5678/webhook/estudy-register'
+const registerUrl = import.meta.env.VITE_N8N_REGISTER_URL || 'http://localhost:5678/webhook/bap-register'
 const reg = ref({ name: '', phone: '', email: '', grade: '9', medium: 'English', city: '' })
 const regError = ref('')
 

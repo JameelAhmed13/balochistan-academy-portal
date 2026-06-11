@@ -195,7 +195,7 @@ const PAGE_TITLES = {
   '/app/experiments':          ['Virtual Experiments', 'Interactive lab experiments'],
   '/app/general-knowledge':    ['General Knowledge', 'GK quiz & learning'],
   '/app/simulations':          ['Simulations', 'Interactive physics/chem sims'],
-  '/app/estudy-notebook':      ['Study Notebook', 'Your personal notes'],
+  '/app/study-notebook':      ['Study Notebook', 'Your personal notes'],
   '/app/ebooks':               ['E-Books', 'Digital textbooks'],
   '/app/mcqs-bank':            ['MCQs Bank', 'Browse all MCQ questions'],
   '/app/past-papers':          ['Past Papers', 'Solve board exam papers'],

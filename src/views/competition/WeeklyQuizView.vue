@@ -140,9 +140,9 @@ const weekRange = computed(() => {
   return `${mon.toLocaleDateString('en-PK',{month:'short',day:'numeric'})} – ${sun.toLocaleDateString('en-PK',{month:'short',day:'numeric'})}`
 })
 
-const weeklyScoresKey = `estudy_weekly_${weekNumber.value}`
+const weeklyScoresKey = `bap_weekly_${weekNumber.value}`
 const weeklyScores = ref(JSON.parse(localStorage.getItem(weeklyScoresKey) || '{}'))
-const streak = computed(() => JSON.parse(localStorage.getItem('estudy_weekly_streak') || '1'))
+const streak = computed(() => JSON.parse(localStorage.getItem('bap_weekly_streak') || '1'))
 
 const quizSubjects = computed(() => subjects.slice(0,6).map(s => ({ ...s, questions: 10, duration: 15 })))
 const completedCount = computed(() => Object.keys(weeklyScores.value).length)
@@ -278,18 +278,18 @@ onUnmounted(()=>clearInterval(timer))
 .wq-take-fill { height: 100%; background: linear-gradient(90deg, #4caf50, #00bcd4); border-radius: 99px; transition: width 0.3s; }
 .wq-take-progress > span { font-size: 0.78rem; color: var(--t-text3); white-space: nowrap; }
 .wq-question { border: 1px solid var(--t-border); border-radius: 18px; padding: 1.5rem; background: var(--t-surface); }
-.wq-q-num { font-size: 0.72rem; font-weight: 700; color: var(--t-text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+.wq-q-num { font-size: 0.72rem; font-weight: 700; color: var(--t-text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
 .wq-q-text { font-size: 1.05rem; font-weight: 700; color: var(--t-text1); line-height: 1.5; margin-bottom: 1.25rem; }
 .wq-q-opts { display: flex; flex-direction: column; gap: 0.5rem; }
 .wq-opt { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; border: 1px solid var(--t-border); border-radius: 12px; background: var(--t-surface); color: var(--t-text1); text-align: left; cursor: pointer; font-size: 0.9rem; transition: all 0.1s; }
 .wq-opt:hover:not(:disabled) { border-color: #4caf50; }
 .wq-opt.selected { border-color: #4caf50; background: rgba(76,175,80,0.06); }
-.wq-opt.correct { border-color: #4caf50; background: rgba(76,175,80,0.1); color: #4caf50; font-weight: 700; }
-.wq-opt.wrong { border-color: #ef4444; background: rgba(239,68,68,0.1); color: #ef4444; }
-.wq-opt-letter { width: 26px; height: 26px; border-radius: 50%; background: var(--t-hover); color: var(--t-text3); font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wq-opt.correct { border-color: var(--t-success); background: var(--t-success-bg); color: var(--t-success); font-weight: 700; }
+.wq-opt.wrong { border-color: var(--t-danger); background: var(--t-danger-bg); color: var(--t-danger); }
+.wq-opt-letter { width: 26px; height: 26px; border-radius: 50%; background: var(--t-hover2); color: var(--t-text2); font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wq-ans-feedback { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.wq-correct { padding: 0.6rem 1rem; border-radius: 10px; background: rgba(76,175,80,0.1); color: #4caf50; font-weight: 700; font-size: 0.9rem; }
-.wq-wrong { padding: 0.6rem 1rem; border-radius: 10px; background: rgba(239,68,68,0.1); color: #ef4444; font-weight: 700; font-size: 0.9rem; }
+.wq-correct { padding: 0.6rem 1rem; border-radius: 10px; background: var(--t-success-bg); color: var(--t-success); font-weight: 700; font-size: 0.9rem; }
+.wq-wrong { padding: 0.6rem 1rem; border-radius: 10px; background: var(--t-danger-bg); color: var(--t-danger); font-weight: 700; font-size: 0.9rem; }
 .wq-next-btn { align-self: flex-end; padding: 0.6rem 1.25rem; background: linear-gradient(135deg, #4caf50, #00bcd4); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
 .wq-result { text-align: center; padding: 2rem 1rem; }
 .wq-result-emoji { font-size: 4rem; margin-bottom: 0.5rem; }

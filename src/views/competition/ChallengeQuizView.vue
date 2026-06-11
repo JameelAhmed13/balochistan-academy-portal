@@ -175,7 +175,7 @@ let timer = null
 
 const currentQ = computed(() => questions.value[currentIdx.value])
 const currentSubjectName = computed(() => subjects.find(s=>s.id===config.value.subjectId)?.name || '')
-const pastAttempts = computed(() => JSON.parse(localStorage.getItem('estudy_challenges') || '[]'))
+const pastAttempts = computed(() => JSON.parse(localStorage.getItem('bap_challenges') || '[]'))
 const resultData = computed(() => {
   const correct = answers.value.filter((a,i)=>a===questions.value[i]?.correct).length
   const total = questions.value.length
@@ -285,10 +285,10 @@ function nextQuestion() {
 }
 
 function saveAttempt() {
-  const attempts = JSON.parse(localStorage.getItem('estudy_challenges') || '[]')
+  const attempts = JSON.parse(localStorage.getItem('bap_challenges') || '[]')
   const subj = subjects.find(s=>s.id===config.value.subjectId)?.name || config.value.subjectId
   attempts.unshift({ id: Date.now(), subject: subj, score: resultData.value.score, total: resultData.value.total, pct: resultData.value.pct, date: new Date().toLocaleDateString('en-PK') })
-  localStorage.setItem('estudy_challenges', JSON.stringify(attempts.slice(0,20)))
+  localStorage.setItem('bap_challenges', JSON.stringify(attempts.slice(0,20)))
   student.saveTest({ subject: config.value.subjectId, type: 'challenge', score: resultData.value.correct, total: resultData.value.total, bookId: 'challenge' })
 }
 onUnmounted(() => clearInterval(timer))
@@ -333,19 +333,19 @@ onUnmounted(() => clearInterval(timer))
 @keyframes pulse { from{opacity:1}to{opacity:0.5} }
 .cq-take-score { font-size: 0.85rem; font-weight: 700; color: #f59e0b; white-space: nowrap; }
 .cq-question-card { border: 1px solid var(--t-border); border-radius: 20px; padding: 1.5rem; background: var(--t-surface); }
-.cq-q-subject { font-size: 0.72rem; font-weight: 700; color: var(--t-text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+.cq-q-subject { font-size: 0.72rem; font-weight: 700; color: var(--t-text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
 .cq-q-text { font-size: 1.1rem; font-weight: 700; color: var(--t-text1); line-height: 1.5; margin-bottom: 1.25rem; }
 .cq-q-options { display: flex; flex-direction: column; gap: 0.5rem; }
 .cq-option { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1rem; border: 1px solid var(--t-border); border-radius: 12px; background: var(--t-surface); color: var(--t-text1); text-align: left; cursor: pointer; font-size: 0.9rem; transition: all 0.12s; }
 .cq-option:hover:not(:disabled) { border-color: #f59e0b; background: rgba(245,158,11,0.05); }
 .cq-option.selected { border-color: #f59e0b; background: rgba(245,158,11,0.08); }
-.cq-option.correct { border-color: #4caf50; background: rgba(76,175,80,0.1); color: #4caf50; font-weight: 700; }
-.cq-option.wrong { border-color: #ef4444; background: rgba(239,68,68,0.1); color: #ef4444; }
-.cq-option-letter { width: 26px; height: 26px; border-radius: 50%; background: var(--t-hover); color: var(--t-text3); font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cq-option.correct { border-color: var(--t-success); background: var(--t-success-bg); color: var(--t-success); font-weight: 700; }
+.cq-option.wrong { border-color: var(--t-danger); background: var(--t-danger-bg); color: var(--t-danger); }
+.cq-option-letter { width: 26px; height: 26px; border-radius: 50%; background: var(--t-hover2); color: var(--t-text2); font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .cq-feedback { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .cq-feedback-badge { padding: 0.6rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.9rem; }
-.cq-correct { background: rgba(76,175,80,0.1); color: #4caf50; }
-.cq-wrong { background: rgba(239,68,68,0.1); color: #ef4444; }
+.cq-correct { background: var(--t-success-bg); color: var(--t-success); }
+.cq-wrong { background: var(--t-danger-bg); color: var(--t-danger); }
 .cq-feedback-explain { font-size: 0.85rem; color: var(--t-text2); padding: 0 0.25rem; }
 .cq-next-btn { align-self: flex-end; padding: 0.6rem 1.25rem; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
 .cq-result { text-align: center; }
@@ -359,7 +359,7 @@ onUnmounted(() => clearInterval(timer))
 .cq-review-item { display: flex; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--t-border); align-items: flex-start; }
 .cq-review-icon { font-size: 1rem; flex-shrink: 0; padding-top: 0.1rem; }
 .cq-review-q { font-size: 0.85rem; color: var(--t-text1); line-height: 1.5; }
-.cq-review-correct { font-size: 0.78rem; color: #4caf50; font-weight: 600; margin-top: 0.2rem; }
+.cq-review-correct { font-size: 0.78rem; color: var(--t-success); font-weight: 600; margin-top: 0.2rem; }
 .cq-result-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
 .cq-action-btn { padding: 0.75rem 1.5rem; border-radius: 14px; font-weight: 700; font-size: 0.9rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
 .cq-action-btn.secondary { border: 1px solid var(--t-border); background: var(--t-hover); color: var(--t-text1); }

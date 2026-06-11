@@ -1,10 +1,11 @@
 {
-  "name": "eStudy Landing2 — Lead Capture",
+  "id": "BapLeadCapture01",
+  "name": "Balochistan Academy Portal — Lead Capture",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "estudy-lead",
+        "path": "bap-lead",
         "responseMode": "responseNode",
         "options": {
           "allowedOrigins": "*"
@@ -15,7 +16,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [0, 0],
-      "webhookId": "estudy-landing2-lead"
+      "webhookId": "bap-landing2-lead"
     },
     {
       "parameters": {

@@ -181,7 +181,7 @@ function formatDate(iso) {
 .mep-table-sub { font-size: 0.75rem; color: var(--t-text3); margin-top: 0.15rem; }
 .mep-table-wrap { overflow-x: auto; }
 .mep-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-.mep-table thead th { background: #4caf50; color: white; padding: 0.75rem 1rem; text-align: left; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
+.mep-table thead th { background: #15803d; color: white; padding: 0.75rem 1rem; text-align: left; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
 .mep-table td { padding: 0.8rem 1rem; color: var(--t-text1); border-bottom: 1px solid var(--t-border); }
 .mep-table tr:hover td { background: var(--t-hover); }
 .mep-status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.72rem; font-weight: 700; }

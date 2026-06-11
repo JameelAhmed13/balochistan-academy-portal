@@ -58,7 +58,8 @@
 
         <!-- Logo text -->
         <div class="loader-brand">
-          <span class="brand-e">e</span><span class="brand-study">Study</span><span class="brand-card">Card</span>
+          <span class="brand-line1"><span class="brand-white">Balochistan</span> <span class="brand-gold">Academy</span></span>
+          <span class="brand-portal">Portal</span>
         </div>
 
         <!-- AI status text -->
@@ -254,12 +255,16 @@ onUnmounted(() => {
 
 /* Brand text */
 .loader-brand {
-  font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 2rem;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: 'Orbitron', sans-serif; text-transform: uppercase; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
 }
-.brand-e { color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.8); }
-.brand-study { color: #fff; }
-.brand-card { color: #7c6af5; text-shadow: 0 0 20px rgba(124,106,245,0.8); }
+.brand-line1 { font-weight: 700; font-size: 1.4rem; letter-spacing: 0.06em; }
+.brand-white { color: #fff; }
+.brand-gold { color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.8); }
+.brand-portal {
+  font-weight: 700; font-size: 0.95rem; letter-spacing: 0.45em;
+  color: #7c6af5; text-shadow: 0 0 20px rgba(124,106,245,0.8); padding-left: 0.45em;
+}
 
 /* Status */
 .loader-status {

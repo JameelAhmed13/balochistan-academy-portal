@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useThemeStore = defineStore('theme', () => {
-  const saved = localStorage.getItem('estudy-theme')
+  const saved = localStorage.getItem('bap-theme')
   const isDark = ref(saved ? saved === 'dark' : true)
 
   function apply() {
@@ -17,7 +17,7 @@ export const useThemeStore = defineStore('theme', () => {
 
   function toggle() {
     isDark.value = !isDark.value
-    localStorage.setItem('estudy-theme', isDark.value ? 'dark' : 'light')
+    localStorage.setItem('bap-theme', isDark.value ? 'dark' : 'light')
     apply()
   }
 

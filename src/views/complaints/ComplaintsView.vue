@@ -70,12 +70,12 @@ import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
 const form = ref({ type: 'Complaint', module: 'General', title: '', message: '' })
-const submissions = ref(JSON.parse(localStorage.getItem('estudy_complaints') || '[]'))
+const submissions = ref(JSON.parse(localStorage.getItem('bap_complaints') || '[]'))
 
 function submit() {
   const s = { ...form.value, id: Date.now(), date: new Date().toISOString(), status: 'Pending' }
   submissions.value.unshift(s)
-  localStorage.setItem('estudy_complaints', JSON.stringify(submissions.value))
+  localStorage.setItem('bap_complaints', JSON.stringify(submissions.value))
   form.value = { type: 'Complaint', module: 'General', title: '', message: '' }
   toast.add({ severity: 'success', summary: 'Submitted', detail: 'Thank you for your feedback!', life: 3000 })
 }

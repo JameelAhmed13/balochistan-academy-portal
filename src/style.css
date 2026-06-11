@@ -74,6 +74,20 @@ html.dark {
   --t-dropdown-item:  rgba(255, 255, 255, 0.05);
 }
 
+/* ─── Semantic state colors (tuned for WCAG-AA contrast in each theme) ─── */
+:root {
+  --t-success: #15803d; --t-success-bg: rgba(22, 163, 74, 0.10);
+  --t-danger:  #b91c1c; --t-danger-bg:  rgba(220, 38, 38, 0.09);
+  --t-info:    #0e7490; --t-info-bg:    rgba(8, 145, 178, 0.10);
+  --t-warn:    #b45309;
+}
+html.dark {
+  --t-success: #4ade80; --t-success-bg: rgba(74, 222, 128, 0.12);
+  --t-danger:  #f87171; --t-danger-bg:  rgba(248, 113, 113, 0.12);
+  --t-info:    #22d3ee; --t-info-bg:    rgba(34, 211, 238, 0.12);
+  --t-warn:    #fbbf24;
+}
+
 /* ─── Base ─── */
 @layer base {
   * { box-sizing: border-box; }

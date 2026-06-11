@@ -122,80 +122,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
+import { experiments } from '@/assets/data/phet'
 
 const activeFilter = ref('All')
 const theoryExp = ref(null)
 const labExp = ref(null)
 const labLoaded = ref(false)
-
-const experiments = [
-  {
-    id:'ohms', icon:'⚡', subject:'Physics', tags:['Grade 9','Electricity','Board Exam'],
-    title:"Ohm's Law",
-    desc:"Verify the relationship between voltage, current, and resistance in a circuit.",
-    provider:'PhET Interactive Simulations — University of Colorado Boulder',
-    labUrl:'https://phet.colorado.edu/sims/html/ohms-law/latest/ohms-law_en.html',
-    objective:"To verify Ohm's Law by showing that current is directly proportional to voltage when resistance is constant.",
-    materials:['Battery (variable voltage)','Resistor (fixed value)','Ammeter','Voltmeter','Connecting wires','Switch'],
-    procedure:['Set up the circuit with the battery, resistor, ammeter (in series), and voltmeter (in parallel).','Start with the minimum voltage (1V) and record the ammeter reading.','Increase voltage in steps of 1V up to 6V, recording current (I) at each step.','Plot a graph of Voltage (V) on x-axis vs Current (I) on y-axis.','Calculate the slope of the graph: Slope = I/V = 1/R.','Compare the calculated resistance with the known resistor value.'],
-    result:"The graph is a straight line through the origin, confirming V ∝ I (Ohm's Law). The slope = 1/R, so R = ΔV/ΔI. This verifies that for a metallic conductor at constant temperature, current is directly proportional to voltage.",
-  },
-  {
-    id:'refraction', icon:'🔮', subject:'Physics', tags:['Grade 9','Optics','Board Exam'],
-    title:'Refraction of Light',
-    desc:"Measure angles of incidence and refraction to verify Snell's Law.",
-    provider:'PhET Interactive Simulations — University of Colorado Boulder',
-    labUrl:'https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html',
-    objective:"To verify Snell's Law of refraction and determine the refractive index of glass.",
-    materials:['Rectangular glass slab','Optical pins (4)','White paper','Ruler','Protractor','Drawing board'],
-    procedure:['Place the glass slab on white paper and trace its outline.','Draw a normal to the surface at the entry point.','Draw an incident ray at 30° and mark with two pins.','View through the other side and align two more pins with the image.','Remove slab, connect exit points to get refracted ray.','Measure angle of refraction from the normal.','Repeat for 40°, 50°, 60°. Calculate sin(i)/sin(r) each time.'],
-    result:"The ratio sin(i)/sin(r) = n (refractive index) is constant (~1.5 for glass) for all angles, verifying Snell's Law. Light bends towards normal when entering denser medium and away when exiting.",
-  },
-  {
-    id:'circuit', icon:'🔌', subject:'Physics', tags:['Grade 9','Electricity','Board Exam'],
-    title:'Circuit Construction',
-    desc:'Build DC circuits and verify series/parallel resistance rules.',
-    provider:'PhET Interactive Simulations — University of Colorado Boulder',
-    labUrl:'https://phet.colorado.edu/sims/html/circuit-construction-kit-dc/latest/circuit-construction-kit-dc_en.html',
-    objective:'To verify that resistances in series add up and resistances in parallel give a smaller combined resistance.',
-    materials:['Battery','Resistors (3)','Ammeter','Voltmeter','Connecting wires'],
-    procedure:['Build a series circuit with 3 resistors. Measure total current and voltage across each.','Calculate total resistance: R = V/I. Compare with R₁+R₂+R₃.','Rebuild as parallel circuit. Measure current through each branch.','Calculate 1/R_total = 1/R₁ + 1/R₂ + 1/R₃ and verify.'],
-    result:'Series: total resistance = sum of individual resistances. Parallel: total resistance is less than any individual resistor. Current divides in parallel; voltage divides in series.',
-  },
-  {
-    id:'acidbase', icon:'🧪', subject:'Chemistry', tags:['Grade 10','Titration','Board Exam'],
-    title:'Acid-Base Titration',
-    desc:'Determine the concentration of an acid by titrating against a standard base solution.',
-    provider:'PhET Interactive Simulations — University of Colorado Boulder',
-    labUrl:'https://phet.colorado.edu/sims/html/acid-base-solutions/latest/acid-base-solutions_en.html',
-    objective:'To determine the concentration of HCl solution by titrating with standard NaOH using phenolphthalein.',
-    materials:['Burette (50 mL)','Pipette (25 mL)','Conical flask','Standard NaOH (0.1 mol/L)','HCl (unknown concentration)','Phenolphthalein indicator','White tile'],
-    procedure:['Fill burette with standard NaOH solution. Record initial reading.','Pipette 25.0 cm³ of HCl into conical flask. Add 2–3 drops phenolphthalein.','Add NaOH slowly from burette, swirling constantly.','Near endpoint, add NaOH drop by drop until faint pink persists 30 seconds.','Record final burette reading. Volume used = final − initial.','Repeat until two concordant results (within 0.1 cm³) are obtained.'],
-    result:'Using C₁V₁ = C₂V₂: if 20 cm³ of 0.1 mol/L NaOH neutralizes 25 cm³ HCl, then C(HCl) = (0.1×20)/25 = 0.08 mol/L. Phenolphthalein turns pink at the equivalence point.',
-  },
-  {
-    id:'balancing', icon:'⚖️', subject:'Chemistry', tags:['Grade 9','Reactions','Board Exam'],
-    title:'Balancing Chemical Equations',
-    desc:'Practice balancing equations by adjusting coefficients to conserve mass.',
-    provider:'PhET Interactive Simulations — University of Colorado Boulder',
-    labUrl:'https://phet.colorado.edu/sims/html/balancing-chemical-equations/latest/balancing-chemical-equations_en.html',
-    objective:'To apply the Law of Conservation of Mass by balancing chemical equations.',
-    materials:['Pencil and paper','Periodic table (for reference)','Model kits (optional)'],
-    procedure:['Write the unbalanced equation.','Count atoms of each element on both sides.','Add coefficients (not subscripts) to balance atoms.','Start with the most complex molecule first.','Balance H and O last.','Verify: count all atoms on both sides are equal.'],
-    result:'A balanced equation has equal numbers of each type of atom on both sides, satisfying the Law of Conservation of Mass. Example: 2H₂ + O₂ → 2H₂O (4H and 2O on each side).',
-  },
-  {
-    id:'osmosis', icon:'🌱', subject:'Biology', tags:['Grade 9','Cell Biology','Board Exam'],
-    title:'Osmosis in Plant Cells',
-    desc:'Observe water movement across semi-permeable membranes in potato strips.',
-    provider:'PhET Interactive Simulations — University of Colorado Boulder',
-    labUrl:'https://phet.colorado.edu/sims/html/natural-selection/latest/natural-selection_en.html',
-    objective:'To investigate the effect of solute concentration on osmosis and determine water potential of potato tissue.',
-    materials:['Potato','Cork borer','Ruler','Balance','Sucrose solutions (0.0–0.8 mol/L)','Boiling tubes (5)','Filter paper'],
-    procedure:['Cut 5 equal potato strips (3 cm). Weigh each accurately.','Place each strip in different sucrose concentrations (0.0, 0.2, 0.4, 0.6, 0.8 mol/L).','Leave for 24 hours (minimum 2 hours).','Remove strips, blot dry, reweigh each.','Calculate % change: [(final−initial)/initial] × 100.','Plot % change in mass vs sucrose concentration.'],
-    result:'In distilled water, potato gains mass (osmosis in). In high concentration, potato loses mass (osmosis out). Where line crosses x-axis, % change = 0 — this concentration equals the water potential of potato tissue.',
-  },
-]
 
 const filteredExps = computed(() => activeFilter.value === 'All' ? experiments : experiments.filter(e => e.subject === activeFilter.value))
 

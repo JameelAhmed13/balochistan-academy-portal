@@ -105,9 +105,9 @@ const quizAnswered = ref({})
 const codeExplanation = ref('')
 const aiLoadingCode = ref(false)
 
-const completed = ref(JSON.parse(localStorage.getItem('estudy_coding_progress') || '{}'))
+const completed = ref(JSON.parse(localStorage.getItem('bap_coding_progress') || '{}'))
 
-function saveProgress() { localStorage.setItem('estudy_coding_progress', JSON.stringify(completed.value)) }
+function saveProgress() { localStorage.setItem('bap_coding_progress', JSON.stringify(completed.value)) }
 function isCompleted(langId, lessonId) { return !!completed.value[langId + '_' + lessonId] }
 function markComplete() {
   if (!activeLang.value || !activeLesson.value) return

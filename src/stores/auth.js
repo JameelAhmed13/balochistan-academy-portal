@@ -2,8 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(JSON.parse(localStorage.getItem('estudy_user') || 'null'))
-  const token = ref(localStorage.getItem('estudy_token') || null)
+  const user = ref(JSON.parse(localStorage.getItem('bap_user') || 'null'))
+  const token = ref(localStorage.getItem('bap_token') || null)
   const loginHistory = ref([])
 
   const isLoggedIn = computed(() => !!token.value)
@@ -25,8 +25,8 @@ export const useAuthStore = defineStore('auth', () => {
     const mockToken = 'demo-token-' + Date.now()
     user.value = mockUser
     token.value = mockToken
-    localStorage.setItem('estudy_user', JSON.stringify(mockUser))
-    localStorage.setItem('estudy_token', mockToken)
+    localStorage.setItem('bap_user', JSON.stringify(mockUser))
+    localStorage.setItem('bap_token', mockToken)
 
     // Log history
     const entry = {
@@ -36,9 +36,9 @@ export const useAuthStore = defineStore('auth', () => {
       device: navigator.userAgent.slice(0, 60),
       status: 'success',
     }
-    const hist = JSON.parse(localStorage.getItem('estudy_login_history') || '[]')
+    const hist = JSON.parse(localStorage.getItem('bap_login_history') || '[]')
     hist.unshift(entry)
-    localStorage.setItem('estudy_login_history', JSON.stringify(hist.slice(0, 50)))
+    localStorage.setItem('bap_login_history', JSON.stringify(hist.slice(0, 50)))
     loginHistory.value = hist
     return mockUser
   }
@@ -46,18 +46,18 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     user.value = null
     token.value = null
-    localStorage.removeItem('estudy_user')
-    localStorage.removeItem('estudy_token')
+    localStorage.removeItem('bap_user')
+    localStorage.removeItem('bap_token')
   }
 
   function loadLoginHistory() {
-    loginHistory.value = JSON.parse(localStorage.getItem('estudy_login_history') || '[]')
+    loginHistory.value = JSON.parse(localStorage.getItem('bap_login_history') || '[]')
   }
 
   function updateCoins(amount) {
     if (user.value) {
       user.value.coins = (user.value.coins || 0) + amount
-      localStorage.setItem('estudy_user', JSON.stringify(user.value))
+      localStorage.setItem('bap_user', JSON.stringify(user.value))
     }
   }
 

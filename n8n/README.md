@@ -1,4 +1,4 @@
-# eStudy — n8n Automation Workflows
+# Balochistan Academy Portal — n8n Automation Workflows
 
 Importable n8n workflows that automate student onboarding and messaging for the
 Balochistan Academy Portal. Built with the same webhook pattern as the existing
@@ -6,9 +6,9 @@ landing-page lead form.
 
 | File | Workflow | Webhook (production URL) |
 |------|----------|--------------------------|
-| `landing2-leads-workflow.json` | Lead capture (landing pages) | `POST /webhook/estudy-lead` |
-| `student-registration-workflow.json` | Student registration & onboarding | `POST /webhook/estudy-register` |
-| `broadcast-messaging-workflow.json` | Announcement broadcast (groups · chats · email) | `POST /webhook/estudy-broadcast` |
+| `landing2-leads-workflow.json` | Lead capture (landing pages) | `POST /webhook/bap-lead` |
+| `student-registration-workflow.json` | Student registration & onboarding | `POST /webhook/bap-register` |
+| `broadcast-messaging-workflow.json` | Announcement broadcast (groups · chats · email) | `POST /webhook/bap-broadcast` |
 
 > ⚠️ n8n exposes **two** URLs per webhook:
 > - `…/webhook-test/<path>` — only live for ~120s after you click **"Listen for test event"**.
@@ -100,8 +100,8 @@ email in a single call. Delete any branch you don't need.
 The landing forms already POST to n8n. To wire registration the same way, add to `.env`:
 
 ```
-VITE_N8N_REGISTER_URL=http://localhost:5678/webhook/estudy-register
-VITE_N8N_BROADCAST_URL=http://localhost:5678/webhook/estudy-broadcast
+VITE_N8N_REGISTER_URL=http://localhost:5678/webhook/bap-register
+VITE_N8N_BROADCAST_URL=http://localhost:5678/webhook/bap-broadcast
 ```
 
 Then `fetch(import.meta.env.VITE_N8N_REGISTER_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })`
@@ -111,12 +111,12 @@ Then `fetch(import.meta.env.VITE_N8N_REGISTER_URL, { method: 'POST', headers: {'
 
 ```bash
 # registration
-curl -X POST http://localhost:5678/webhook/estudy-register \
+curl -X POST http://localhost:5678/webhook/bap-register \
   -H "Content-Type: application/json" \
   -d '{"name":"Test Student","phone":"03001234567","email":"test@example.com","grade":"9","medium":"English","city":"Quetta"}'
 
 # broadcast
-curl -X POST http://localhost:5678/webhook/estudy-broadcast \
+curl -X POST http://localhost:5678/webhook/bap-broadcast \
   -H "Content-Type: application/json" \
   -d '{"title":"Hello","body":"First broadcast from n8n","whatsappTo":"03001234567","emailTo":"test@example.com"}'
 ```

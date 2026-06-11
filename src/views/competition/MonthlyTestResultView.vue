@@ -93,7 +93,7 @@ html.dark .kua-amber { background: rgba(245,127,23,0.2); border-color: rgba(245,
 .kua-lbl { font-size: 0.7rem; color: var(--t-text2); margin-top: 0.2rem; }
 .qt-wrap { background: var(--t-surface); border: 1px solid var(--t-border); border-radius: 12px; overflow: hidden; }
 .qt-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-.qt-thead th { background: #4caf50; color: white; padding: 0.75rem 1rem; text-align: left; font-weight: 600; }
+.qt-thead th { background: #15803d; color: white; padding: 0.75rem 1rem; text-align: left; font-weight: 600; }
 .qt-table td { padding: 0.85rem 1rem; color: var(--t-text1); border-bottom: 1px solid var(--t-border); vertical-align: top; }
 .qt-badges { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
 .qt-stem { line-height: 1.4; }

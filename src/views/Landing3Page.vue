@@ -751,7 +751,7 @@ const testimonials = [
 ]
 
 /* ── n8n lead form ───────────────────────────────────────── */
-const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/estudy-lead'
+const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/bap-lead'
 const form = reactive({ name: '', phone: '', grade: '9', city: '', status: 'idle' })
 
 async function submitLead() {

@@ -1,4 +1,4 @@
-# eStudyCard — Claude Code Project Guide
+# Balochistan Academy Portal — Claude Code Project Guide
 
 ## Stack
 Vue 3 + Vite · Tailwind CSS 3 · PrimeVue 4 · Pinia · Vue Router 4 · TipTap 2 · ApexCharts · @lucide/vue

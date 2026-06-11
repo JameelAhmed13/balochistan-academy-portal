@@ -67,7 +67,7 @@ const tiles = [
   { id:'dict',      title:'Dictionary',           sub:'Urdu & English',    icon:'📖', path:'/app/dictionary' },
   { id:'progress',  title:'Progress Tracking',    sub:'Your analytics',    icon:'📈', path:'/app/progress-tracking' },
   { id:'tt',        title:'Time Table',           sub:'Schedule planner',  icon:'🗓️', path:'/app/time-table' },
-  { id:'notebook',  title:'Study Notebook',      sub:'AI-powered notes',  icon:'📓', path:'/app/estudy-notebook' },
+  { id:'notebook',  title:'Study Notebook',      sub:'AI-powered notes',  icon:'📓', path:'/app/study-notebook' },
   { id:'notes',     title:'Smart Notes',          sub:'Auto-summarize',    icon:'🧠', path:'/app/smart-notes' },
   { id:'fullprep',  title:'Full Prep',            sub:'Complete bundle',   icon:'🎓', path:'/app/full-prep' },
   { id:'library',   title:'Global Library',       sub:'World resources',   icon:'🏛️', path:'/app/global-library' },

@@ -176,8 +176,8 @@ const tabs = [
 ]
 
 const newGroup = ref({ name:'', subject:'', desc:'' })
-const joinedGroups = ref(JSON.parse(localStorage.getItem('estudy_joined_groups') || '[]'))
-const userGroups = ref(JSON.parse(localStorage.getItem('estudy_user_groups') || '[]'))
+const joinedGroups = ref(JSON.parse(localStorage.getItem('bap_joined_groups') || '[]'))
+const userGroups = ref(JSON.parse(localStorage.getItem('bap_user_groups') || '[]'))
 
 const allGroups = computed(() => [
   { id:1, name:'Physics Legends', subject:'Physics', avatar:'⚡', color:'linear-gradient(135deg,#6d54e8,#a855f7)', members:28, active:true },
@@ -193,25 +193,25 @@ const filteredGroups = computed(()=> searchQuery.value ? allGroups.value.filter(
 
 function joinGroup(id) {
   if (!joinedGroups.value.includes(id)) joinedGroups.value.push(id)
-  localStorage.setItem('estudy_joined_groups', JSON.stringify(joinedGroups.value))
+  localStorage.setItem('bap_joined_groups', JSON.stringify(joinedGroups.value))
 }
 function leaveGroup(id) {
   joinedGroups.value = joinedGroups.value.filter(i=>i!==id)
-  localStorage.setItem('estudy_joined_groups', JSON.stringify(joinedGroups.value))
+  localStorage.setItem('bap_joined_groups', JSON.stringify(joinedGroups.value))
 }
 function createGroup() {
   const id = Date.now()
   const colors = ['linear-gradient(135deg,#6d54e8,#a855f7)','linear-gradient(135deg,#4caf50,#00bcd4)','linear-gradient(135deg,#f59e0b,#ef4444)']
   const grp = { id, name: newGroup.value.name, subject: newGroup.value.subject, avatar: '⭐', color: colors[Math.floor(Math.random()*colors.length)], members: 1, active: true, isOwner: true }
   userGroups.value.push(grp)
-  localStorage.setItem('estudy_user_groups', JSON.stringify(userGroups.value))
+  localStorage.setItem('bap_user_groups', JSON.stringify(userGroups.value))
   joinedGroups.value.push(id)
-  localStorage.setItem('estudy_joined_groups', JSON.stringify(joinedGroups.value))
+  localStorage.setItem('bap_joined_groups', JSON.stringify(joinedGroups.value))
   newGroup.value = { name:'', subject:'', desc:'' }
   showCreate.value = false
 }
 
-const CHAT_KEY_PREFIX = 'estudy_chat_'
+const CHAT_KEY_PREFIX = 'bap_chat_'
 function openChat(group) { chatGroup.value = group; activeTab.value = 'chat' }
 function openChallenge(group) { activeTab.value = 'challenges' }
 

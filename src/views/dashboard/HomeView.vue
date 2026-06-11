@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6 animate-fade-in">
     <!-- KPI Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       <KpiCard v-for="k in kpis" :key="k.label" v-bind="k" />
     </div>
 
@@ -76,15 +76,17 @@ const theme = useThemeStore()
 const student = useStudentStore()
 const auth = useAuthStore()
 
-const kpis = computed(() => [
-  { label: 'Total Tests',   value: student.totalTests,   icon: '📝', color: 'blue' },
-  { label: 'Passed',        value: student.passedTests,  icon: '✅', color: 'green' },
-  { label: 'Avg Score',     value: student.avgPercent + '%', icon: '📊', color: 'purple' },
-  { label: 'This Month',    value: student.monthlyTests, icon: '📅', color: 'amber' },
-  { label: 'Parent Tests',  value: 0,                    icon: '👨‍👩‍👧', color: 'rose' },
-  { label: 'Performance',   value: student.avgPercent + '%', icon: '🏆', color: 'teal' },
-  { label: 'Coins',         value: auth.user?.coins || 0, icon: '🪙', color: 'amber' },
-])
+const kpis = computed(() => {
+  const passRate = student.totalTests ? Math.round((student.passedTests / student.totalTests) * 100) : 0
+  return [
+    { label: 'Total Tests', value: student.totalTests,        icon: '📝', color: 'blue' },
+    { label: 'Passed',      value: student.passedTests,       icon: '✅', color: 'green' },
+    { label: 'Avg Score',   value: student.avgPercent + '%',  icon: '📊', color: 'purple' },
+    { label: 'Pass Rate',   value: passRate + '%',            icon: '🎯', color: 'teal' },
+    { label: 'This Month',  value: student.monthlyTests,      icon: '📅', color: 'amber' },
+    { label: 'Coins',       value: auth.user?.coins ?? 0,     icon: '🪙', color: 'rose' },
+  ]
+})
 
 const actionCards = [
   { title: 'Full Syllabus',      subtitle: 'Prep all subjects',      grad: 'grad-violet',  icon: '📚', to: '/app/preparation',  sub: [] },
@@ -141,4 +143,47 @@ const chartOptions = computed(() => {
   }
 })
 </script>
+
+<style scoped>
+/* ─── Getting Started guide ─── */
+.gs-guide {
+  border-radius: 20px; padding: 1.25rem 1.5rem;
+  background: var(--t-surface); border: 1px solid var(--t-border);
+  box-shadow: var(--t-shadow);
+}
+.gs-header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.1rem; }
+.gs-header-icon {
+  width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 1.4rem;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+}
+.gs-header-title { font-weight: 700; font-size: 1rem; color: var(--t-text1); line-height: 1.3; }
+.gs-header-sub { font-size: 0.8rem; color: var(--t-text3); margin-top: 0.1rem; }
+
+.gs-steps { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+@media (min-width: 640px)  { .gs-steps { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .gs-steps { grid-template-columns: repeat(4, 1fr); } }
+
+.gs-step {
+  position: relative; display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.9rem; border-radius: 14px; text-decoration: none;
+  background: var(--t-bg); border: 1px solid var(--t-border);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.gs-step:hover {
+  border-color: var(--t-accent); transform: translateY(-2px);
+  box-shadow: var(--t-shadow-md);
+}
+.gs-step-num {
+  position: absolute; top: -8px; left: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 0.72rem; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+}
+.gs-step-icon { font-size: 1.35rem; flex-shrink: 0; }
+.gs-step-title { font-weight: 600; font-size: 0.85rem; color: var(--t-text1); line-height: 1.2; }
+.gs-step-desc { font-size: 0.72rem; color: var(--t-text3); margin-top: 0.15rem; line-height: 1.3; }
+.gs-step-arrow { margin-left: auto; color: var(--t-text3); font-size: 1rem; transition: transform 0.2s, color 0.2s; }
+.gs-step:hover .gs-step-arrow { color: var(--t-accent); transform: translateX(3px); }
+</style>
 

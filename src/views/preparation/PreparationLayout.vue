@@ -48,27 +48,6 @@
         </nav>
       </div>
 
-      <!-- Study Options (always visible once a book is selected) -->
-      <div class="pl-opts-section" v-if="selectedBook">
-        <div class="pl-opts-hd">
-          <span class="pl-sec-lbl">Study Options</span>
-        </div>
-        <nav aria-label="Study options">
-          <button v-for="opt in studyOptions" :key="opt.action"
-            type="button"
-            @click="handleOption(opt)"
-            :class="['pl-opt-row', activeOption === opt.action ? 'is-active' : '']"
-            :aria-pressed="activeOption === opt.action"
-            :aria-label="opt.title">
-            <span class="pl-opt-icon" :style="{ background: opt.bg }" aria-hidden="true">
-              <component :is="opt.icon" class="pl-opt-svg" />
-            </span>
-            <span class="pl-opt-label">{{ opt.title }}</span>
-            <ArrowRight v-if="activeOption === opt.action" class="pl-opt-arr" aria-hidden="true" />
-          </button>
-        </nav>
-      </div>
-
     </aside>
 
     <!-- ═══ RIGHT: ROUTED CONTENT ═══ -->
@@ -109,6 +88,20 @@
           </button>
         </div>
       </div>
+
+      <!-- Desktop study-options bar — sits at the top of the workspace,
+           not buried below the library, so options are always one click away -->
+      <nav v-if="selectedBook" class="pl-optbar" aria-label="Study options">
+        <button v-for="opt in studyOptions" :key="opt.action"
+          type="button"
+          @click="handleOption(opt)"
+          :class="['pl-optbar-pill', activeOption === opt.action ? 'is-active' : '']"
+          :aria-pressed="activeOption === opt.action"
+          :aria-label="opt.title">
+          <component :is="opt.icon" class="pl-optbar-svg" aria-hidden="true" />
+          <span>{{ opt.title }}</span>
+        </button>
+      </nav>
 
       <!-- Page content via nested router -->
       <RouterView v-slot="{ Component, route: cr }">
@@ -491,6 +484,42 @@ function handleOption(opt) {
   overflow-y: auto;
   min-height: calc(100vh - 64px);
 }
+
+/* ─── Desktop study-options bar (top of workspace) ──────── */
+.pl-optbar { display: none; }
+@media (min-width: 768px) {
+  .pl-optbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--t-border);
+  }
+}
+.pl-optbar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: 99px;
+  border: 1px solid var(--t-border);
+  background: var(--t-surface);
+  color: var(--t-text2);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.pl-optbar-pill:hover { border-color: var(--t-accent); color: var(--t-accent); }
+.pl-optbar-pill.is-active {
+  background: color-mix(in srgb, var(--t-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--t-accent) 40%, transparent);
+  color: var(--t-accent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--t-accent) 14%, transparent);
+}
+.pl-optbar-svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 /* ─── Mobile controls (desktop: hidden) ─────────────────── */
 .pl-mobile-controls { display: none; }
