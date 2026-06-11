@@ -91,12 +91,18 @@
               </defs>
             </svg>
           </div>
-          <h2 class="form-title">Welcome Back</h2>
-          <p class="form-sub">Sign in to continue your AI learning journey</p>
+          <h2 class="form-title">{{ mode === 'login' ? 'Welcome Back' : 'Create Account' }}</h2>
+          <p class="form-sub">{{ mode === 'login' ? 'Sign in to continue your AI learning journey' : 'Register to start your AI learning journey' }}</p>
+        </div>
+
+        <!-- Mode toggle -->
+        <div class="mode-toggle" role="tablist">
+          <button type="button" role="tab" :aria-selected="mode === 'login'" class="mode-tab" :class="{ active: mode === 'login' }" @click="switchMode('login')">Sign In</button>
+          <button type="button" role="tab" :aria-selected="mode === 'register'" class="mode-tab" :class="{ active: mode === 'register' }" @click="switchMode('register')">Register</button>
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="handleLogin" class="login-form">
+        <form v-if="mode === 'login'" @submit.prevent="handleLogin" class="login-form">
           <!-- Username field -->
           <div class="field-wrap" :class="{ focused: focusedField === 'user', filled: form.username }">
             <label class="field-label">Username / Student ID</label>
@@ -163,8 +169,97 @@
           </button>
         </form>
 
+        <!-- Register form (wired to n8n) -->
+        <form v-else @submit.prevent="handleRegister" class="login-form">
+          <div class="field-wrap">
+            <label class="field-label">Full Name</label>
+            <div class="field-inner">
+              <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+              <input v-model.trim="reg.name" type="text" class="glass-input" placeholder="e.g. Ayesha Khan" required autocomplete="name" />
+            </div>
+          </div>
+
+          <div class="field-wrap">
+            <label class="field-label">Phone / WhatsApp</label>
+            <div class="field-inner">
+              <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.5 10.1a19.79 19.79 0 01-3.07-8.67A2 2 0 013.4 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 9.91a16 16 0 006.09 6.09l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+              </svg>
+              <input v-model.trim="reg.phone" type="tel" class="glass-input" placeholder="03xx-xxxxxxx" required autocomplete="tel" />
+            </div>
+          </div>
+
+          <div class="field-wrap">
+            <label class="field-label">Email</label>
+            <div class="field-inner">
+              <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/>
+              </svg>
+              <input v-model.trim="reg.email" type="email" class="glass-input" placeholder="you@example.com" required autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field-wrap">
+              <label class="field-label">Grade</label>
+              <div class="field-inner">
+                <select v-model="reg.grade" class="glass-input glass-select">
+                  <option value="9">Grade 9</option>
+                  <option value="10">Grade 10</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-wrap">
+              <label class="field-label">Medium</label>
+              <div class="field-inner">
+                <select v-model="reg.medium" class="glass-input glass-select">
+                  <option value="English">English</option>
+                  <option value="Urdu">Urdu</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-wrap">
+            <label class="field-label">City</label>
+            <div class="field-inner">
+              <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              <input v-model.trim="reg.city" type="text" class="glass-input" placeholder="Quetta" autocomplete="address-level2" />
+            </div>
+          </div>
+
+          <Transition name="err">
+            <div v-if="regError" class="error-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="#f87171"/></svg>
+              <span>Couldn’t reach the n8n register webhook (<code>{{ registerUrl }}</code>). Is the workflow <strong>active</strong>? <button type="button" class="link-btn" @click="continueDemo">Continue as demo →</button></span>
+            </div>
+          </Transition>
+
+          <button type="submit" :disabled="loading" class="submit-btn">
+            <span v-if="!loading" class="btn-content">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/>
+              </svg>
+              Create Account &amp; Send Welcome
+            </span>
+            <span v-else class="btn-loading">
+              <span class="spin-dots"><span/><span/><span/></span>
+              Registering via n8n…
+            </span>
+            <div class="btn-glow" />
+          </button>
+        </form>
+
         <!-- Footer -->
         <div class="form-footer">
+          <p class="switch-prompt">
+            <template v-if="mode === 'login'">New here? <button type="button" class="link-btn" @click="switchMode('register')">Create an account</button></template>
+            <template v-else>Already registered? <button type="button" class="link-btn" @click="switchMode('login')">Sign in</button></template>
+          </p>
           <div class="demo-hint">
             <span class="hint-label">DEMO</span>
             Any username & phone · use <code>admin</code> for admin panel
@@ -195,6 +290,18 @@ const shaking = ref(false)
 const focusedField = ref('')
 const netCanvas = ref(null)
 
+// ── Registration (wired to n8n) ──
+const mode = ref('login') // 'login' | 'register'
+const registerUrl = import.meta.env.VITE_N8N_REGISTER_URL || 'http://localhost:5678/webhook/estudy-register'
+const reg = ref({ name: '', phone: '', email: '', grade: '9', medium: 'English', city: '' })
+const regError = ref('')
+
+function switchMode(m) {
+  mode.value = m
+  errorMsg.value = ''
+  regError.value = ''
+}
+
 const showcaseStats = [
   { num: '1,200+', label: 'Questions' },
   { num: '8', label: 'AI Tutors' },
@@ -216,6 +323,35 @@ async function handleLogin() {
   } finally {
     loading.value = false
   }
+}
+
+async function handleRegister() {
+  loading.value = true
+  regError.value = ''
+  try {
+    const res = await fetch(registerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...reg.value, source: 'app-register', submittedAt: new Date().toISOString() }),
+    })
+    if (!res.ok) throw new Error(`Register webhook responded ${res.status}`)
+    toast.add({ severity: 'success', summary: 'Account created!', detail: 'Welcome message sent via n8n', life: 3000 })
+    await auth.login(reg.value.name, reg.value.phone)
+    router.push('/app')
+  } catch (e) {
+    console.error('[register] n8n webhook failed:', e)
+    regError.value = e.message
+    shaking.value = true
+    setTimeout(() => { shaking.value = false }, 500)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Skip the n8n round-trip (demo) when the webhook is unreachable
+function continueDemo() {
+  auth.login(reg.value.name || 'Demo Student', reg.value.phone || '03001234567')
+  router.push('/app')
 }
 
 // Neural net canvas
@@ -376,12 +512,39 @@ onUnmounted(() => cancelAnimationFrame(animHandle))
 
 .glass-card {
   width: 100%; max-width: 420px;
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.08);
+  /* layered frosted glass: bright top-left fall-off to a faint violet tint */
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03) 42%, rgba(124,106,245,0.06));
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255,255,255,0.14);
   border-radius: 28px;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,106,245,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
-  overflow: hidden; position: relative;
+  /* outer depth + crisp top edge highlight + soft bottom shade = real glass thickness */
+  box-shadow:
+    0 24px 80px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(124,106,245,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.25);
+  overflow: hidden; position: relative; isolation: isolate;
+}
+/* specular light-reflection sweep across the pane */
+.glass-card::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(130% 80% at 0% 0%, rgba(255,255,255,0.16), transparent 55%),
+    linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.06) 47%, transparent 64%);
+  background-size: 100% 100%, 250% 100%;
+  background-position: 0 0, -40% 0;
+  animation: glassSheen 9s ease-in-out infinite;
+}
+/* keep all card content above the sheen layer */
+.glass-card > * { position: relative; z-index: 1; }
+@keyframes glassSheen {
+  0%, 100% { background-position: 0 0, -40% 0; }
+  50%      { background-position: 0 0, 140% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass-card::before { animation: none; }
 }
 .glass-card.shake { animation: shake 0.4s ease; }
 @keyframes shake {
@@ -412,7 +575,33 @@ onUnmounted(() => cancelAnimationFrame(animHandle))
 }
 .form-sub { color: rgba(148,163,184,0.7); font-size: 0.875rem; margin: 0; }
 
+/* ─── Mode toggle (Sign In / Register) ─── */
+.mode-toggle {
+  display: flex; gap: 0.35rem; margin: 0 2rem 0.25rem;
+  padding: 0.3rem; border-radius: 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+}
+.mode-tab {
+  flex: 1; padding: 0.55rem 0; border: none; border-radius: 11px;
+  background: transparent; color: rgba(148,163,184,0.7);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 0.85rem;
+  cursor: none; transition: color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.mode-tab:hover { color: #e2e8f0; }
+.mode-tab.active {
+  color: #f1f5f9;
+  background: linear-gradient(135deg, rgba(124,106,245,0.9), rgba(91,67,204,0.9));
+  box-shadow: 0 4px 16px rgba(124,106,245,0.35);
+}
+
 .login-form { padding: 0.5rem 2rem 0; display: flex; flex-direction: column; gap: 1rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.glass-select {
+  padding-left: 1rem; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.9rem center;
+}
+.glass-select option { background: #0f1424; color: #f1f5f9; }
 
 .field-wrap { display: flex; flex-direction: column; gap: 0.4rem; }
 .field-label {
@@ -428,9 +617,11 @@ onUnmounted(() => cancelAnimationFrame(animHandle))
 .field-wrap.focused .field-icon { color: #a78bfa; }
 .glass-input {
   width: 100%; padding: 0.85rem 1rem 0.85rem 2.75rem;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
   border-radius: 14px; color: #f1f5f9; font-size: 0.95rem;
   font-family: 'Plus Jakarta Sans', sans-serif;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
   outline: none; transition: all 0.25s;
   cursor: none;
 }
@@ -490,6 +681,13 @@ onUnmounted(() => cancelAnimationFrame(animHandle))
 @keyframes dotJump { 0%,80%,100% { transform: translateY(0) } 40% { transform: translateY(-6px) } }
 
 .form-footer { padding: 1.25rem 2rem 2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.switch-prompt { text-align: center; font-size: 0.82rem; color: rgba(148,163,184,0.7); margin: 0; }
+.link-btn {
+  background: none; border: none; padding: 0; cursor: none;
+  color: #a78bfa; font-family: inherit; font-size: inherit; font-weight: 700;
+  text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s;
+}
+.link-btn:hover { color: #c4b5fd; }
 .demo-hint {
   display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
   padding: 0.6rem 0.85rem; border-radius: 10px;
