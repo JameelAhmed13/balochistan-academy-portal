@@ -1,0 +1,63 @@
+{
+  "name": "eStudy Landing2 — Lead Capture",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "estudy-lead",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "estudy-landing2-lead"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "f-name",  "name": "name",       "type": "string", "value": "={{ $json.body.name }}" },
+            { "id": "f-phone", "name": "phone",      "type": "string", "value": "={{ $json.body.phone }}" },
+            { "id": "f-grade", "name": "grade",      "type": "string", "value": "={{ $json.body.grade }}" },
+            { "id": "f-city",  "name": "city",       "type": "string", "value": "={{ $json.body.city || 'Unknown' }}" },
+            { "id": "f-src",   "name": "source",     "type": "string", "value": "={{ $json.body.source || 'landing2' }}" },
+            { "id": "f-at",    "name": "receivedAt", "type": "string", "value": "={{ $now.toISO() }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Normalize Lead",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"message\": \"Lead received\", \"lead\": $json.name } }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 0]
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [[{ "node": "Normalize Lead", "type": "main", "index": 0 }]]
+    },
+    "Normalize Lead": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
