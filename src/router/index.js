@@ -6,6 +6,7 @@ const routes = [
   { path: '/', name: 'Landing', component: () => import('@/views/LandingPage.vue'), meta: { public: true } },
   { path: '/landing2', name: 'Landing2', component: () => import('@/views/Landing2Page.vue'), meta: { public: true } },
   { path: '/landing3', name: 'Landing3', component: () => import('@/views/Landing3Page.vue'), meta: { public: true } },
+  { path: '/landing4', name: 'Landing4', component: () => import('@/views/Landing4Page.vue'), meta: { public: true } },
 
   // Auth
   { path: '/login', name: 'Login', component: () => import('@/views/auth/LoginView.vue'), meta: { guest: true } },

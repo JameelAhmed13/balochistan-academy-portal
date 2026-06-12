@@ -251,6 +251,15 @@ html.dark {
 /* ─── Urdu RTL ─── */
 [lang="ur"], .urdu { font-family: 'Noto Nastaliq Urdu', serif; direction: rtl; text-align: right; }
 
+/* ─── Automatic bidi for form fields ───
+   `unicode-bidi: plaintext` makes each field resolve its direction from the
+   text actually typed — English aligns left, Urdu aligns right — with no JS. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+textarea, select, [contenteditable="true"], [contenteditable=""] {
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
 /* ─── TipTap editor ─── */
 .tiptap { min-height: 120px; }
 .tiptap p { margin-bottom: 0.5rem; }

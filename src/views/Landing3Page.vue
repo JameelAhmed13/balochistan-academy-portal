@@ -560,6 +560,7 @@
           <b>Landings</b>
           <RouterLink to="/">Classic (v1)</RouterLink>
           <RouterLink to="/landing2">The Path (v2)</RouterLink>
+          <RouterLink to="/landing4">Mobile (v4)</RouterLink>
           <RouterLink to="/login">Student Login</RouterLink>
         </nav>
         <nav class="l3-foot-col" aria-label="Contact">
