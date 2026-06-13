@@ -83,7 +83,7 @@ function handleOption(opt) {
 </script>
 
 <style scoped>
-.pv-home { max-width: 860px; }
+.pv-home { width: 100%; }
 
 /* Book header */
 .pv-book-hd {
@@ -129,13 +129,15 @@ function handleOption(opt) {
 .pv-empty-icon { font-size: 2.5rem; }
 .pv-empty-lbl { font-size: 0.9rem; color: var(--t-text3); max-width: 260px; }
 
-/* Options grid */
+/* Options grid — fills the workspace, scaling columns to the available width */
 .pv-opts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
-@media (min-width: 900px) { .pv-opts-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 900px)  { .pv-opts-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1500px) { .pv-opts-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 1900px) { .pv-opts-grid { grid-template-columns: repeat(6, 1fr); } }
 
 .pv-opt-card {
   display: flex;

@@ -1,8 +1,25 @@
 <template>
-  <div class="pl-shell">
+  <div class="pl-shell" :class="{ 'is-horizontal': sidebarLayout === 'horizontal' }">
 
-    <!-- ═══ PERSISTENT LEFT SIDEBAR ═══ -->
+    <!-- ═══ PERSISTENT SIDEBAR (left, or top strip in horizontal mode) ═══ -->
     <aside class="pl-sidebar" aria-label="Preparation navigation">
+
+      <!-- Layout toggle: vertical sidebar vs horizontal top bar -->
+      <div class="pl-layout-bar">
+        <span class="pl-sec-lbl">Layout</span>
+        <div class="pl-layout-toggle" role="group" aria-label="Sidebar layout">
+          <button type="button" @click="setLayout('vertical')"
+            :class="['pl-ltog', sidebarLayout === 'vertical' ? 'is-on' : '']"
+            :aria-pressed="sidebarLayout === 'vertical'" title="Vertical sidebar">
+            <PanelLeft class="pl-ltog-svg" aria-hidden="true" />
+          </button>
+          <button type="button" @click="setLayout('horizontal')"
+            :class="['pl-ltog', sidebarLayout === 'horizontal' ? 'is-on' : '']"
+            :aria-pressed="sidebarLayout === 'horizontal'" title="Horizontal bar">
+            <PanelTop class="pl-ltog-svg" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
 
       <!-- Grade / Class Selector -->
       <div class="pl-grade-section">
@@ -121,6 +138,7 @@ import {
   ChevronRight, ArrowRight,
   FolderOpen, Video, FileText, FlaskConical,
   TestTube2, CheckSquare, PenLine, FileStack,
+  PanelLeft, PanelTop,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'
@@ -129,6 +147,13 @@ const router = useRouter()
 const route  = useRoute()
 const auth = useAuthStore()
 const catalog = useCatalogStore()
+
+// ── Sidebar orientation (vertical | horizontal), persisted ─────
+const sidebarLayout = ref(localStorage.getItem('bap_prep_layout') || 'vertical')
+function setLayout(mode) {
+  sidebarLayout.value = mode
+  localStorage.setItem('bap_prep_layout', mode)
+}
 
 // ── Grades ────────────────────────────────────────────────────
 // A student is locked to their own grade; an admin (no grade) may browse all.
@@ -272,6 +297,40 @@ function handleOption(opt) {
   color: var(--t-text3);
   font-family: 'Syne', sans-serif;
 }
+
+/* ── Layout toggle (vertical / horizontal) ── */
+.pl-layout-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.875rem;
+  border-bottom: 1px solid var(--t-border);
+  flex-shrink: 0;
+}
+.pl-layout-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--t-hover);
+  border-radius: 7px;
+  padding: 2px;
+}
+.pl-ltog {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+  border-radius: 5px;
+  border: none;
+  background: none;
+  color: var(--t-text3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pl-ltog:hover { color: var(--t-accent); }
+.pl-ltog.is-on { background: var(--t-accent); color: #fff; }
+.pl-ltog-svg { width: 15px; height: 15px; }
 
 /* ── Grade section ── */
 .pl-grade-section {
@@ -460,6 +519,54 @@ function handleOption(opt) {
   padding: 1.25rem 1.5rem;
   overflow-y: auto;
   min-height: calc(100vh - 64px);
+}
+
+/* ─── Horizontal layout (sidebar becomes a top strip) ───── */
+@media (min-width: 768px) {
+  .pl-shell.is-horizontal { flex-direction: column; }
+  .pl-shell.is-horizontal .pl-sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.85rem;
+    position: static;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--t-border);
+    padding: 0.4rem 0.75rem;
+  }
+  .pl-shell.is-horizontal .pl-layout-bar,
+  .pl-shell.is-horizontal .pl-grade-section {
+    border-bottom: none;
+    padding: 0;
+    flex-shrink: 0;
+    gap: 0.5rem;
+  }
+  .pl-shell.is-horizontal .pl-layout-bar { border-right: 1px solid var(--t-border); padding-right: 0.85rem; }
+  .pl-shell.is-horizontal .pl-grade-section { border-right: 1px solid var(--t-border); padding-right: 0.85rem; }
+  .pl-shell.is-horizontal .pl-lib-section {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+    border-bottom: none;
+    flex: 1;
+    min-width: 0;
+  }
+  .pl-shell.is-horizontal .pl-lib-hd { padding: 0; flex-shrink: 0; }
+  .pl-shell.is-horizontal .pl-book-list {
+    flex-direction: row;
+    padding: 0;
+    gap: 0.4rem;
+    overflow-x: auto;
+    flex: 1;
+    scrollbar-width: thin;
+  }
+  .pl-shell.is-horizontal .pl-book-row { flex-shrink: 0; width: auto; padding: 0.4rem 0.7rem; }
+  .pl-shell.is-horizontal .pl-book-row .pl-bsub { display: none; }
+  .pl-shell.is-horizontal .pl-bicon { width: 22px; height: 22px; font-size: 0.85rem; }
+  .pl-shell.is-horizontal .pl-content { min-height: 0; }
 }
 
 /* ─── Desktop study-options bar (top of workspace) ──────── */
