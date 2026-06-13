@@ -145,7 +145,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Zap, Timer, BookOpen, Sparkles, Wand2, ScrollText } from '@lucide/vue'
-import { SUBJECTS, useContentStore } from '@/stores/content'
+import { useContentStore } from '@/stores/content'
+import { findPrepSubject } from '@/views/preparation/prepSubjects'
 import { useAuthStore } from '@/stores/auth'
 import { patternFor, patternSummary } from '@/data/boardPattern'
 import { generateObjectiveQuestions, generatePredictedPaper, ollamaConfig } from '@/services/ollamaService'
@@ -157,7 +158,7 @@ const router = useRouter()
 const content = useContentStore()
 const auth = useAuthStore()
 
-const subject = computed(() => SUBJECTS.find(s => s.id === +props.bookId))
+const subject = computed(() => findPrepSubject(props.bookId))
 const units = computed(() => content.units[+props.bookId] || [])
 
 const boardName = computed(() => (auth.user?.board ? `${auth.user.board} Board` : 'Balochistan Board') + ' (BISE)')

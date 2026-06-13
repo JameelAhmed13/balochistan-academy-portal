@@ -4,6 +4,8 @@
 // layout, the book-home view and every study panel resolve subjects the
 // same way — single source of truth.
 import { SUBJECTS } from '@/stores/content'
+import { useCatalogStore } from '@/stores/catalog'
+import { useAuthStore } from '@/stores/auth'
 
 export const FSC_PART1 = [
   { id: 101, name: 'Physics',          nameUr: 'طبیعیات',           icon: '⚡', color: 'grad-blue',    medium: 'english' },
@@ -27,17 +29,36 @@ export const GRADE_SUBJECTS = {
   12: FSC_PART2,
 }
 
-const ALL_PREP_SUBJECTS = [...SUBJECTS, ...FSC_PART1, ...FSC_PART2]
+// Fallback pool excludes the base SUBJECTS (ids 1–10): those ids collide with
+// the catalog's DB subject ids (e.g. legacy Urdu=1 vs catalog English=1), so for
+// 1–11 we resolve ONLY via the catalog. Legacy FSC ids (101–120) don't collide.
+const ALL_PREP_SUBJECTS = [...FSC_PART1, ...FSC_PART2]
 
-// Resolve a subject record from any preparation bookId (1–10 or 101–120).
+// Resolve a subject record from any preparation bookId. Prefers the live catalog
+// (DB subjects for the student's grade) so ECD–12 all resolve; falls back to the
+// legacy hardcoded lists if the catalog isn't loaded.
 export function findPrepSubject(id) {
+  try {
+    const cat = useCatalogStore()
+    const pools = [cat.subjects, ...Object.values(cat.gradeSubjects)]
+    for (const pool of pools) {
+      const hit = pool?.find((s) => String(s.id) === String(id))
+      if (hit) return { ...hit, nameUr: hit.nameUr ?? hit.name_ur }
+    }
+  } catch { /* pinia not ready / backend offline */ }
   const n = +id
-  if (!n) return null
   return ALL_PREP_SUBJECTS.find((s) => s.id === n) ?? null
 }
 
-// Grade label for a bookId (used for headers / past-paper matching).
+// Grade label for headers / past-paper matching. Uses the logged-in student's
+// grade from the catalog when available; falls back to the legacy id-range guess.
 export function gradeLabelFor(id) {
+  try {
+    const auth = useAuthStore()
+    const cat = useCatalogStore()
+    const code = auth.user?.gradeCode
+    if (code) return cat.gradeByCode(code)?.label || `Grade ${code}`
+  } catch { /* ignore */ }
   const n = +id
   if (n >= 111) return 'F.Sc Part 2'
   if (n >= 101) return 'F.Sc Part 1'

@@ -1,0 +1,7 @@
+grade,subject,unit,topic,skill,question,option1,correct1,option2,correct2,option3,correct3,option4,correct4,remarks
+11,Physics,Measurement,Measurement,"Rules of significant figures and scientific notations","The significant figure in 0.00203090:",6,Y,9,N,0,N,8,N,"Correct answer is ""6"""
+11,Physics,Measurement,Measurement,"Rules of significant figures and scientific notations","The significant figure in 30200 is:",5,N,2,N,3,Y,4,N,"Correct answer is ""3"""
+11,Physics,Measurement,Measurement,"Rules of significant figures and scientific notations","The number of significant figures in the length of a bar 6200 mm measured by meter rod are:",two,N,one,Y,three,N,four,N,"Correct answer is ""one"""
+11,Physics,Measurement,Measurement,"Rules of significant figures and scientific notations","The number 0860.400 has:","6 significant figures",Y,"5 significant figures",N,"4 significant figures",N,"3 significant figures",N,"Correct answer is ""6 significant figures"""
+11,Physics,Measurement,Measurement,"Rules of significant figures and scientific notations","The significant figure in 0.00203090:",6,Y,9,N,0,N,8,N,"Correct answer is ""6"""
+11,Physics,Measurement,Measurement,"Rules of significant figures and scientific notations","The significant figure in 30200 is:",5,N,2,N,3,Y,4,N,"Correct answer is ""3"""

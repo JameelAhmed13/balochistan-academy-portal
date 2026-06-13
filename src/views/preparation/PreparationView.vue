@@ -50,41 +50,17 @@ import {
   FolderOpen, Video, FileText, FlaskConical,
   TestTube2, CheckSquare, PenLine, FileStack,
 } from '@lucide/vue'
-import { SUBJECTS } from '@/stores/content'
+import { findPrepSubject } from '@/views/preparation/prepSubjects'
 
 const props = defineProps({ bookId: { type: [String, Number], default: null } })
 
 const router = useRouter()
 const route  = useRoute()
 
-const ALL_FSC = [
-  { id: 101, name: 'Physics',          icon: '⚡', color: 'grad-blue',    medium: 'english' },
-  { id: 102, name: 'Chemistry',        icon: '🧪', color: 'grad-rose',    medium: 'english' },
-  { id: 103, name: 'Biology',          icon: '🌿', color: 'grad-emerald', medium: 'english' },
-  { id: 104, name: 'Mathematics',      icon: '📐', color: 'grad-teal',    medium: 'english' },
-  { id: 105, name: 'Computer Science', icon: '💻', color: 'grad-cyan',    medium: 'english' },
-  { id: 106, name: 'English',          icon: '📖', color: 'grad-amber',   medium: 'english' },
-  { id: 107, name: 'Urdu',             icon: '✍️', color: 'grad-violet',  medium: 'urdu' },
-  { id: 108, name: 'Islamiat',         icon: '🕌', color: 'grad-green',   medium: 'urdu' },
-  { id: 109, name: 'Pakistan Studies', icon: '🗺️', color: 'grad-pink',    medium: 'urdu' },
-  { id: 110, name: 'Statistics',       icon: '📊', color: 'grad-orange',  medium: 'english' },
-  { id: 111, name: 'Physics',          icon: '⚡', color: 'grad-blue',    medium: 'english' },
-  { id: 112, name: 'Chemistry',        icon: '🧪', color: 'grad-rose',    medium: 'english' },
-  { id: 113, name: 'Biology',          icon: '🌿', color: 'grad-emerald', medium: 'english' },
-  { id: 114, name: 'Mathematics',      icon: '📐', color: 'grad-teal',    medium: 'english' },
-  { id: 115, name: 'Computer Science', icon: '💻', color: 'grad-cyan',    medium: 'english' },
-  { id: 116, name: 'English',          icon: '📖', color: 'grad-amber',   medium: 'english' },
-  { id: 117, name: 'Urdu',             icon: '✍️', color: 'grad-violet',  medium: 'urdu' },
-  { id: 118, name: 'Islamiat',         icon: '🕌', color: 'grad-green',   medium: 'urdu' },
-  { id: 119, name: 'Pakistan Studies', icon: '🗺️', color: 'grad-pink',    medium: 'urdu' },
-  { id: 120, name: 'Statistics',       icon: '📊', color: 'grad-orange',  medium: 'english' },
-]
-const ALL_SUBJECTS = [...SUBJECTS, ...ALL_FSC]
-
 const book = computed(() => {
-  const id = +(props.bookId ?? route.params.bookId ?? 0)
-  if (!id) return null
-  return ALL_SUBJECTS.find(s => s.id === id) ?? null
+  const id = props.bookId ?? route.params.bookId ?? null
+  if (id == null || id === '') return null
+  return findPrepSubject(id)
 })
 
 const studyOptions = [

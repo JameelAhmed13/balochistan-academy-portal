@@ -122,55 +122,40 @@ import {
   FolderOpen, Video, FileText, FlaskConical,
   TestTube2, CheckSquare, PenLine, FileStack,
 } from '@lucide/vue'
-import { SUBJECTS } from '@/stores/content'
+import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 
 const router = useRouter()
 const route  = useRoute()
+const auth = useAuthStore()
+const catalog = useCatalogStore()
 
 // ── Grades ────────────────────────────────────────────────────
-const grades = [9, 10, 11, 12]
-const selectedGrade = ref(9)
+// A student is locked to their own grade; an admin (no grade) may browse all.
+const isStudent = computed(() => auth.user?.role === 'student')
+const grades = computed(() => {
+  if (isStudent.value && auth.user?.gradeCode) return [auth.user.gradeCode]
+  const all = catalog.enabledGrades.map((g) => g.code)
+  return all.length ? all : [auth.user?.gradeCode || '9']
+})
+const selectedGrade = ref(auth.user?.gradeCode || '9')
 
-const GRADE_SUBJECTS = {
-  9:  SUBJECTS,
-  10: SUBJECTS,
-  11: [
-    { id: 101, name: 'Physics',          nameUr: 'طبیعیات',           icon: '⚡', color: 'grad-blue',    medium: 'english' },
-    { id: 102, name: 'Chemistry',        nameUr: 'کیمیا',              icon: '🧪', color: 'grad-rose',    medium: 'english' },
-    { id: 103, name: 'Biology',          nameUr: 'حیاتیات',            icon: '🌿', color: 'grad-emerald', medium: 'english' },
-    { id: 104, name: 'Mathematics',      nameUr: 'ریاضی',              icon: '📐', color: 'grad-teal',    medium: 'english' },
-    { id: 105, name: 'Computer Science', nameUr: 'کمپیوٹر سائنس',      icon: '💻', color: 'grad-cyan',    medium: 'english' },
-    { id: 106, name: 'English',          nameUr: 'انگریزی',            icon: '📖', color: 'grad-amber',   medium: 'english' },
-    { id: 107, name: 'Urdu',             nameUr: 'اردو',               icon: '✍️', color: 'grad-violet',  medium: 'urdu' },
-    { id: 108, name: 'Islamiat',         nameUr: 'اسلامیات',           icon: '🕌', color: 'grad-green',   medium: 'urdu' },
-    { id: 109, name: 'Pakistan Studies', nameUr: 'پاکستان کا مطالعہ',  icon: '🗺️', color: 'grad-pink',    medium: 'urdu' },
-    { id: 110, name: 'Statistics',       nameUr: 'اعداد و شمار',       icon: '📊', color: 'grad-orange',  medium: 'english' },
-  ],
-  12: [
-    { id: 111, name: 'Physics',          nameUr: 'طبیعیات',           icon: '⚡', color: 'grad-blue',    medium: 'english' },
-    { id: 112, name: 'Chemistry',        nameUr: 'کیمیا',              icon: '🧪', color: 'grad-rose',    medium: 'english' },
-    { id: 113, name: 'Biology',          nameUr: 'حیاتیات',            icon: '🌿', color: 'grad-emerald', medium: 'english' },
-    { id: 114, name: 'Mathematics',      nameUr: 'ریاضی',              icon: '📐', color: 'grad-teal',    medium: 'english' },
-    { id: 115, name: 'Computer Science', nameUr: 'کمپیوٹر سائنس',      icon: '💻', color: 'grad-cyan',    medium: 'english' },
-    { id: 116, name: 'English',          nameUr: 'انگریزی',            icon: '📖', color: 'grad-amber',   medium: 'english' },
-    { id: 117, name: 'Urdu',             nameUr: 'اردو',               icon: '✍️', color: 'grad-violet',  medium: 'urdu' },
-    { id: 118, name: 'Islamiat',         nameUr: 'اسلامیات',           icon: '🕌', color: 'grad-green',   medium: 'urdu' },
-    { id: 119, name: 'Pakistan Studies', nameUr: 'پاکستان کا مطالعہ',  icon: '🗺️', color: 'grad-pink',    medium: 'urdu' },
-    { id: 120, name: 'Statistics',       nameUr: 'اعداد و شمار',       icon: '📊', color: 'grad-orange',  medium: 'english' },
-  ],
+async function ensureSubjects(code) {
+  if (code && !catalog.subjectsForGrade(code).length) {
+    try { await catalog.fetchSubjectsForGrade(code) } catch { /* backend offline */ }
+  }
 }
 
 // Preserve the active study-option suffix (e.g. "/videos", "/test/objective")
-// when switching subject or grade, so students stay on their current option
-// instead of being bounced back to the overview.
+// when switching subject or grade, so students stay on their current option.
 function currentSuffix() {
-  const m = route.path.match(/^\/app\/preparation\/\d+(\/.*)?$/)
+  const m = route.path.match(/^\/app\/preparation\/[^/]+(\/.*)?$/)
   return m && m[1] ? m[1] : ''
 }
 
-function selectGrade(g) {
+async function selectGrade(g) {
   selectedGrade.value = g
-  // Reset to first book in new grade
+  await ensureSubjects(g)
   selectedBook.value = filteredSubjects.value[0] ?? null
   if (selectedBook.value) {
     router.replace(`/app/preparation/${selectedBook.value.id}${currentSuffix()}`)
@@ -186,9 +171,9 @@ const mediumTabs = [
 ]
 
 const filteredSubjects = computed(() => {
-  const list = GRADE_SUBJECTS[selectedGrade.value] ?? SUBJECTS
+  const list = catalog.subjectsForGrade(selectedGrade.value) || []
   if (mediumFilter.value === 'All') return list
-  return list.filter(s => s.medium === mediumFilter.value)
+  return list.filter((s) => (s.medium || '').toLowerCase() === mediumFilter.value)
 })
 
 // ── Selected book ──────────────────────────────────────────────
@@ -196,31 +181,23 @@ const selectedBook = ref(null)
 
 function selectBook(subj) {
   selectedBook.value = subj
-  // Keep the current study option when changing subject (focused switching)
   router.push(`/app/preparation/${subj.id}${currentSuffix()}`)
 }
 
-onMounted(() => {
-  const id = route.params.bookId ? +route.params.bookId : null
-  if (id) {
-    // Find in any grade
-    let found = null
-    for (const list of Object.values(GRADE_SUBJECTS)) {
-      found = list.find(s => s.id === id)
-      if (found) break
-    }
-    selectedBook.value = found ?? filteredSubjects.value[0] ?? null
-  } else {
-    selectedBook.value = filteredSubjects.value[0] ?? null
-  }
+onMounted(async () => {
+  if (!catalog.grades.length) { try { await catalog.fetchGrades() } catch { /* offline */ } }
+  await ensureSubjects(selectedGrade.value)
+  const id = route.params.bookId
+  selectedBook.value =
+    (id && filteredSubjects.value.find((s) => String(s.id) === String(id))) ||
+    filteredSubjects.value[0] ||
+    null
 })
 
 watch(() => route.params.bookId, (id) => {
   if (!id) return
-  for (const list of Object.values(GRADE_SUBJECTS)) {
-    const found = list.find(s => s.id === +id)
-    if (found) { selectedBook.value = found; break }
-  }
+  const found = filteredSubjects.value.find((s) => String(s.id) === String(id))
+  if (found) selectedBook.value = found
 })
 
 // ── Study options ──────────────────────────────────────────────

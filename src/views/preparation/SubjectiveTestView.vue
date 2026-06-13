@@ -147,14 +147,15 @@ import { ArrowLeft, Timer, Play, CheckCircle, Bold, Italic, List, Mic, ChevronLe
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import { SUBJECTS, useContentStore } from '@/stores/content'
+import { useContentStore } from '@/stores/content'
+import { findPrepSubject } from '@/views/preparation/prepSubjects'
 import { useStudentStore } from '@/stores/student'
 
 const props = defineProps({ bookId: String })
 const content = useContentStore()
 const student = useStudentStore()
 
-const subject = computed(() => SUBJECTS.find(s => s.id === +props.bookId))
+const subject = computed(() => findPrepSubject(props.bookId))
 const questions = ref(content.getSubjectiveQuestions(+props.bookId, { limit: 20 }))
 const shortQs = computed(() => questions.value.filter(q => q.type === 'Short'))
 const longQs  = computed(() => questions.value.filter(q => q.type === 'Long'))

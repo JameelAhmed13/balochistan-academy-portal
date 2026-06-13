@@ -86,7 +86,8 @@
 <script setup>
 import { ref, computed, onUnmounted } from 'vue'
 import { ArrowLeft, Timer, Play, CheckCircle, RefreshCw, BookOpen } from '@lucide/vue'
-import { SUBJECTS, useContentStore } from '@/stores/content'
+import { useContentStore } from '@/stores/content'
+import { findPrepSubject } from '@/views/preparation/prepSubjects'
 import { useStudentStore } from '@/stores/student'
 import ObjectiveQuestionCard from '@/components/test/ObjectiveQuestionCard.vue'
 
@@ -94,7 +95,7 @@ const props = defineProps({ bookId: String })
 const content = useContentStore()
 const student = useStudentStore()
 
-const subject = computed(() => SUBJECTS.find(s => s.id === +props.bookId))
+const subject = computed(() => findPrepSubject(props.bookId))
 const questions = ref(content.getQuestions(+props.bookId, { limit: 35 }))
 const answers = ref({})
 const started = ref(false)

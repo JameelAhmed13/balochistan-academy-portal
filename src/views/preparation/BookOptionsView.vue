@@ -24,13 +24,13 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft } from '@lucide/vue'
-import { SUBJECTS } from '@/stores/content'
+import { findPrepSubject } from '@/views/preparation/prepSubjects'
 import BookOptionCard from '@/components/ui/BookOptionCard.vue'
 
 const props = defineProps({ bookId: String })
 const router = useRouter()
 
-const subject = computed(() => SUBJECTS.find(s => s.id === +props.bookId))
+const subject = computed(() => findPrepSubject(props.bookId))
 
 const options = [
   { title: 'Academic Resources',   icon: '📁', desc: 'Downloadable files & notes',         grad: 'grad-blue',    action: 'resources' },

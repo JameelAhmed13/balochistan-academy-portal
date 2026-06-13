@@ -109,7 +109,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ArrowLeft, Zap, Timer, BookOpen, Eye, Sparkles, Wand2, ScrollText } from '@lucide/vue'
-import { SUBJECTS, useContentStore } from '@/stores/content'
+import { useContentStore } from '@/stores/content'
+import { findPrepSubject } from '@/views/preparation/prepSubjects'
 import { useAuthStore } from '@/stores/auth'
 import { patternFor } from '@/data/boardPattern'
 import { generateSubjectiveQuestions, generatePredictedPaper, ollamaConfig } from '@/services/ollamaService'
@@ -117,7 +118,7 @@ import { generateSubjectiveQuestions, generatePredictedPaper, ollamaConfig } fro
 const props = defineProps({ bookId: String })
 const content = useContentStore()
 const auth = useAuthStore()
-const subject = computed(() => SUBJECTS.find(s => s.id === +props.bookId))
+const subject = computed(() => findPrepSubject(props.bookId))
 
 const boardName = computed(() => (auth.user?.board ? `${auth.user.board} Board` : 'Balochistan Board') + ' (BISE)')
 const pattern = computed(() => patternFor({ grade: auth.user?.grade, bookId: +props.bookId }))

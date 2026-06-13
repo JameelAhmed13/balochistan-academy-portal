@@ -33,9 +33,11 @@ def slug(s):
     return re.sub(r"[^a-z0-9]+", "-", norm(s).lower()).strip("-")
 
 def grade_from_path(parts):
+    # explicit "Grade N" wins over the "ECD-5" band folder, else 1-5 mis-tag as ECD
     for p in parts:
         m = re.match(r"grade\s*0*([0-9]+)", p, re.I)
         if m: return m.group(1)
+    for p in parts:
         if p.strip().upper() in ("ECD", "ECD-5"): return "ECD"
     return "?"
 

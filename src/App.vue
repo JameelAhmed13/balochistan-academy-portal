@@ -15,14 +15,25 @@ import PageLoader from '@/components/effects/PageLoader.vue'
 import CursorEffect from '@/components/effects/CursorEffect.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 import { initAutoDirection, stopAutoDirection } from '@/utils/autoDirection'
 
 // Initialize theme (applies dark/light class to <html>)
 useThemeStore()
 
-// Re-validate the stored JWT + refresh the user (incl. their grade) on boot.
+// Re-validate the stored JWT + refresh the user (incl. their grade) on boot, then
+// preload the catalog (grades/tutors) and the student's grade subjects so subject
+// resolution (findPrepSubject) is correct from the first render — avoids the
+// hardcoded-fallback id collision (e.g. catalog English id 1 vs legacy Urdu id 1).
 const auth = useAuthStore()
-if (auth.token) auth.fetchMe()
+const catalog = useCatalogStore()
+async function boot() {
+  if (auth.token) await auth.fetchMe()
+  catalog.bootstrap().catch(() => {})
+  const code = auth.user?.gradeCode
+  if (code) catalog.fetchSubjectsForGrade(code).catch(() => {})
+}
+boot()
 
 // Auto-align text by language (English → left, Urdu → right) across the whole app.
 onMounted(() => initAutoDirection(document.body))
