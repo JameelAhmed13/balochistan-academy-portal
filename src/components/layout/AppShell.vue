@@ -1,10 +1,10 @@
 <template>
-  <div class="flex h-screen overflow-hidden" style="background:var(--t-bg)">
+  <div class="h-screen overflow-hidden" :class="ui.navLayout === 'horizontal' ? 'flex flex-col' : 'flex'" style="background:var(--t-bg)">
     <!-- Skip navigation link for keyboard/screen-reader users -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- Sidebar -->
-    <AppSidebar :collapsed="sidebarCollapsed" @toggle="sidebarCollapsed = !sidebarCollapsed" />
+    <!-- Sidebar (left rail, or top nav bar in horizontal layout) -->
+    <AppSidebar :collapsed="sidebarCollapsed" :layout="ui.navLayout" @toggle="sidebarCollapsed = !sidebarCollapsed" />
 
     <!-- Main area -->
     <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -31,7 +31,9 @@ import { RouterView } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import FloatingActions from './FloatingActions.vue'
+import { useUiStore } from '@/stores/ui'
 
+const ui = useUiStore()
 const sidebarCollapsed = ref(false)
 </script>
 

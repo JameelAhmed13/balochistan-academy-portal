@@ -121,7 +121,7 @@ const auth = useAuthStore()
 const subject = computed(() => findPrepSubject(props.bookId))
 
 const boardName = computed(() => (auth.user?.board ? `${auth.user.board} Board` : 'Balochistan Board') + ' (BISE)')
-const pattern = computed(() => patternFor({ grade: auth.user?.grade, bookId: +props.bookId }))
+const pattern = computed(() => patternFor({ grade: auth.user?.gradeCode, bookId: +props.bookId }))
 
 const filters = ref({ type: ['Short', 'Long'], difficulty: ['Easy', 'Medium', 'Hard'], limit: 10 })
 const questions = ref([])
@@ -151,9 +151,9 @@ async function generateWithAI(mode) {
   let qs = []
   try {
     if (mode === 'predicted') {
-      qs = await generatePredictedPaper({ subject: subject.value.name, grade: auth.user?.grade || 9, board: boardName.value, count, kind: 'subjective' })
+      qs = await generatePredictedPaper({ subject: subject.value.name, grade: auth.user?.gradeCode || 9, board: boardName.value, count, kind: 'subjective' })
     } else {
-      qs = await generateSubjectiveQuestions({ subject: subject.value.name, grade: auth.user?.grade || 9, board: boardName.value, count, type, difficulty: diff })
+      qs = await generateSubjectiveQuestions({ subject: subject.value.name, grade: auth.user?.gradeCode || 9, board: boardName.value, count, type, difficulty: diff })
     }
   } catch { qs = [] }
 

@@ -391,12 +391,40 @@ function normalizeSubjective(q, ctx) {
 // ----------------------------------------------------------------------
 // PUBLIC: high-level generators (return [] on failure → caller falls back)
 // ----------------------------------------------------------------------
+// One-shot JSON generation via Gemini (used as a fast fallback to local Ollama).
+async function geminiGenerate(prompt, json = true) {
+  if (!GEMINI_KEY) throw new Error('no-gemini-key')
+  const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }] }
+  if (json) body.generationConfig = { responseMimeType: 'application/json' }
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`)
+  const d = await res.json()
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || ''
+}
+
+// Generate JSON: try local Ollama, fall back to Gemini so generation completes
+// even when Ollama is slow/unreachable. Same prompt (incl. real-data grounding) either way.
+async function generateJSON(useCase, ctx, opts = {}) {
+  const cfg = USE_CASES[useCase]
+  try {
+    const txt = await llmCall('generate', useCase, ctx, opts)
+    if (txt && extractJson(txt)) { lastEngine = 'ollama'; return txt }
+  } catch (e) { lastError = e?.message || String(e) }
+  const txt = await geminiGenerate(flatPrompt(cfg, ctx), cfg.json)
+  lastEngine = 'gemini'
+  return txt
+}
+
 export async function generateObjectiveQuestions({ subject, topic, unit, grade, board, count = 10, difficulty, examples } = {}) {
   try {
     lastError = null
     const ctx = { subject, grade, board, topic: topic || 'the full syllabus', count, difficulty }
     if (examples) ctx.realExamplesToMatch = examples
-    const txt = await llmCall('generate', 'objective_questions', ctx,
+    const txt = await generateJSON('objective_questions', ctx,
       { numPredict: Math.min(2048, 180 * count) })
     return asQuestionArray(extractJson(txt))
       .map((q) => normalizeObjective(q, { subject, unit, topic }))
@@ -407,7 +435,7 @@ export async function generateObjectiveQuestions({ subject, topic, unit, grade, 
 export async function generateSubjectiveQuestions({ subject, topic, unit, grade, board, count = 6, type, difficulty } = {}) {
   try {
     lastError = null
-    const txt = await llmCall('generate', 'subjective_questions',
+    const txt = await generateJSON('subjective_questions',
       { subject, grade, board, topic: topic || 'the full syllabus', count, type, difficulty },
       { numPredict: Math.min(2048, 220 * count) })
     return asQuestionArray(extractJson(txt))
@@ -421,10 +449,10 @@ export async function generatePredictedPaper({ subject, grade, board, count = 10
   try {
     lastError = null
     if (kind === 'subjective') {
-      const txt = await llmCall('generate', 'predicted_subjective', { subject, grade, board, count }, { numPredict: Math.min(2048, 220 * count) })
+      const txt = await generateJSON('predicted_subjective', { subject, grade, board, count }, { numPredict: Math.min(2048, 220 * count) })
       return asQuestionArray(extractJson(txt)).map((q) => ({ ...normalizeSubjective(q, { subject }), predicted: true }))
     }
-    const txt = await llmCall('generate', 'predicted_objective', { subject, grade, board, count }, { numPredict: Math.min(2048, 180 * count) })
+    const txt = await generateJSON('predicted_objective', { subject, grade, board, count }, { numPredict: Math.min(2048, 180 * count) })
     return asQuestionArray(extractJson(txt))
       .map((q) => ({ ...normalizeObjective(q, { subject }), entranceExam: true }))
       .filter((q) => q.options.length === 4)

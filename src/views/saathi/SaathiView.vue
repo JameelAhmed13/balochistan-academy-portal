@@ -87,7 +87,7 @@ import { useAuthStore } from '@/stores/auth'
 import { saathiChat, getLastEngine } from '@/services/ollamaService'
 
 const auth = useAuthStore()
-const grade = computed(() => auth.user?.grade ?? 9)
+const grade = computed(() => auth.user?.gradeCode ?? 9)
 const board = computed(() => (auth.user?.board ? `${auth.user.board} Board` : 'Balochistan Board') + ' (BISE)')
 
 const lang = ref('english')
