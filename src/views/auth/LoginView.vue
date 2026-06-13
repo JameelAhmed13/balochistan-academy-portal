@@ -124,21 +124,21 @@
             </div>
           </div>
 
-          <!-- Phone field -->
-          <div class="field-wrap" :class="{ focused: focusedField === 'phone', filled: form.phone }">
-            <label class="field-label">Phone Number</label>
+          <!-- Password field -->
+          <div class="field-wrap" :class="{ focused: focusedField === 'password', filled: form.password }">
+            <label class="field-label">Password</label>
             <div class="field-inner">
               <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.5 10.1a19.79 19.79 0 01-3.07-8.67A2 2 0 013.4 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 9.91a16 16 0 006.09 6.09l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
               </svg>
               <input
-                v-model="form.phone"
-                type="tel"
+                v-model="form.password"
+                type="password"
                 class="glass-input"
-                placeholder="03xxxxxxxxx"
+                placeholder="Enter your password"
                 required
-                autocomplete="tel"
-                @focus="focusedField = 'phone'"
+                autocomplete="current-password"
+                @focus="focusedField = 'password'"
                 @blur="focusedField = ''"
               />
               <div class="field-glow" />
@@ -181,33 +181,33 @@
             </div>
           </div>
 
-          <div class="field-wrap">
-            <label class="field-label">Phone / WhatsApp</label>
-            <div class="field-inner">
-              <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.5 10.1a19.79 19.79 0 01-3.07-8.67A2 2 0 013.4 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 9.91a16 16 0 006.09 6.09l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
-              </svg>
-              <input v-model.trim="reg.phone" type="tel" class="glass-input" placeholder="03xx-xxxxxxx" required autocomplete="tel" />
+          <div class="field-row">
+            <div class="field-wrap">
+              <label class="field-label">Username</label>
+              <div class="field-inner">
+                <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                </svg>
+                <input v-model.trim="reg.username" type="text" class="glass-input" placeholder="choose a username" required autocomplete="username" />
+              </div>
             </div>
-          </div>
-
-          <div class="field-wrap">
-            <label class="field-label">Email</label>
-            <div class="field-inner">
-              <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/>
-              </svg>
-              <input v-model.trim="reg.email" type="email" class="glass-input" placeholder="you@example.com" required autocomplete="email" />
+            <div class="field-wrap">
+              <label class="field-label">Password</label>
+              <div class="field-inner">
+                <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                <input v-model="reg.password" type="password" class="glass-input" placeholder="min 4 characters" required autocomplete="new-password" />
+              </div>
             </div>
           </div>
 
           <div class="field-row">
             <div class="field-wrap">
-              <label class="field-label">Grade</label>
+              <label class="field-label">Grade / Class</label>
               <div class="field-inner">
-                <select v-model="reg.grade" class="glass-input glass-select">
-                  <option value="9">Grade 9</option>
-                  <option value="10">Grade 10</option>
+                <select v-model="reg.gradeCode" class="glass-input glass-select" required>
+                  <option v-for="g in grades" :key="g.code" :value="g.code">{{ g.label }}</option>
                 </select>
               </div>
             </div>
@@ -222,20 +222,25 @@
             </div>
           </div>
 
-          <div class="field-wrap">
-            <label class="field-label">City</label>
-            <div class="field-inner">
-              <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-              </svg>
-              <input v-model.trim="reg.city" type="text" class="glass-input" placeholder="Quetta" autocomplete="address-level2" />
+          <div class="field-row">
+            <div class="field-wrap">
+              <label class="field-label">Phone / WhatsApp <span style="opacity:.6">(optional)</span></label>
+              <div class="field-inner">
+                <input v-model.trim="reg.phone" type="tel" class="glass-input" placeholder="03xx-xxxxxxx" autocomplete="tel" />
+              </div>
+            </div>
+            <div class="field-wrap">
+              <label class="field-label">City <span style="opacity:.6">(optional)</span></label>
+              <div class="field-inner">
+                <input v-model.trim="reg.institute" type="text" class="glass-input" placeholder="Quetta" autocomplete="address-level2" />
+              </div>
             </div>
           </div>
 
           <Transition name="err">
             <div v-if="regError" class="error-box">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="#f87171"/></svg>
-              <span>Couldn’t reach the n8n register webhook (<code>{{ registerUrl }}</code>). Is the workflow <strong>active</strong>? <button type="button" class="link-btn" @click="continueDemo">Continue as demo →</button></span>
+              <span>{{ regError }}</span>
             </div>
           </Transition>
 
@@ -244,11 +249,11 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/>
               </svg>
-              Create Account &amp; Send Welcome
+              Create My Account
             </span>
             <span v-else class="btn-loading">
               <span class="spin-dots"><span/><span/><span/></span>
-              Registering via n8n…
+              Creating account…
             </span>
             <div class="btn-glow" />
           </button>
@@ -261,8 +266,8 @@
             <template v-else>Already registered? <button type="button" class="link-btn" @click="switchMode('login')">Sign in</button></template>
           </p>
           <div class="demo-hint">
-            <span class="hint-label">DEMO</span>
-            Any username & phone · use <code>admin</code> for admin panel
+            <span class="hint-label">ADMIN</span>
+            Admins sign in with their username &amp; password
           </div>
           <a href="https://wa.me/923001234567" target="_blank" class="wa-link">
             Need access? <span>WhatsApp us →</span>
@@ -278,22 +283,23 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 
 const router = useRouter()
 const auth = useAuthStore()
 const toast = useToast()
 
-const form = ref({ username: '', phone: '' })
+const form = ref({ username: '', password: '' })
 const loading = ref(false)
 const errorMsg = ref('')
 const shaking = ref(false)
 const focusedField = ref('')
 const netCanvas = ref(null)
 
-// ── Registration (wired to n8n) ──
+// ── Registration (real backend) ──
 const mode = ref('login') // 'login' | 'register'
-const registerUrl = import.meta.env.VITE_N8N_REGISTER_URL || 'http://localhost:5678/webhook/bap-register'
-const reg = ref({ name: '', phone: '', email: '', grade: '9', medium: 'English', city: '' })
+const grades = ref([])
+const reg = ref({ name: '', username: '', password: '', gradeCode: '', medium: 'English', phone: '', institute: '' })
 const regError = ref('')
 
 function switchMode(m) {
@@ -303,21 +309,36 @@ function switchMode(m) {
 }
 
 const showcaseStats = [
-  { num: '1,200+', label: 'Questions' },
-  { num: '8', label: 'AI Tutors' },
-  { num: '10', label: 'Subjects' },
+  { num: '21k+', label: 'Questions' },
+  { num: '11', label: 'AI Tutors' },
+  { num: '13', label: 'Grades' },
   { num: '99%', label: 'Pass Rate' },
 ]
+
+async function loadGrades() {
+  try {
+    grades.value = await api.get('/grades').then((r) => r.data)
+    if (!reg.value.gradeCode && grades.value.length) {
+      reg.value.gradeCode = (grades.value.find((g) => g.code === '9') || grades.value[0]).code
+    }
+  } catch { /* backend offline — register disabled until it's up */ }
+}
+
+function routeAfterAuth(user) {
+  if (user.role === 'admin') router.push('/app/admin')
+  else if (!user.gradeCode) router.push('/app/select-grade')
+  else router.push('/app')
+}
 
 async function handleLogin() {
   loading.value = true
   errorMsg.value = ''
   try {
-    await auth.login(form.value.username, form.value.phone)
-    toast.add({ severity: 'success', summary: 'Welcome back!', detail: `Signed in as ${form.value.username}`, life: 3000 })
-    router.push('/app')
+    const user = await auth.login(form.value.username, form.value.password)
+    toast.add({ severity: 'success', summary: 'Welcome back!', detail: `Signed in as ${user.name || user.username}`, life: 3000 })
+    routeAfterAuth(user)
   } catch (e) {
-    errorMsg.value = e.message
+    errorMsg.value = e.message || 'Login failed'
     shaking.value = true
     setTimeout(() => { shaking.value = false }, 500)
   } finally {
@@ -329,29 +350,24 @@ async function handleRegister() {
   loading.value = true
   regError.value = ''
   try {
-    const res = await fetch(registerUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...reg.value, source: 'app-register', submittedAt: new Date().toISOString() }),
+    const user = await auth.register({
+      name: reg.value.name,
+      username: reg.value.username,
+      password: reg.value.password,
+      gradeCode: reg.value.gradeCode,
+      medium: reg.value.medium,
+      phone: reg.value.phone || undefined,
+      institute: reg.value.institute || undefined,
     })
-    if (!res.ok) throw new Error(`Register webhook responded ${res.status}`)
-    toast.add({ severity: 'success', summary: 'Account created!', detail: 'Welcome message sent via n8n', life: 3000 })
-    await auth.login(reg.value.name, reg.value.phone)
-    router.push('/app')
+    toast.add({ severity: 'success', summary: 'Account created!', detail: `Welcome, ${user.name}`, life: 3000 })
+    routeAfterAuth(user)
   } catch (e) {
-    console.error('[register] n8n webhook failed:', e)
-    regError.value = e.message
+    regError.value = e.message || 'Registration failed'
     shaking.value = true
     setTimeout(() => { shaking.value = false }, 500)
   } finally {
     loading.value = false
   }
-}
-
-// Skip the n8n round-trip (demo) when the webhook is unreachable
-function continueDemo() {
-  auth.login(reg.value.name || 'Demo Student', reg.value.phone || '03001234567')
-  router.push('/app')
 }
 
 // Neural net canvas
@@ -387,7 +403,7 @@ function initNet() {
   }
   draw()
 }
-onMounted(initNet)
+onMounted(() => { initNet(); loadGrades() })
 onUnmounted(() => cancelAnimationFrame(animHandle))
 </script>
 

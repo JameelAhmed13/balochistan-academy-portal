@@ -2,6 +2,16 @@
   command = "npm run build"
   publish = "dist"
 
+# Backend API — Netlify only serves the static SPA, so the Express+SQLite backend
+# must be hosted separately (Render/Railway/Fly, with a persistent disk for estudy.db).
+# Point this at that host so the SPA keeps calling same-origin "/api/*" (no CORS).
+# Replace the URL below, then this redirect must come BEFORE the SPA catch-all.
+[[redirects]]
+  from = "/api/*"
+  to = "https://YOUR-BACKEND-HOST.example.com/api/:splat"
+  status = 200
+  force = true
+
 # SPA fallback — Vue Router history mode needs every route served index.html
 [[redirects]]
   from = "/*"

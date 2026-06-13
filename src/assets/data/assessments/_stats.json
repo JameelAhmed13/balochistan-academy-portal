@@ -1,0 +1,88 @@
+{
+ "files": 1441,
+ "ok": 1373,
+ "questions": 21140,
+ "skipped_count": 68,
+ "skipped_sample": [
+  {
+   "file": "9-12/9-12/Grade 11/English/11 English.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "9-12/9-12/Grade 11/Math/11 Maths.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "9-12/9-12/Grade 11/Math/Unit 2/G11MU02P14.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "9-12/9-12/Grade 11/Urdu/GRADE11 Urdu.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "9-12/9-12/Grade 12/Chemistry/G12ChU01P01_U04P16_U05P10_U05P12_U05P13_U09P03_U09P04_U10P03_U12P01.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "9-12/9-12/Grade 12/English/12 English.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "9-12/9-12/Grade 12/Math/12 Maths.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "9-12/9-12/Grade 12/Pak Studies/12 Pak. studies.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "9-12/9-12/Grade 12/Urdu/GRADE12 Urdu.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 1/Urdu/Unit 3/G01UrU03P16.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 1/Urdu/Unit 3/G01UrU03P17.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/Unit 1/G02UU01P01.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/Unit 1/G02UU01P03.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/Unit 2/G02UU02P23.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/Unit 3/G02UU03P02.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/Unit 3/G02UU03P07.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/unit 4/G02UU04P19.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/unit 4/G02UU04P21.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/unit 5/G02UU05P09.xlsx",
+   "reason": "no-questions"
+  },
+  {
+   "file": "ECD-5/ECD-5/Grade 2/Urdu/unit 5/G02UU05P13.xlsx",
+   "reason": "no-questions"
+  }
+ ]
+}

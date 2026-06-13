@@ -78,8 +78,8 @@ const tiles = [
   { id:'forces',    title:'Join Forces',          sub:'Study groups',      icon:'🤝', path:'/app/join-forces' },
   { id:'typing',    title:'Typing Master',        sub:'Speed & accuracy',  icon:'⌨️', path:'/app/typing-master' },
   { id:'msg',       title:'Messages',             sub:'Inbox & chat',      icon:'💬', path:'/app/messages' },
-  { id:'ai',        title:'AI Assistant',         sub:'Ask anything',      icon:'🤖', path:'/app/ai-tutor' },
-  { id:'chatgpt',   title:'ChatGPT',              sub:'AI chat',           icon:'✨', path:'/app/chatgpt' },
+  { id:'saathi',    title:'Saathi AI',            sub:'Your study companion', icon:'🤝', path:'/app/saathi' },
+  { id:'tutor',     title:'AI Tutor',             sub:'Learn from legends', icon:'🧑‍🏫', path:'/app/ai-tutor' },
   { id:'dash',      title:'Dashboard',            sub:'Your overview',     icon:'🏠', path:'/app' },
 ]
 

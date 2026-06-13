@@ -111,16 +111,29 @@
 </template>
 
 <script setup>
+import { ref, reactive, onMounted } from 'vue'
 import { ChevronRight, LayoutGrid, Zap, Activity } from '@lucide/vue'
+import api from '@/services/api'
 
-const kpiCards = [
-  { label: 'Total Users',  value: '48',    icon: '👥', color: '#8b5cf6' },
-  { label: 'Tests Taken',  value: '312',   icon: '📝', color: '#3b82f6' },
-  { label: 'AI Sessions',  value: '128',   icon: '🤖', color: '#10b981' },
-  { label: 'Coins Issued', value: '15.2K', icon: '🪙', color: '#f59e0b' },
-  { label: 'Questions',    value: '1200',  icon: '❓', color: '#a855f7' },
-  { label: 'Active Tests', value: '5',     icon: '📅', color: '#14b8a6' },
-]
+const fmt = (n) => (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'K' : String(n ?? 0))
+const stats = reactive({ students: 0, attempts: 0, tutors: 0, questions: 0, units: 0, tests: 0 })
+
+const kpiCards = ref([
+  { label: 'Students',   value: '—', icon: '👥', color: '#8b5cf6', key: 'students' },
+  { label: 'Tests Taken', value: '—', icon: '📝', color: '#3b82f6', key: 'attempts' },
+  { label: 'AI Tutors',  value: '—', icon: '🤖', color: '#10b981', key: 'tutors' },
+  { label: 'Questions',  value: '—', icon: '❓', color: '#a855f7', key: 'questions' },
+  { label: 'Syllabus Units', value: '—', icon: '📚', color: '#f59e0b', key: 'units' },
+  { label: 'Tests',      value: '—', icon: '📅', color: '#14b8a6', key: 'tests' },
+])
+
+onMounted(async () => {
+  try {
+    const s = (await api.get('/admin/stats')).data
+    Object.assign(stats, s)
+    kpiCards.value = kpiCards.value.map((c) => ({ ...c, value: fmt(s[c.key]) }))
+  } catch { /* leave dashes if backend offline */ }
+})
 
 const adminModules = [
   { title: 'Content',       desc: 'Subjects, books, units, topics and resources',   icon: '📚', count: '10 subjects',    path: '/app/admin/content',       iconBg: 'rgba(59,130,246,0.12)'  },

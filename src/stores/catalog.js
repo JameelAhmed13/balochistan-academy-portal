@@ -1,0 +1,98 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import api from '@/services/api'
+
+// Central curriculum store backed by the API: grades (ECD–12), subjects per grade,
+// AI tutors, and syllabus trees. Replaces the hardcoded SUBJECTS/AI_TUTORS/GRADE_SUBJECTS
+// constants for the dynamic admin/student flows.
+export const useCatalogStore = defineStore('catalog', () => {
+  const grades = ref([])
+  const subjects = ref([])        // all subjects (admin); per-grade via subjectsForGrade
+  const tutors = ref([])
+  const gradeSubjects = ref({})   // gradeCode -> [subject]
+  const syllabus = ref({})        // `${grade}:${subjectId}` -> units[]
+  const loaded = ref(false)
+  const loading = ref(false)
+  const error = ref('')
+
+  // normalize a subject row to carry both API (name_ur) and legacy (nameUr) keys
+  const decorate = (s) => ({ ...s, nameUr: s.name_ur ?? s.nameUr })
+
+  const enabledGrades = computed(() => grades.value.filter((g) => g.enabled !== 0))
+  const gradeByCode = (code) => grades.value.find((g) => String(g.code) === String(code)) || null
+  const subjectsForGrade = (code) => gradeSubjects.value[code] || []
+  const findSubject = (id) => subjects.value.find((s) => String(s.id) === String(id)) || null
+  const tutorsForGrade = (code) => {
+    const subj = new Set(subjectsForGrade(code).map((s) => s.id))
+    return tutors.value.filter((t) => t.subject_id == null || subj.has(t.subject_id))
+  }
+
+  // ── reads ──────────────────────────────────────────────────────────
+  async function fetchGrades() { grades.value = (await api.get('/grades')).data }
+  async function fetchTutors() { tutors.value = (await api.get('/tutors')).data }
+  async function fetchSubjectsForGrade(code) {
+    const data = (await api.get(`/grades/${code}/subjects`)).data.map(decorate)
+    gradeSubjects.value = { ...gradeSubjects.value, [code]: data }
+    return data
+  }
+  async function fetchSyllabus(code, subjectId) {
+    const key = `${code}:${subjectId}`
+    const data = (await api.get(`/grades/${code}/subjects/${subjectId}/syllabus`)).data
+    syllabus.value = { ...syllabus.value, [key]: data }
+    return data
+  }
+  function syllabusFor(code, subjectId) { return syllabus.value[`${code}:${subjectId}`] || [] }
+
+  async function bootstrap() {
+    if (loaded.value || loading.value) return
+    loading.value = true
+    error.value = ''
+    try {
+      const [g, t] = await Promise.all([api.get('/grades'), api.get('/tutors')])
+      grades.value = g.data
+      tutors.value = t.data
+      loaded.value = true
+    } catch (e) {
+      error.value = e.message || 'Failed to load catalog'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // ── admin: subjects (all) + writes ──────────────────────────────────
+  async function fetchAllSubjects() { subjects.value = (await api.get('/admin/subjects')).data.map(decorate) }
+
+  async function createGrade(payload) { await api.post('/admin/grades', payload); await fetchGrades() }
+  async function updateGrade(code, payload) { await api.put(`/admin/grades/${code}`, payload); await fetchGrades() }
+  async function deleteGrade(code) { await api.delete(`/admin/grades/${code}`); await fetchGrades() }
+  async function setGradeSubjects(code, subjectIds) {
+    await api.put(`/admin/grades/${code}/subjects`, { subjectIds })
+    await fetchSubjectsForGrade(code)
+  }
+
+  async function createSubject(payload) { await api.post('/admin/subjects', payload); await fetchAllSubjects() }
+  async function updateSubject(id, payload) { await api.put(`/admin/subjects/${id}`, payload); await fetchAllSubjects() }
+  async function deleteSubject(id) { await api.delete(`/admin/subjects/${id}`); await fetchAllSubjects() }
+
+  async function createTutor(payload) { await api.post('/admin/tutors', payload); await fetchTutors() }
+  async function updateTutor(id, payload) { await api.put(`/admin/tutors/${id}`, payload); await fetchTutors() }
+  async function deleteTutor(id) { await api.delete(`/admin/tutors/${id}`); await fetchTutors() }
+
+  async function addUnit(payload) { return (await api.post('/admin/syllabus/units', payload)).data }
+  async function updateUnit(id, payload) { return (await api.put(`/admin/syllabus/units/${id}`, payload)).data }
+  async function deleteUnit(id) { await api.delete(`/admin/syllabus/units/${id}`) }
+  async function addTopic(payload) { return (await api.post('/admin/syllabus/topics', payload)).data }
+  async function deleteTopic(id) { await api.delete(`/admin/syllabus/topics/${id}`) }
+  async function addObjective(payload) { return (await api.post('/admin/syllabus/objectives', payload)).data }
+  async function deleteObjective(id) { await api.delete(`/admin/syllabus/objectives/${id}`) }
+
+  return {
+    grades, subjects, tutors, gradeSubjects, syllabus, loaded, loading, error,
+    enabledGrades, gradeByCode, subjectsForGrade, findSubject, tutorsForGrade, syllabusFor,
+    fetchGrades, fetchTutors, fetchSubjectsForGrade, fetchSyllabus, bootstrap, fetchAllSubjects,
+    createGrade, updateGrade, deleteGrade, setGradeSubjects,
+    createSubject, updateSubject, deleteSubject,
+    createTutor, updateTutor, deleteTutor,
+    addUnit, updateUnit, deleteUnit, addTopic, deleteTopic, addObjective, deleteObjective,
+  }
+})

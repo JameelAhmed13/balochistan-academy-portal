@@ -27,10 +27,31 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { Bot, Video, MessageSquare } from '@lucide/vue'
 import { AI_TUTORS } from '@/stores/content'
+import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 import TutorCard from '@/components/tutor/TutorCard.vue'
 
-const tutors = AI_TUTORS
+const auth = useAuthStore()
+const catalog = useCatalogStore()
+// fall back to the static personas if the catalog hasn't loaded / backend is offline
+const tutors = ref(AI_TUTORS)
+
+onMounted(async () => {
+  try {
+    if (!catalog.tutors.length) await catalog.fetchTutors()
+    const code = auth.user?.gradeCode
+    const list = code ? catalog.tutorsForGrade(code) : catalog.tutors
+    if (list.length) {
+      tutors.value = list.map((t) => ({
+        slug: t.slug, persona: t.persona, subject: t.subject_name || t.subject || 'General',
+        icon: t.icon || '🤖', color: t.color || 'grad-blue', desc: t.description || t.desc || '',
+        systemPrompt: t.system_prompt,
+      }))
+    }
+  } catch { /* keep static fallback */ }
+})
 </script>
 

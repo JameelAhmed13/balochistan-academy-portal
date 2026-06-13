@@ -112,15 +112,35 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStudentStore } from '@/stores/student'
+import { useAuthStore } from '@/stores/auth'
 import { SUBJECTS } from '@/stores/content'
+import api from '@/services/api'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const student = useStudentStore()
+const auth = useAuthStore()
 const activeFilter = ref('all-time')
 const activeSubject = ref('all')
+
+// Live, grade-scoped leaderboard from the backend (peers in the same grade).
+const liveEntries = ref([])
+onMounted(async () => {
+  try {
+    const code = auth.user?.gradeCode
+    const rows = (await api.get('/leaderboard', { params: code ? { grade: code } : {} })).data
+    liveEntries.value = rows.map((r, i) => ({
+      rank: i + 1, name: r.name || 'Student',
+      initials: (r.name || 'S').split(' ').map((n) => n[0]).join('').slice(0, 2),
+      city: '', color: COLORS[i % COLORS.length],
+      tests: r.attempts || 0, avg: Math.round(r.avg_percent || 0),
+      score: Math.round((r.avg_percent || 0) * (r.attempts || 0)) + (r.coins || 0),
+      isMe: r.user_id === auth.user?.id,
+    }))
+  } catch { /* backend offline → keep mock board */ }
+})
 
 const subjects = SUBJECTS || []
 const filters = [
@@ -159,6 +179,8 @@ const userEntry = computed(() => ({
   name: 'You',
 }))
 const displayList = computed(() => {
+  // prefer the live, grade-scoped board when the backend returned peers
+  if (liveEntries.value.length) return liveEntries.value.slice(0, 25)
   const list = [...mockEntries.value]
   const myIdx = list.findIndex(e=>e.score <= userScore.value)
   const meEntry = { rank: myIdx + 1, name: student.name || 'You', initials: (student.name||'Y').split(' ').map(n=>n[0]).join(''), city:'Your City', color: COLORS[0], tests: student.passedTests || 0, avg: student.avgPercent || 0, score: userScore.value, isMe: true }

@@ -160,15 +160,23 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { ArrowLeft, Send, History, EyeOff, Layers, Link, Pencil } from '@lucide/vue'
 import { AI_TUTORS } from '@/stores/content'
 import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 
 const props = defineProps({ subject: String })
 const auth = useAuthStore()
+const catalog = useCatalogStore()
 
-const tutor = computed(() => AI_TUTORS.find(t => t.slug === props.subject))
+// prefer the admin-managed tutor (carries subject_name + system_prompt); fall back to the static persona
+const tutor = computed(() => {
+  const c = catalog.tutors.find(t => t.slug === props.subject)
+  if (c) return { ...c, subject: c.subject_name || c.subject, desc: c.description || c.desc }
+  return AI_TUTORS.find(t => t.slug === props.subject)
+})
+onMounted(() => { if (!catalog.tutors.length) catalog.fetchTutors().catch(() => {}) })
 const initials = computed(() => auth.user?.name?.split(' ').map(w => w[0]).slice(0,2).join('') || 'U')
 
 // Slugs whose AI should respond in Urdu
@@ -198,6 +206,8 @@ const starters = computed(() => ({
 }[props.subject] || ['Ask me anything!']))
 
 function buildSystemInstruction() {
+  // admin-authored persona prompt wins when present
+  if (tutor.value?.system_prompt) return tutor.value.system_prompt
   if (isUrduMode.value) {
     return `آپ ${tutor.value?.persona} ہیں، ${tutor.value?.subject} کے AI استاد۔ ہمیشہ خالص اردو میں جواب دیں۔ آسان، واضح اور تعلیمی انداز اختیار کریں جو پاکستان (بلوچستان بورڈ) کے گریڈ 9 کے طلباء کے لیے مناسب ہو۔ جہاں ضروری ہو نکات اور مثالیں استعمال کریں۔ اگر طالب علم انگریزی میں پوچھے تو بھی اردو میں جواب دیں۔`
   }

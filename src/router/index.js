@@ -28,12 +28,17 @@ const routes = [
       { path: 'ai-tutor/:subject/chat',  name: 'AITutorChat',  component: () => import('@/views/ai-tutor/ChatView.vue'), props: true },
       { path: 'ai-tutor/:subject/video', name: 'AITutorVideo', component: () => import('@/views/ai-tutor/VideoView.vue'), props: true },
 
+      // Saathi AI companion + assessment uploads
+      { path: 'saathi',              name: 'Saathi',            component: () => import('@/views/saathi/SaathiView.vue') },
+      { path: 'upload-assessments',  name: 'UploadAssessments', component: () => import('@/views/assessments/AssessmentUploadView.vue') },
+
       // Preparation — layout wraps all sub-routes so sidebar stays persistent
       {
         path: 'preparation',
         component: () => import('@/views/preparation/PreparationLayout.vue'),
         children: [
           { path: '',        name: 'Preparation', component: () => import('@/views/preparation/PreparationView.vue') },
+          { path: 'syllabus', name: 'MySyllabus', component: () => import('@/views/preparation/StudentSyllabusView.vue') },
           { path: ':bookId', name: 'BookOptions', component: () => import('@/views/preparation/PreparationView.vue'), props: true },
           { path: ':bookId/objective',       name: 'ObjectivePaper',  component: () => import('@/views/preparation/ObjectivePaperView.vue'), props: true },
           { path: ':bookId/subjective',      name: 'SubjectivePaper', component: () => import('@/views/preparation/SubjectivePaperView.vue'), props: true },
@@ -112,26 +117,38 @@ const routes = [
       { path: 'mcqs-bank',         name: 'MCQsBank',         component: () => import('@/views/tools/MCQsBankView.vue') },
       { path: 'past-papers',       name: 'PastPapers',       component: () => import('@/views/tools/PastPapersView.vue') },
       { path: 'progress-tracking', name: 'ProgressTracking', component: () => import('@/views/tools/ProgressTrackingView.vue') },
-      { path: 'chatgpt',           name: 'ChatGPT',          component: () => import('@/views/tools/ChatGPTView.vue') },
+      { path: 'chatgpt',           redirect: '/app/saathi' },
 
       // Core app routes
       { path: 'coins',        name: 'Coins',        component: () => import('@/views/coins/CoinsView.vue') },
       { path: 'reports',      name: 'Reports',      component: () => import('@/views/reports/ReportsView.vue') },
       { path: 'complaints',   name: 'Complaints',   component: () => import('@/views/complaints/ComplaintsView.vue') },
 
-      // Admin
-      { path: 'admin',           name: 'Admin',         component: () => import('@/views/admin/AdminView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/content',   name: 'AdminContent',  component: () => import('@/views/admin/ContentView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/questions', name: 'AdminQuestions',component: () => import('@/views/admin/QuestionsView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/tests',     name: 'AdminTests',    component: () => import('@/views/admin/TestsView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/users',     name: 'AdminUsers',    component: () => import('@/views/admin/UsersView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/coins',     name: 'AdminCoins',    component: () => import('@/views/admin/CoinsAdminView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/analytics',      name: 'AdminAnalytics',      component: () => import('@/views/admin/AnalyticsView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/notifications', name: 'AdminNotifications', component: () => import('@/views/admin/NotificationsView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/settings',      name: 'AdminSettings',      component: () => import('@/views/admin/SettingsView.vue'), meta: { requiresAdmin: true } },
-      { path: 'admin/complaints',    name: 'AdminComplaints',     component: () => import('@/views/admin/ComplaintsAdminView.vue'), meta: { requiresAdmin: true } },
     ],
   },
+
+  // Admin — dedicated shell with a Udemy-style top mega-menu (no sidebar)
+  {
+    path: '/app/admin',
+    component: () => import('@/components/admin/AdminShell.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      { path: '',              name: 'Admin',              component: () => import('@/views/admin/AdminView.vue') },
+      { path: 'grades',        name: 'AdminGrades',        component: () => import('@/views/admin/GradesView.vue') },
+      { path: 'syllabus',      name: 'AdminSyllabus',      component: () => import('@/views/admin/SyllabusView.vue') },
+      { path: 'tutors',        name: 'AdminTutors',        component: () => import('@/views/admin/TutorsView.vue') },
+      { path: 'content',       name: 'AdminContent',       component: () => import('@/views/admin/ContentView.vue') },
+      { path: 'questions',     name: 'AdminQuestions',     component: () => import('@/views/admin/QuestionsView.vue') },
+      { path: 'tests',         name: 'AdminTests',         component: () => import('@/views/admin/TestsView.vue') },
+      { path: 'users',         name: 'AdminUsers',         component: () => import('@/views/admin/UsersView.vue') },
+      { path: 'coins',         name: 'AdminCoins',         component: () => import('@/views/admin/CoinsAdminView.vue') },
+      { path: 'analytics',     name: 'AdminAnalytics',     component: () => import('@/views/admin/AnalyticsView.vue') },
+      { path: 'notifications', name: 'AdminNotifications', component: () => import('@/views/admin/NotificationsView.vue') },
+      { path: 'settings',      name: 'AdminSettings',      component: () => import('@/views/admin/SettingsView.vue') },
+      { path: 'complaints',    name: 'AdminComplaints',    component: () => import('@/views/admin/ComplaintsAdminView.vue') },
+    ],
+  },
+  { path: '/app/select-grade', name: 'SelectGrade', component: () => import('@/views/auth/SelectGradeView.vue'), meta: { requiresAuth: true } },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
@@ -146,6 +163,16 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !auth.isLoggedIn) return { name: 'Login' }
   if (to.meta.guest && auth.isLoggedIn) return { name: 'Home' }
   if (to.meta.requiresAdmin && auth.user?.role !== 'admin') return { name: 'Home' }
+  // Students must have a grade before entering the student app (admins exempt).
+  if (
+    auth.isLoggedIn &&
+    auth.user?.role === 'student' &&
+    !auth.hasGrade &&
+    to.path.startsWith('/app') &&
+    to.name !== 'SelectGrade'
+  ) {
+    return { name: 'SelectGrade' }
+  }
 })
 
 export default router

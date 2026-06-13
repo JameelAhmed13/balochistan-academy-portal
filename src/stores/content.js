@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getRealQuestions } from '@/services/assessmentBank'
 
 export const SUBJECTS = [
   { id: 1, name: 'Urdu',                nameUr: 'اردو',           color: 'grad-violet', icon: '📖', medium: 'urdu' },
@@ -99,5 +100,18 @@ export const useContentStore = defineStore('content', () => {
     return qs
   }
 
-  return { subjects, units, objectiveBank, subjectiveBank, getQuestions, getSubjectiveQuestions }
+  // Real board questions first (ingested from docs), with the local bank as fallback
+  // only for grade/subjects not yet ingested. Pass subjectName for F.Sc bookIds (101–120).
+  async function getQuestionsReal(subjectId, { grade, subjectName, unit, topic, limit = 30 } = {}) {
+    const name = subjectName || SUBJECTS.find(s => s.id === +subjectId)?.name
+    if (grade && name) {
+      try {
+        const real = await getRealQuestions({ grade, subject: name, unit, topic, limit })
+        if (real.length) return real
+      } catch { /* fall through to local bank */ }
+    }
+    return getQuestions(subjectId, { limit })
+  }
+
+  return { subjects, units, objectiveBank, subjectiveBank, getQuestions, getSubjectiveQuestions, getQuestionsReal }
 })

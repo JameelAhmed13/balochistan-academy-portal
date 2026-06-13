@@ -20,6 +20,14 @@ dist-ssr
 # Netlify
 .netlify
 
+# Generated ingestion output (large; rebuild via `python scripts/ingest/ingest_all.py`)
+scripts/ingest/out/
+
+# Backend SQLite DB + deps (server/ has its own .gitignore too)
+server/node_modules/
+server/data/
+server/.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
