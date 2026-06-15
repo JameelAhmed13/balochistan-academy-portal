@@ -7,6 +7,8 @@ export default defineConfig(({ mode }) => {
   // Local Ollama server (llama3) for AI test generation. Proxied so the
   // browser calls same-origin "/ollama/*" and avoids CORS issues.
   const ollamaTarget = env.VITE_OLLAMA_URL || 'http://localhost:11434'
+  // .NET 10 API (server-dotnet) — override with VITE_API_TARGET env var if needed
+  const apiTarget = env.VITE_API_TARGET || 'http://localhost:5000'
 
   return {
     plugins: [vue()],
@@ -19,8 +21,13 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         '/api': {
-          target: 'http://localhost:3000',
+          target: apiTarget,
           changeOrigin: true,
+        },
+        '/hubs': {
+          target: apiTarget,
+          changeOrigin: true,
+          ws: true,   // WebSocket passthrough for SignalR
         },
         '/ollama': {
           target: ollamaTarget,

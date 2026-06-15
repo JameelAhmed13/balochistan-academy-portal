@@ -1,0 +1,16 @@
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiAcademy.Application.csproj.AssemblyReference.cache
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiAcademy.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiAcademy.Application.AssemblyInfoInputs.cache
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiAcademy.Application.AssemblyInfo.cs
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiAcademy.Application.csproj.CoreCompileInputs.cache
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiAcademy.Application.sourcelink.json
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\bin\Debug\net10.0\BalochiAcademy.Application.deps.json
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\bin\Debug\net10.0\BalochiAcademy.Application.dll
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\bin\Debug\net10.0\BalochiAcademy.Application.pdb
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\bin\Debug\net10.0\BalochiAcademy.Domain.dll
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\bin\Debug\net10.0\BalochiAcademy.Domain.pdb
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiA.45975049.Up2Date
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiAcademy.Application.dll
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\refint\BalochiAcademy.Application.dll
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\BalochiAcademy.Application.pdb
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\obj\Debug\net10.0\ref\BalochiAcademy.Application.dll
