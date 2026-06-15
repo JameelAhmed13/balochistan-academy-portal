@@ -35,6 +35,23 @@ public class UsersController(IApplicationDbContext db, ICurrentUserService cu) :
         return Ok(new { items, total, page, pageSize });
     }
 
+    /// <summary>GET /api/admin/users/{id}/results — student's test attempts</summary>
+    [HttpGet("{id:int}/results")]
+    public async Task<IActionResult> StudentResults(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken ct = default)
+    {
+        var q = db.TestAttempts.Where(a => a.UserId == id);
+        var total = await q.CountAsync(ct);
+        var items = await q.OrderByDescending(a => a.SubmittedAt)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(a => new
+            {
+                a.Id, a.TestId, a.Score, a.Total, a.Percent,
+                a.CoinsEarned, a.AttemptType, a.DurationSec, a.SubmittedAt,
+            })
+            .ToListAsync(ct);
+        return Ok(new { items, total, page, pageSize });
+    }
+
     /// <summary>PATCH /api/admin/users/{id}/toggle — activate/deactivate</summary>
     [HttpPatch("{id:int}/toggle")]
     public async Task<IActionResult> Toggle(int id, CancellationToken ct)

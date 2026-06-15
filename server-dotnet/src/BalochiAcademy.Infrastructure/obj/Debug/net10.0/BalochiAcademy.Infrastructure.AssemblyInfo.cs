@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BalochiAcademy.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+814022954036a0f45ba07a37dc434d3ec6e56305")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6fcc42d1161c7bbe16b1a13837bbe7c6717f62f5")]
 [assembly: System.Reflection.AssemblyProductAttribute("BalochiAcademy.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BalochiAcademy.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

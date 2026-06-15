@@ -13,7 +13,6 @@ public class AuthController(
     IApplicationDbContext db,
     ITokenService         tokens,
     IPasswordService      passwords,
-    IAuditService         audit,
     ICurrentUserService   currentUser) : ControllerBase
 {
     private UserDto ToDto(User u) => new(

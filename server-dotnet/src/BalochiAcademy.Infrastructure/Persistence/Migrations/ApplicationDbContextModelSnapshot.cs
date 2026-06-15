@@ -1812,7 +1812,7 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.HasOne("BalochiAcademy.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Account");

@@ -92,8 +92,9 @@ public class WithdrawalRequestConfiguration : IEntityTypeConfiguration<Withdrawa
         b.HasKey(e => e.Id);
         b.Property(e => e.Status).HasMaxLength(20).HasDefaultValue("pending");
         b.Property(e => e.AmountPkr).HasPrecision(10, 2);
+        // NoAction: financial records must outlive the user; two cascade paths exist via PayoutAccounts
         b.HasOne(e => e.User).WithMany()
-         .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+         .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
         b.HasOne(e => e.Account).WithMany(a => a.WithdrawalRequests)
          .HasForeignKey(e => e.AccountId).OnDelete(DeleteBehavior.SetNull);
         // Second FK to Users — must be NoAction

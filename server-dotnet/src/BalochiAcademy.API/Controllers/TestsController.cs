@@ -164,6 +164,29 @@ public class TestsController(IApplicationDbContext db, ICurrentUserService cu) :
         return Ok(a);
     }
 
+    /// <summary>GET /api/tests/me/stats — current user summary (attempts, avg, coins)</summary>
+    [HttpGet("me/stats")]
+    public async Task<IActionResult> MyStats(CancellationToken ct)
+    {
+        var userId = cu.UserId!.Value;
+        var attempts = await db.TestAttempts
+            .Where(a => a.UserId == userId)
+            .Select(a => new { a.Percent, a.Score, a.Total, a.CoinsEarned })
+            .ToListAsync(ct);
+
+        var coins = await db.Users
+            .Where(u => u.Id == userId)
+            .Select(u => u.Coins)
+            .FirstOrDefaultAsync(ct);
+
+        var total   = attempts.Count;
+        var passed  = attempts.Count(a => a.Percent >= 40);
+        var avg     = total > 0 ? Math.Round(attempts.Average(a => (double)(a.Percent ?? 0)), 1) : 0;
+        var earned  = attempts.Sum(a => a.CoinsEarned);
+
+        return Ok(new { attempts = total, avgPercent = avg, passed, coinsEarned = earned, coins });
+    }
+
     /// <summary>GET /api/tests/leaderboard</summary>
     [HttpGet("leaderboard"), AllowAnonymous]
     public async Task<IActionResult> Leaderboard([FromQuery] string? gradeCode, [FromQuery] int top = 20, CancellationToken ct = default)
