@@ -61,7 +61,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Syne', 'system-ui', 'sans-serif'],
+        display: ['"Space Grotesk"', 'Syne', 'system-ui', 'sans-serif'],
+        syne:    ['Syne', 'system-ui', 'sans-serif'],
         sans:    ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         urdu:    ['"Noto Nastaliq Urdu"', 'serif'],
       },

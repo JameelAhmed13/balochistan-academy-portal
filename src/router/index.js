@@ -3,7 +3,8 @@ import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   // Public landing page
-  { path: '/', name: 'Landing', component: () => import('@/views/LandingPage.vue'), meta: { public: true } },
+  { path: '/', name: 'Landing', component: () => import('@/views/HomeLanding.vue'), meta: { public: true } },
+  { path: '/landing1', name: 'Landing1', component: () => import('@/views/LandingPage.vue'), meta: { public: true } },
   { path: '/landing2', name: 'Landing2', component: () => import('@/views/Landing2Page.vue'), meta: { public: true } },
   { path: '/landing3', name: 'Landing3', component: () => import('@/views/Landing3Page.vue'), meta: { public: true } },
   { path: '/landing4', name: 'Landing4', component: () => import('@/views/Landing4Page.vue'), meta: { public: true } },

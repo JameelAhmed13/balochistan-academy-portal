@@ -73,7 +73,7 @@
 
     <!-- Right panel — Login form -->
     <div class="login-right">
-      <div class="glass-card" :class="{ shake: shaking }">
+      <div class="glass-card" :class="{ shake: shaking, 'is-register': mode === 'register' }">
         <!-- Glow border top -->
         <div class="card-glow-bar" />
 
@@ -520,14 +520,15 @@ onUnmounted(() => cancelAnimationFrame(animHandle))
 
 /* ─── Right panel ─── */
 .login-right {
-  flex: 1; max-width: 520px; display: flex; align-items: center; justify-content: center;
+  flex: 1; max-width: 760px; display: flex; align-items: center; justify-content: center;
   padding: 2rem 2rem; position: relative; z-index: 10;
   margin: 0 auto;
 }
 @media (min-width: 1024px) { .login-right { padding: 3rem 4rem; } }
 
 .glass-card {
-  width: 100%; max-width: 420px;
+  width: 100%; max-width: 500px;
+  transition: max-width 0.35s cubic-bezier(0.4,0,0.2,1);
   /* layered frosted glass: bright top-left fall-off to a faint violet tint */
   background:
     linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03) 42%, rgba(124,106,245,0.06));
@@ -563,6 +564,8 @@ onUnmounted(() => cancelAnimationFrame(animHandle))
   .glass-card::before { animation: none; }
 }
 .glass-card.shake { animation: shake 0.4s ease; }
+/* register has many more fields — give it room so the 2-column rows breathe */
+.glass-card.is-register { max-width: 620px; }
 @keyframes shake {
   0%,100% { transform: translateX(0) }
   20% { transform: translateX(-8px) }

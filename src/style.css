@@ -4,74 +4,87 @@
 
 /* ─── Theme Tokens ─── */
 :root {
-  /* Light theme defaults */
-  --t-bg:             #f1f5f9;
+  /* Light theme defaults — indigo + violet refresh */
+  --t-bg:             #f4f5fb;
   --t-bg2:            #ffffff;
   --t-surface:        #ffffff;
-  --t-border:         #e2e8f0;
-  --t-text1:          #0f172a;
-  --t-text2:          #475569;
-  --t-text3:          #94a3b8;
-  --t-accent:         #6d54e8;
-  --t-accent2:        #5b43cc;
+  --t-border:         #e5e7f2;
+  --t-text1:          #0f1424;
+  --t-text2:          #4b5168;
+  --t-text3:          #8b90a6;
+  --t-accent:         #6366f1;
+  --t-accent2:        #8b5cf6;
   --t-gold:           #d97706;
-  --t-hover:          rgba(0, 0, 0, 0.04);
-  --t-hover2:         rgba(0, 0, 0, 0.07);
+  --t-hover:          rgba(99, 102, 241, 0.05);
+  --t-hover2:         rgba(99, 102, 241, 0.09);
   --t-sidebar:        #ffffff;
-  --t-sidebar-border: #e2e8f0;
-  --t-sidebar-shadow: 1px 0 24px rgba(0, 0, 0, 0.07);
-  --t-header:         rgba(255, 255, 255, 0.95);
-  --t-header-border:  #e2e8f0;
-  --t-header-shadow:  0 1px 3px rgba(0, 0, 0, 0.08);
+  --t-sidebar-border: #e5e7f2;
+  --t-sidebar-shadow: 1px 0 24px rgba(79, 70, 229, 0.06);
+  --t-header:         rgba(255, 255, 255, 0.85);
+  --t-header-border:  #e5e7f2;
+  --t-header-shadow:  0 1px 3px rgba(15, 20, 36, 0.06);
   --t-blur:           blur(20px) saturate(180%);
-  --t-shadow:         0 1px 3px rgba(0,0,0,0.08), 0 4px 14px rgba(0,0,0,0.06);
-  --t-shadow-md:      0 4px 20px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06);
+  --t-shadow:         0 1px 3px rgba(15,20,36,0.07), 0 4px 14px rgba(15,20,36,0.05);
+  --t-shadow-md:      0 4px 20px rgba(15,20,36,0.10), 0 1px 4px rgba(15,20,36,0.05);
   --t-aurora1:        transparent;
   --t-aurora2:        transparent;
   --t-aurora3:        transparent;
-  --t-acc-alpha-sm:   rgba(109, 84, 232, 0.08);
-  --t-acc-alpha-md:   rgba(109, 84, 232, 0.14);
-  --t-logo-glow:      rgba(109, 84, 232, 0.3);
+  --t-acc-alpha-sm:   rgba(99, 102, 241, 0.08);
+  --t-acc-alpha-md:   rgba(99, 102, 241, 0.14);
+  --t-logo-glow:      rgba(99, 102, 241, 0.3);
   --t-input-bg:       #ffffff;
-  --t-input-border:   #cbd5e1;
-  --t-input-focus:    rgba(109, 84, 232, 0.25);
+  --t-input-border:   #cdd2e6;
+  --t-input-focus:    rgba(99, 102, 241, 0.25);
   --t-dropdown-bg:    #ffffff;
-  --t-dropdown-item:  rgba(0, 0, 0, 0.04);
+  --t-dropdown-item:  rgba(99, 102, 241, 0.06);
+  /* mirror-glass */
+  --t-glass-bg:       rgba(255, 255, 255, 0.62);
+  --t-glass-border:   rgba(255, 255, 255, 0.85);
+  --t-glass-blur:     blur(18px) saturate(180%);
+  --t-glass-shadow:   0 10px 36px rgba(15, 20, 36, 0.10);
+  --t-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 html.dark {
-  --t-bg:             #030712;
-  --t-bg2:            #070c1a;
-  --t-surface:        #0d1526;
-  --t-border:         rgba(255, 255, 255, 0.07);
-  --t-text1:          #f1f5f9;
-  --t-text2:          #94a3b8;
-  --t-text3:          #475569;
-  --t-accent:         #7c6af5;
-  --t-accent2:        #5b43cc;
+  /* Dark theme — deep indigo-black + violet refresh */
+  --t-bg:             #0a0a14;
+  --t-bg2:            #0e0e1c;
+  --t-surface:        #141426;
+  --t-border:         rgba(255, 255, 255, 0.08);
+  --t-text1:          #f2f3fb;
+  --t-text2:          #a4a9c4;
+  --t-text3:          #5c6182;
+  --t-accent:         #818cf8;
+  --t-accent2:        #a78bfa;
   --t-gold:           #fbbf24;
   --t-hover:          rgba(255, 255, 255, 0.05);
   --t-hover2:         rgba(255, 255, 255, 0.08);
-  --t-sidebar:        rgba(7, 12, 26, 0.97);
-  --t-sidebar-border: rgba(255, 255, 255, 0.07);
+  --t-sidebar:        rgba(14, 14, 28, 0.97);
+  --t-sidebar-border: rgba(255, 255, 255, 0.08);
   --t-sidebar-shadow: none;
-  --t-header:         rgba(7, 12, 26, 0.88);
-  --t-header-border:  rgba(255, 255, 255, 0.07);
+  --t-header:         rgba(14, 14, 28, 0.85);
+  --t-header-border:  rgba(255, 255, 255, 0.08);
   --t-header-shadow:  none;
   --t-blur:           blur(24px) saturate(160%);
   --t-shadow:         0 4px 24px rgba(0,0,0,0.5), 0 1px 6px rgba(0,0,0,0.3);
   --t-shadow-md:      0 8px 40px rgba(0,0,0,0.6), 0 2px 10px rgba(0,0,0,0.3);
-  --t-aurora1:        rgba(124, 106, 245, 0.15);
-  --t-aurora2:        rgba(6, 182, 212, 0.08);
-  --t-aurora3:        rgba(251, 191, 36, 0.06);
-  --t-acc-alpha-sm:   rgba(124, 106, 245, 0.1);
-  --t-acc-alpha-md:   rgba(124, 106, 245, 0.18);
-  --t-logo-glow:      rgba(124, 106, 245, 0.5);
+  --t-aurora1:        rgba(129, 140, 248, 0.18);
+  --t-aurora2:        rgba(167, 139, 250, 0.12);
+  --t-aurora3:        rgba(99, 102, 241, 0.08);
+  --t-acc-alpha-sm:   rgba(129, 140, 248, 0.12);
+  --t-acc-alpha-md:   rgba(129, 140, 248, 0.20);
+  --t-logo-glow:      rgba(129, 140, 248, 0.5);
   --t-input-bg:       rgba(255, 255, 255, 0.04);
-  --t-input-border:   rgba(255, 255, 255, 0.1);
-  --t-input-focus:    rgba(124, 106, 245, 0.3);
-  --t-dropdown-bg:    rgba(7, 12, 26, 0.98);
+  --t-input-border:   rgba(255, 255, 255, 0.12);
+  --t-input-focus:    rgba(129, 140, 248, 0.32);
+  --t-dropdown-bg:    rgba(14, 14, 28, 0.98);
   --t-dropdown-item:  rgba(255, 255, 255, 0.05);
+  /* mirror-glass */
+  --t-glass-bg:       rgba(20, 20, 38, 0.55);
+  --t-glass-border:   rgba(255, 255, 255, 0.10);
+  --t-glass-blur:     blur(20px) saturate(170%);
+  --t-glass-shadow:   0 18px 50px rgba(0, 0, 0, 0.5);
+  --t-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* ─── Semantic state colors (tuned for WCAG-AA contrast in each theme) ─── */
@@ -86,6 +99,15 @@ html.dark {
   --t-danger:  #f87171; --t-danger-bg:  rgba(248, 113, 113, 0.12);
   --t-info:    #22d3ee; --t-info-bg:    rgba(34, 211, 238, 0.12);
   --t-warn:    #fbbf24;
+}
+
+/* ─── Reusable mirror-glass surface ─── */
+.glass {
+  background: var(--t-glass-bg);
+  -webkit-backdrop-filter: var(--t-glass-blur);
+  backdrop-filter: var(--t-glass-blur);
+  border: 1px solid var(--t-glass-border);
+  box-shadow: var(--t-glass-shadow), var(--t-glass-highlight);
 }
 
 /* ─── Base ─── */
