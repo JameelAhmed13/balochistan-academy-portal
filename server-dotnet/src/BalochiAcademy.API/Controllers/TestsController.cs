@@ -105,7 +105,8 @@ public class TestsController(IApplicationDbContext db, ICurrentUserService cu) :
         // Earn coins if test has ≥35 questions and it's a qualifying attempt type
         if (req.Total >= 35 && req.AttemptType is "self-test" or "parent-test")
         {
-            var alreadyEarned = await db.TestAttempts.AnyAsync(
+            // Only de-duplicate by TestId when one is provided; freeform self-tests (no TestId) always award coins
+            var alreadyEarned = req.TestId.HasValue && await db.TestAttempts.AnyAsync(
                 a => a.UserId == cu.UserId && a.TestId == req.TestId && a.CoinsEarned > 0, ct);
             if (!alreadyEarned)
             {

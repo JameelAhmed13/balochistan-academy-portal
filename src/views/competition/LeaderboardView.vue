@@ -130,14 +130,14 @@ const liveEntries = ref([])
 onMounted(async () => {
   try {
     const code = auth.user?.gradeCode
-    const rows = (await api.get('/leaderboard', { params: code ? { grade: code } : {} })).data
+    const rows = (await api.get('/tests/leaderboard', { params: code ? { gradeCode: code } : {} })).data
     liveEntries.value = rows.map((r, i) => ({
       rank: i + 1, name: r.name || 'Student',
       initials: (r.name || 'S').split(' ').map((n) => n[0]).join('').slice(0, 2),
       city: '', color: COLORS[i % COLORS.length],
-      tests: r.attempts || 0, avg: Math.round(r.avg_percent || 0),
-      score: Math.round((r.avg_percent || 0) * (r.attempts || 0)) + (r.coins || 0),
-      isMe: r.user_id === auth.user?.id,
+      tests: r.totalAttempts || 0, avg: Math.round(r.avgPercent || 0),
+      score: Math.round((r.avgPercent || 0) * (r.totalAttempts || 0)) + (r.coins || 0),
+      isMe: r.id === auth.user?.id,
     }))
   } catch { /* backend offline → keep mock board */ }
 })

@@ -139,15 +139,18 @@ function finishTest() {
     const qi = Object.keys(answers.value)[i]
     return questions.value[+qi]?.correct === a
   }).length
+  const elapsed = ((+route.query.time || 30) * 60) - timeLeft.value
   student.saveTest({
-    subject: subject.value?.name,
-    type: 'Objective Self Test',
+    subject:     subject.value?.name,
+    type:        'Objective Self Test',
     score,
-    total: questions.value.length,
-    bookId: bookId.value,
-    testType: route.query.type || 'general',
-    questions: questions.value,
-    answers: answers.value,
+    total:       questions.value.length,
+    bookId:      bookId.value,
+    testType:    route.query.type || 'general',
+    questions:   questions.value,
+    answers:     answers.value,
+    durationSec: elapsed,
+    attemptType: 'self-test',
   })
   router.push(`/app/self-test/${bookId.value}/result?score=${score}&total=${questions.value.length}`)
 }
