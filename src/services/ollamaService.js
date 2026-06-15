@@ -307,6 +307,30 @@ export async function saathiRole(role, injected = {}, userText = '', history = [
   return chatWithFallback({ system, messages: [...history, { role: 'user', content: userText }], ...opts })
 }
 
+/**
+ * AI-grade subjective answers against model answers.
+ * @param {Array} items [{ id, question, answer, modelAnswer, marks }]
+ * @returns {Promise<Array>} [{ id, marks, feedback }] (empty on failure)
+ */
+export async function gradeSubjectiveAnswers(items = [], { grade, subject } = {}) {
+  if (!items.length) return []
+  const body = items.map((it, i) =>
+    `Q${i + 1} [id:${it.id}, max ${it.marks} marks]\nQuestion: ${it.question}\nStudent answer: ${it.answer || '(left blank)'}\nModel answer: ${it.modelAnswer || '(not provided)'}`,
+  ).join('\n\n')
+  const system = `You are a fair, encouraging ${subject || ''} examiner for Grade ${grade || 9} (Balochistan Board). ` +
+    `Grade each student answer against its model answer and award whole marks out of that question's maximum. ` +
+    `A blank answer scores 0. Give one or two sentences of specific, kind feedback. ` +
+    `Return ONLY JSON: {"grades":[{"id":<id>,"marks":<number>,"feedback":"<text>"}]}`
+  try {
+    const txt = await chatWithFallback({ system, messages: [{ role: 'user', content: body }], format: 'json' })
+    const m = String(txt).match(/\{[\s\S]*\}/)
+    const j = m ? JSON.parse(m[0]) : {}
+    return Array.isArray(j.grades) ? j.grades : []
+  } catch {
+    return []
+  }
+}
+
 // Lightweight reachability probe.
 export async function isOllamaAvailable(timeout = 3000) {
   try {

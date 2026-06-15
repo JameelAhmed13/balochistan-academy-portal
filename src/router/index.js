@@ -32,6 +32,7 @@ const routes = [
       // Saathi AI companion + assessment uploads
       { path: 'saathi',              name: 'Saathi',            component: () => import('@/views/saathi/SaathiView.vue') },
       { path: 'upload-assessments',  name: 'UploadAssessments', component: () => import('@/views/assessments/AssessmentUploadView.vue') },
+      { path: 'report',              name: 'PreparationReport', component: () => import('@/views/reports/PreparationReportView.vue') },
 
       // Preparation — layout wraps all sub-routes so sidebar stays persistent
       {

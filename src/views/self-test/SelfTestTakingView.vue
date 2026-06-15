@@ -16,7 +16,9 @@
       <div class="take-qinfo">Question {{ currentIdx + 1 }}/{{ questions.length }}</div>
     </div>
 
-    <div class="take-body">
+    <div v-if="loadingQ" class="take-loading">Loading real board questions…</div>
+    <div v-else-if="!questions.length" class="take-loading">No questions available for this subject yet.</div>
+    <div v-else class="take-body">
       <!-- Question area -->
       <div class="take-main">
         <div class="take-q-header">
@@ -85,6 +87,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { SUBJECTS, useContentStore } from '@/stores/content'
 import { useStudentStore } from '@/stores/student'
+import { useAuthStore } from '@/stores/auth'
 import CognitiveBadge from '@/components/platform/CognitiveBadge.vue'
 import DifficultyBadge from '@/components/platform/DifficultyBadge.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
@@ -93,16 +96,23 @@ const route = useRoute()
 const router = useRouter()
 const content = useContentStore()
 const student = useStudentStore()
+const auth = useAuthStore()
 
 const bookId = computed(() => +route.params.bookId)
 const subject = computed(() => SUBJECTS.find(s => s.id === bookId.value))
 const difficulty = computed(() => route.query.difficulty || 'Easy,Medium,Hard')
 
-const questions = ref(content.getQuestions(bookId.value, {
-  type: (route.query.types || 'Exercise,Conceptual').split(','),
-  difficulty: (route.query.difficulty || 'Easy,Medium,Hard').split(','),
-  limit: 30,
-}))
+const questions = ref([])
+const loadingQ = ref(true)
+async function loadQuestions() {
+  loadingQ.value = true
+  questions.value = await content.getQuestionsReal(bookId.value, {
+    grade: auth.user?.gradeCode || 9,
+    subjectName: subject.value?.name,
+    limit: 30,
+  })
+  loadingQ.value = false
+}
 
 const currentIdx = ref(0)
 const answers = ref({})
@@ -142,7 +152,8 @@ function finishTest() {
   router.push(`/app/self-test/${bookId.value}/result?score=${score}&total=${questions.value.length}`)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await loadQuestions()
   timer = setInterval(() => {
     if (timeLeft.value > 0) timeLeft.value--
     else finishTest()
@@ -169,6 +180,7 @@ html.dark .tbadge-blue { background: rgba(21,101,192,0.2); color: #90caf9; borde
 html.dark .tbadge-orange { background: rgba(230,81,0,0.2); color: #ffb74d; border-color: rgba(230,81,0,0.4); }
 .take-qinfo { margin-left: auto; font-size: 0.82rem; color: var(--t-text3); font-weight: 600; }
 
+.take-loading { padding: 3rem 1rem; text-align: center; color: var(--t-text3); font-size: 0.9rem; background: var(--t-surface); border: 1px solid var(--t-border); border-radius: 12px; }
 .take-body { display: flex; gap: 1.5rem; align-items: flex-start; }
 .take-main { flex: 1; min-width: 0; background: var(--t-surface); border: 1px solid var(--t-border); border-radius: 12px; padding: 1.5rem; space-y: 1rem; }
 .take-q-header { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }

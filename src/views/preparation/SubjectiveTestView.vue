@@ -107,7 +107,7 @@
         <div class="text-3xl">🤖</div>
         <div class="flex-1">
           <div class="font-semibold text-slate-800">Test Submitted — AI Grading in Progress</div>
-          <div class="text-sm text-slate-500">Gemini is evaluating your answers against model answers…</div>
+          <div class="text-sm" style="color:var(--t-text3)">Saathi is evaluating your answers against the model answers…</div>
         </div>
         <span v-if="!gradingDone" class="badge-amber animate-pulse">Grading…</span>
         <span v-else class="badge-green">Graded</span>
@@ -123,18 +123,18 @@
         </div>
         <p class="text-slate-800 font-medium">{{ q.stem }}</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div class="p-3 rounded-xl bg-blue-50 border border-blue-100">
-            <div class="text-xs font-semibold text-blue-700 mb-1">Your Answer</div>
-            <div class="text-sm text-blue-800 prose prose-sm max-w-none" v-html="answers[q.id] || '<em class=\'text-slate-400\'>No answer given</em>'" />
+          <div class="st-box st-box-ans">
+            <div class="st-box-lbl">Your Answer</div>
+            <div class="text-sm prose prose-sm max-w-none" style="color:var(--t-text1)" v-html="answers[q.id] || '<em style=\'color:var(--t-text3)\'>No answer given</em>'" />
           </div>
-          <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
-            <div class="text-xs font-semibold text-emerald-700 mb-1">Model Answer</div>
-            <div class="text-sm text-emerald-800">{{ q.modelAnswer }}</div>
+          <div class="st-box st-box-model">
+            <div class="st-box-lbl">📝 Model Answer (Summary Note)</div>
+            <div class="text-sm" style="color:var(--t-text1)">{{ q.modelAnswer }}</div>
           </div>
         </div>
-        <div v-if="gradingDone && grades[q.id]" class="p-3 rounded-xl bg-purple-50 border border-purple-100">
-          <div class="text-xs font-semibold text-purple-700 mb-1">AI Feedback</div>
-          <p class="text-sm text-purple-800">{{ grades[q.id].feedback }}</p>
+        <div v-if="gradingDone && grades[q.id]" class="st-box st-box-fb">
+          <div class="st-box-lbl">🤖 AI Feedback</div>
+          <p class="text-sm" style="color:var(--t-text1)">{{ grades[q.id].feedback }}</p>
         </div>
       </div>
     </div>
@@ -150,10 +150,13 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { useContentStore } from '@/stores/content'
 import { findPrepSubject } from '@/views/preparation/prepSubjects'
 import { useStudentStore } from '@/stores/student'
+import { useAuthStore } from '@/stores/auth'
+import { gradeSubjectiveAnswers } from '@/services/ollamaService'
 
 const props = defineProps({ bookId: String })
 const content = useContentStore()
 const student = useStudentStore()
+const auth = useAuthStore()
 
 const subject = computed(() => findPrepSubject(props.bookId))
 const questions = ref(content.getSubjectiveQuestions(+props.bookId, { limit: 20 }))
@@ -203,25 +206,37 @@ function goToQuestion(q) {
   currentIndex.value = questions.value.indexOf(q)
 }
 
+const stripHtml = (h) => (h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+
 async function finishTest() {
   clearInterval(timer)
   finished.value = true
-  // AI Grading (mock — real impl calls Gemini API)
-  setTimeout(() => {
-    questions.value.forEach(q => {
-      const hasAnswer = answers.value[q.id] && answers.value[q.id] !== '<p></p>'
+  const items = questions.value.map(q => ({
+    id: q.id, question: q.stem, answer: stripHtml(answers.value[q.id]), modelAnswer: q.modelAnswer, marks: q.marks,
+  }))
+  let ai = []
+  try { ai = await gradeSubjectiveAnswers(items, { grade: auth.user?.gradeCode, subject: subject.value?.name }) } catch { ai = [] }
+  questions.value.forEach(q => {
+    const hasAnswer = answers.value[q.id] && answers.value[q.id] !== '<p></p>'
+    const g = ai.find(x => String(x.id) === String(q.id))
+    if (g && hasAnswer) {
       grades.value[q.id] = {
-        marks: hasAnswer ? Math.round(q.marks * 0.7) : 0,
+        marks: Math.min(q.marks, Math.max(0, Math.round(Number(g.marks) || 0))),
+        feedback: g.feedback || 'Reviewed against the model answer.',
+      }
+    } else {
+      grades.value[q.id] = {
+        marks: 0,
         feedback: hasAnswer
-          ? 'Good answer! You covered the main points. Consider adding more specific examples to strengthen your response.'
+          ? 'Could not reach the AI grader — compare your answer against the model answer (summary note) above.'
           : 'No answer was provided for this question.',
       }
-    })
-    gradingDone.value = true
-    const totalMarks = questions.value.reduce((a, q) => a + q.marks, 0)
-    const earned = Object.values(grades.value).reduce((a, g) => a + g.marks, 0)
-    student.saveTest({ subject: subject.value?.name, type: 'Subjective Test', score: earned, total: totalMarks, bookId: +props.bookId })
-  }, 2500)
+    }
+  })
+  gradingDone.value = true
+  const totalMarks = questions.value.reduce((a, q) => a + q.marks, 0)
+  const earned = Object.values(grades.value).reduce((a, g) => a + g.marks, 0)
+  student.saveTest({ subject: subject.value?.name, type: 'Subjective Test', score: earned, total: totalMarks, bookId: +props.bookId })
 }
 
 function toggleVoice() {
@@ -262,5 +277,10 @@ onBeforeUnmount(() => { clearInterval(timer); recognition?.stop(); editor.value?
 
 <style>
 .editor-btn { @apply p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 transition-colors; }
+.st-box { padding: 0.75rem; border-radius: 12px; border: 1px solid var(--t-border); background: var(--t-hover); }
+.st-box-lbl { font-size: 0.72rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--t-text2); }
+.st-box-ans { background: color-mix(in srgb, #3b82f6 8%, transparent); border-color: color-mix(in srgb, #3b82f6 25%, transparent); }
+.st-box-model { background: color-mix(in srgb, #10b981 10%, transparent); border-color: color-mix(in srgb, #10b981 28%, transparent); }
+.st-box-fb { background: color-mix(in srgb, var(--t-accent) 8%, transparent); border-color: color-mix(in srgb, var(--t-accent) 25%, transparent); }
 </style>
 

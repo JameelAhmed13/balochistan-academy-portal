@@ -122,6 +122,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { SUBJECTS, useContentStore } from '@/stores/content'
 import { useStudentStore } from '@/stores/student'
+import { useAuthStore } from '@/stores/auth'
 import CognitiveBadge from '@/components/platform/CognitiveBadge.vue'
 import DifficultyBadge from '@/components/platform/DifficultyBadge.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
@@ -129,6 +130,7 @@ import PageFooter from '@/components/platform/PageFooter.vue'
 const router = useRouter()
 const content = useContentStore()
 const student = useStudentStore()
+const auth = useAuthStore()
 
 const phase = ref('setup')
 const selectedSubjects = ref([])
@@ -153,13 +155,17 @@ const currentSubjectiveQs = computed(() => allSubjQs.value[currentSubjectId.valu
 const currentQ = computed(() => currentObjectiveQs.value[currentQIdx.value] || {})
 const hasMoreSubjects = computed(() => currentSubjectIdx.value < selectedSubjects.value.length - 1)
 
-function startExam() {
-  selectedSubjects.value.forEach(id => {
-    allObjQs.value[id] = content.getQuestions(id, { limit: mcqCount.value })
+async function startExam() {
+  for (const id of selectedSubjects.value) {
+    allObjQs.value[id] = await content.getQuestionsReal(id, {
+      grade: auth.user?.gradeCode || 9,
+      subjectName: SUBJECTS.find(s => s.id === id)?.name,
+      limit: mcqCount.value,
+    })
     allSubjQs.value[id] = content.getSubjectiveQuestions(id, { limit: subjCount.value })
     objAnswers.value[id] = {}
     subjAnswers.value[id] = {}
-  })
+  }
   timeLeft.value = timeLimit.value * 60
   phase.value = 'objective'
   currentSubjectIdx.value = 0
