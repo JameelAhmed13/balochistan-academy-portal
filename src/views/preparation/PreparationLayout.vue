@@ -1,28 +1,11 @@
 <template>
-  <div class="pl-shell" :class="{ 'is-horizontal': sidebarLayout === 'horizontal' }">
+  <div class="pl-shell">
 
-    <!-- ═══ PERSISTENT SIDEBAR (left, or top strip in horizontal mode) ═══ -->
+    <!-- ═══ PERSISTENT SIDEBAR (subject picker) ═══ -->
     <aside class="pl-sidebar" aria-label="Preparation navigation">
 
-      <!-- Layout toggle: vertical sidebar vs horizontal top bar -->
-      <div class="pl-layout-bar">
-        <span class="pl-sec-lbl">Layout</span>
-        <div class="pl-layout-toggle" role="group" aria-label="Sidebar layout">
-          <button type="button" @click="setLayout('vertical')"
-            :class="['pl-ltog', sidebarLayout === 'vertical' ? 'is-on' : '']"
-            :aria-pressed="sidebarLayout === 'vertical'" title="Vertical sidebar">
-            <PanelLeft class="pl-ltog-svg" aria-hidden="true" />
-          </button>
-          <button type="button" @click="setLayout('horizontal')"
-            :class="['pl-ltog', sidebarLayout === 'horizontal' ? 'is-on' : '']"
-            :aria-pressed="sidebarLayout === 'horizontal'" title="Horizontal bar">
-            <PanelTop class="pl-ltog-svg" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-
-      <!-- Grade / Class Selector -->
-      <div class="pl-grade-section">
+      <!-- Grade / Class Selector — admins only; students are locked to one grade -->
+      <div v-if="!isStudent && grades.length > 1" class="pl-grade-section">
         <span class="pl-sec-lbl">Class</span>
         <div class="pl-grade-grid">
           <button v-for="g in grades" :key="g"
@@ -106,13 +89,21 @@
         </div>
       </div>
 
-      <!-- Desktop study-options bar — sits at the top of the workspace,
-           not buried below the library, so options are always one click away -->
+      <!-- Subject title — sits ABOVE the study-option tabs -->
+      <div v-if="selectedBook" class="pl-subject-hd">
+        <span class="pl-shd-icon" :class="selectedBook.color" aria-hidden="true">{{ selectedBook.icon }}</span>
+        <div class="pl-shd-info">
+          <h1 class="pl-shd-title">{{ selectedBook.name }}</h1>
+          <p class="pl-shd-sub">{{ activeOptionTitle || 'Choose a study option below to begin' }}</p>
+        </div>
+      </div>
+
+      <!-- Desktop study-options bar — now sits directly under the subject title -->
       <nav v-if="selectedBook" class="pl-optbar" aria-label="Study options">
         <button v-for="opt in studyOptions" :key="opt.action"
           type="button"
           @click="handleOption(opt)"
-          :class="['pl-optbar-pill', activeOption === opt.action ? 'is-active' : '']"
+          :class="['pl-optbar-tab', activeOption === opt.action ? 'is-active' : '']"
           :aria-pressed="activeOption === opt.action"
           :aria-label="opt.title">
           <component :is="opt.icon" class="pl-optbar-svg" aria-hidden="true" />
@@ -135,10 +126,9 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
-  ChevronRight, ArrowRight,
+  ChevronRight,
   FolderOpen, Video, FileText, FlaskConical,
   TestTube2, CheckSquare, PenLine, FileStack,
-  PanelLeft, PanelTop,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'
@@ -147,13 +137,6 @@ const router = useRouter()
 const route  = useRoute()
 const auth = useAuthStore()
 const catalog = useCatalogStore()
-
-// ── Sidebar orientation (vertical | horizontal), persisted ─────
-const sidebarLayout = ref(localStorage.getItem('bap_prep_layout') || 'vertical')
-function setLayout(mode) {
-  sidebarLayout.value = mode
-  localStorage.setItem('bap_prep_layout', mode)
-}
 
 // ── Grades ────────────────────────────────────────────────────
 // A student is locked to their own grade; an admin (no grade) may browse all.
@@ -237,6 +220,8 @@ const studyOptions = [
   { title: 'Past & Model Papers', action: 'pastpapers',  icon: FileStack,    bg: 'rgba(249,115,22,0.15)'  },
 ]
 
+const activeOptionTitle = computed(() => studyOptions.find((o) => o.action === activeOption.value)?.title || '')
+
 const activeOption = computed(() => {
   const p = route.path
   if (p.includes('/test/objective')  || p.endsWith('/objective'))  return 'objective'
@@ -297,40 +282,6 @@ function handleOption(opt) {
   color: var(--t-text3);
   font-family: 'Syne', sans-serif;
 }
-
-/* ── Layout toggle (vertical / horizontal) ── */
-.pl-layout-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.6rem 0.875rem;
-  border-bottom: 1px solid var(--t-border);
-  flex-shrink: 0;
-}
-.pl-layout-toggle {
-  display: flex;
-  gap: 2px;
-  background: var(--t-hover);
-  border-radius: 7px;
-  padding: 2px;
-}
-.pl-ltog {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 24px;
-  border-radius: 5px;
-  border: none;
-  background: none;
-  color: var(--t-text3);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.pl-ltog:hover { color: var(--t-accent); }
-.pl-ltog.is-on { background: var(--t-accent); color: #fff; }
-.pl-ltog-svg { width: 15px; height: 15px; }
 
 /* ── Grade section ── */
 .pl-grade-section {
@@ -465,145 +416,65 @@ function handleOption(opt) {
   flex-shrink: 0;
 }
 
-/* ── Study Options section ── */
-.pl-opts-section { flex-shrink: 0; padding-bottom: 0.5rem; }
-.pl-opts-hd { padding: 0.65rem 0.875rem 0.3rem; }
-
-.pl-opt-row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.6rem;
-  margin: 0 0.4rem;
-  width: calc(100% - 0.8rem);
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: none;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: left;
-}
-.pl-opt-row:hover { background: var(--t-hover); }
-.pl-opt-row.is-active {
-  background: color-mix(in srgb, var(--t-accent) 10%, transparent);
-  border-color: color-mix(in srgb, var(--t-accent) 28%, transparent);
-}
-.pl-opt-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.pl-opt-svg { width: 13px; height: 13px; color: var(--t-text2); }
-.pl-opt-row.is-active .pl-opt-svg { color: var(--t-accent); }
-.pl-opt-label {
-  flex: 1;
-  font-size: 0.76rem;
-  font-weight: 500;
-  color: var(--t-text2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.pl-opt-row.is-active .pl-opt-label { color: var(--t-accent); font-weight: 600; }
-.pl-opt-arr { width: 12px; height: 12px; color: var(--t-accent); flex-shrink: 0; }
-
 /* ─── Content Panel ─────────────────────────────────────── */
 .pl-content {
   flex: 1;
   min-width: 0;
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem 1rem;
   overflow-y: auto;
   min-height: calc(100vh - 64px);
 }
 
-/* ─── Horizontal layout (sidebar becomes a top strip) ───── */
-@media (min-width: 768px) {
-  .pl-shell.is-horizontal { flex-direction: column; }
-  .pl-shell.is-horizontal .pl-sidebar {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.85rem;
-    position: static;
-    max-height: none;
-    overflow-x: auto;
-    overflow-y: hidden;
-    border-right: none;
-    border-bottom: 1px solid var(--t-border);
-    padding: 0.4rem 0.75rem;
-  }
-  .pl-shell.is-horizontal .pl-layout-bar,
-  .pl-shell.is-horizontal .pl-grade-section {
-    border-bottom: none;
-    padding: 0;
-    flex-shrink: 0;
-    gap: 0.5rem;
-  }
-  .pl-shell.is-horizontal .pl-layout-bar { border-right: 1px solid var(--t-border); padding-right: 0.85rem; }
-  .pl-shell.is-horizontal .pl-grade-section { border-right: 1px solid var(--t-border); padding-right: 0.85rem; }
-  .pl-shell.is-horizontal .pl-lib-section {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.6rem;
-    border-bottom: none;
-    flex: 1;
-    min-width: 0;
-  }
-  .pl-shell.is-horizontal .pl-lib-hd { padding: 0; flex-shrink: 0; }
-  .pl-shell.is-horizontal .pl-book-list {
-    flex-direction: row;
-    padding: 0;
-    gap: 0.4rem;
-    overflow-x: auto;
-    flex: 1;
-    scrollbar-width: thin;
-  }
-  .pl-shell.is-horizontal .pl-book-row { flex-shrink: 0; width: auto; padding: 0.4rem 0.7rem; }
-  .pl-shell.is-horizontal .pl-book-row .pl-bsub { display: none; }
-  .pl-shell.is-horizontal .pl-bicon { width: 22px; height: 22px; font-size: 0.85rem; }
-  .pl-shell.is-horizontal .pl-content { min-height: 0; }
+/* ─── Subject title header (above the tabs) ─────────────── */
+.pl-subject-hd { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; }
+.pl-shd-icon {
+  width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: #fff;
 }
+.pl-shd-info { min-width: 0; }
+.pl-shd-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.15; color: var(--t-text1); margin: 0; }
+.pl-shd-sub { font-size: 0.82rem; color: var(--t-text3); margin: 0.15rem 0 0; }
 
-/* ─── Desktop study-options bar (top of workspace) ──────── */
+/* The routed panels render their own subject header (.sp-head) and the default
+   view its (.pv-book-hd) — hide those so the subject title shows once, up top. */
+.pl-content :deep(.sp-head),
+.pl-content :deep(.pv-book-hd) { display: none; }
+
+/* ─── Desktop study-options tab row (under the title) ───── */
 .pl-optbar { display: none; }
 @media (min-width: 768px) {
   .pl-optbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
-    padding-bottom: 1rem;
+    gap: 0.25rem;
     margin-bottom: 1.25rem;
     border-bottom: 1px solid var(--t-border);
   }
 }
-.pl-optbar-pill {
+.pl-optbar-tab {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.42rem 0.85rem;
-  border-radius: 99px;
-  border: 1px solid var(--t-border);
-  background: var(--t-surface);
-  color: var(--t-text2);
-  font-size: 0.78rem;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--t-text3);
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   white-space: nowrap;
+  margin-bottom: -1px;
 }
-.pl-optbar-pill:hover { border-color: var(--t-accent); color: var(--t-accent); }
-.pl-optbar-pill.is-active {
-  background: color-mix(in srgb, var(--t-accent) 12%, transparent);
-  border-color: color-mix(in srgb, var(--t-accent) 40%, transparent);
+.pl-optbar-tab:hover { color: var(--t-accent); }
+.pl-optbar-tab.is-active {
   color: var(--t-accent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--t-accent) 14%, transparent);
+  border-bottom-color: var(--t-accent);
 }
-.pl-optbar-svg { width: 14px; height: 14px; flex-shrink: 0; }
+.pl-optbar-svg { width: 15px; height: 15px; flex-shrink: 0; }
 
 /* ─── Mobile controls (desktop: hidden) ─────────────────── */
 .pl-mobile-controls { display: none; }
@@ -712,6 +583,6 @@ function handleOption(opt) {
 
 @media (prefers-reduced-motion: reduce) {
   .pl-fade-enter-active, .pl-fade-leave-active { transition: none; }
-  .pl-book-row, .pl-opt-row, .pl-gtab, .pl-mob-chip, .pl-mob-optchip { transition: none; }
+  .pl-book-row, .pl-optbar-tab, .pl-gtab, .pl-mob-chip, .pl-mob-optchip { transition: none; }
 }
 </style>

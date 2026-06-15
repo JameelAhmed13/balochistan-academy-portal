@@ -443,7 +443,7 @@ html.dark .ag-grid-card {
 .ag-page-hd-left { display: flex; align-items: center; gap: 0.75rem; }
 
 /* ─── Preparation Study Panels (in-layout, single-page workspace) ─── */
-.sp { max-width: 940px; }
+.sp { max-width: 1280px; }
 .sp-head { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.25rem; }
 .sp-head-icon {
   width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
