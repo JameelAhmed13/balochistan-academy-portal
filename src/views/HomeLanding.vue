@@ -7,7 +7,7 @@
     <!-- ── NAV ── -->
     <nav class="hl-nav glass" :class="{ scrolled }">
       <a href="#top" class="hl-logo">
-        <span class="hl-logo-mark">B</span>
+        <img src="@/assets/logo.png" alt="Balochistan Academy Portal" class="hl-logo-mark" />
         <span class="hl-logo-text">Balochistan Academy<em>&nbsp;Portal</em></span>
       </a>
       <div class="hl-nav-links">
@@ -350,7 +350,7 @@
     <footer class="hl-footer">
       <div class="hl-foot-grid">
         <div class="hl-foot-brand">
-          <a href="#top" class="hl-logo"><span class="hl-logo-mark">B</span><span class="hl-logo-text">Balochistan Academy<em>&nbsp;Portal</em></span></a>
+          <a href="#top" class="hl-logo"><img src="@/assets/logo.png" alt="Balochistan Academy Portal" class="hl-logo-mark" /><span class="hl-logo-text">Balochistan Academy<em>&nbsp;Portal</em></span></a>
           <p>High-quality educational resources — digital textbooks, notes, and smart preparation tools. Learning made easy, engaging, and accessible for all students.</p>
         </div>
         <nav class="hl-foot-col" aria-label="Platform">
@@ -603,7 +603,7 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-nav { position: fixed; top: 12px; left: 16px; right: 16px; z-index: 50; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border: 1px solid transparent; background: transparent; box-shadow: none; transition: padding 0.25s; }
 .hl-nav.scrolled { background: var(--t-glass-bg); border-color: var(--t-glass-border); box-shadow: var(--t-glass-shadow); -webkit-backdrop-filter: var(--t-glass-blur); backdrop-filter: var(--t-glass-blur); }
 .hl-logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
-.hl-logo-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; font-family: 'Space Grotesk'; font-weight: 700; font-size: 18px; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2) 55%, var(--t-yellow)); }
+.hl-logo-mark { width: 38px; height: 38px; border-radius: 10px; object-fit: contain; flex-shrink: 0; }
 .hl-logo-text { font-weight: 700; font-size: 15.5px; color: var(--t-text1); white-space: nowrap; }
 .hl-logo-text em { font-style: normal; color: var(--t-accent); }
 .hl-nav-links { display: flex; gap: 4px; }
