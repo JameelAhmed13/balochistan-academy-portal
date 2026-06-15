@@ -25,10 +25,10 @@
     </nav>
 
     <!-- ── HERO ── -->
-    <header id="top" class="hl-hero">
+    <header id="top" class="hl-hero" @mouseenter="pauseSlides" @mouseleave="resumeSlides">
       <div class="hl-hero-copy">
         <span class="hl-badge reveal"><Sparkles :size="13" /> Pakistan's smart learning companion</span>
-        <Transition name="hl-rot" mode="out-in">
+        <Transition :name="dir > 0 ? 'hl-rot' : 'hl-rot-back'" mode="out-in">
           <div :key="slide" class="hl-rot-block">
             <h1 class="hl-h1">{{ slides[slide].title }}<br /><em>{{ slides[slide].em }}</em></h1>
             <p class="hl-sub">{{ slides[slide].sub }}</p>
@@ -38,27 +38,81 @@
           <RouterLink to="/login" class="hl-btn hl-btn-primary">Start Learning Free <ArrowRight :size="16" /></RouterLink>
           <a href="#how" class="hl-btn hl-btn-ghost"><ArrowDown :size="16" /> See how it works</a>
         </div>
+        <!-- slider controls -->
+        <div class="hl-slider-nav reveal">
+          <button class="hl-snav-arrow" aria-label="Previous slide" @click="go(-1)"><ChevronLeft :size="16" /></button>
+          <div class="hl-dots" role="tablist" aria-label="Hero slides">
+            <button v-for="(s, i) in slides" :key="i" class="hl-dot" :class="{ on: i === slide }"
+              :aria-label="`Go to slide ${i + 1}`" :aria-selected="i === slide" role="tab" @click="goTo(i)" />
+          </div>
+          <button class="hl-snav-arrow" aria-label="Next slide" @click="go(1)"><ChevronRight :size="16" /></button>
+          <span class="hl-slide-count">{{ String(slide + 1).padStart(2, '0') }} / {{ String(slides.length).padStart(2, '0') }}</span>
+        </div>
         <div class="hl-hero-stats reveal">
           <div v-for="s in heroStats" :key="s.label"><b>{{ s.val }}</b><span>{{ s.label }}</span></div>
         </div>
       </div>
 
+      <!-- device: screen swaps per slide -->
       <div class="hl-hero-device reveal">
         <Phone>
-          <div class="ui-app">
-            <div class="ui-appbar"><ChevronLeft :size="13" /> Student Self Test</div>
-            <div class="ui-list">
-              <div v-for="(r, i) in selfTestRows" :key="r.s" class="ui-row" :class="{ open: i === 1 }">
-                <span class="ui-row-av" :style="{ background: r.c }">{{ r.s[0] }}</span>
-                <span class="ui-row-info"><b>{{ r.s }}</b><i>CLASS 10 · KPTB</i></span>
-                <ChevronDown :size="13" class="ui-row-chev" />
-                <div v-if="i === 1" class="ui-row-actions">
-                  <span class="ui-pill"><ClipboardList :size="12" /> Objective</span>
-                  <span class="ui-pill"><PenLine :size="12" /> Subjective</span>
+          <Transition :name="dir > 0 ? 'hl-screen' : 'hl-screen-back'" mode="out-in">
+            <div :key="slide" class="hl-screen-wrap">
+              <!-- 0 · self-test list -->
+              <div v-if="slides[slide].view === 'selftest'" class="ui-app">
+                <div class="ui-appbar"><ChevronLeft :size="13" /> Student Self Test</div>
+                <div class="ui-list">
+                  <div v-for="(r, i) in selfTestRows" :key="r.s" class="ui-row" :class="{ open: i === 1 }">
+                    <span class="ui-row-av" :style="{ background: r.c }">{{ r.s[0] }}</span>
+                    <span class="ui-row-info"><b>{{ r.s }}</b><i>CLASS 10 · KPTB</i></span>
+                    <ChevronDown :size="13" class="ui-row-chev" />
+                    <div v-if="i === 1" class="ui-row-actions">
+                      <span class="ui-pill"><ClipboardList :size="12" /> Objective</span>
+                      <span class="ui-pill"><PenLine :size="12" /> Subjective</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 1 · AI tutor chat -->
+              <div v-else-if="slides[slide].view === 'tutor'" class="ui-app">
+                <div class="ui-appbar"><Bot2 :size="13" /> AI Tutor · Physics</div>
+                <div class="ui-chat">
+                  <div class="ui-msg user">Explain Newton's 2nd law?</div>
+                  <div class="ui-msg ai">Force = mass × acceleration, so a = F/m. The heavier the object, the smaller the acceleration for the same push.</div>
+                  <div class="ui-msg user">Give me a practice question 🙌</div>
+                </div>
+                <div class="ui-chatbar"><span>Ask anything…</span><Send :size="12" /></div>
+              </div>
+              <!-- 2 · result ring -->
+              <div v-else-if="slides[slide].view === 'result'" class="ui-app">
+                <div class="ui-appbar"><ClipboardCheck :size="13" /> Test Result</div>
+                <div class="ui-result">
+                  <div class="ui-ring"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" class="rbg" /><circle cx="40" cy="40" r="32" class="rfg" /></svg><b>87%</b></div>
+                  <span class="ui-result-lbl">Great work, Ayesha!</span>
+                  <i class="ui-bar" v-for="n in 3" :key="n" :style="{ width: [90,72,60][n-1] + '%' }" />
+                </div>
+              </div>
+              <!-- 3 · grade / board picker -->
+              <div v-else-if="slides[slide].view === 'grades'" class="ui-app">
+                <div class="ui-appbar"><GraduationCap :size="13" /> Choose your grade</div>
+                <div class="ui-grades">
+                  <span v-for="g in ['ECD','1','2','3','4','5','6','7','8','9','10','11','12']" :key="g"
+                    class="ui-gchip" :class="{ on: g === '10' }">{{ g }}</span>
+                </div>
+                <div class="ui-board"><span>Board</span><b>Balochistan (BISE)</b></div>
+              </div>
+              <!-- 4 · leaderboard -->
+              <div v-else class="ui-app">
+                <div class="ui-appbar"><Trophy :size="13" /> Leaderboard · Grade 10</div>
+                <div class="ui-lblist">
+                  <div v-for="(p, i) in leadersHero" :key="p.n" class="ui-lbrow" :class="{ me: p.me }">
+                    <span class="ui-lbr" :class="'r' + (i + 1)">{{ i + 1 }}</span>
+                    <span class="ui-lbn">{{ p.n }}</span><b>{{ p.s }}%</b>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Transition>
         </Phone>
         <Bot pose="bot-wave" class="hl-hero-bot" />
       </div>
@@ -325,7 +379,7 @@ import { ref, reactive, onMounted, onBeforeUnmount, h } from 'vue'
 import {
   ArrowRight, ArrowDown, Sparkles, Check, X, Send, Star, BookOpen, LayoutGrid,
   ClipboardCheck, ClipboardList, PenLine, GraduationCap, Trophy, Mail, Globe,
-  MapPin, Phone as Phone2, ChevronDown, ChevronLeft, Sun, Moon,
+  MapPin, Phone as Phone2, ChevronDown, ChevronLeft, ChevronRight, Sun, Moon,
   BrainCircuit, Target, Lightbulb, TrendingUp, Bot as Bot2, FileText, Video,
   Coins, Library, Users, BookMarked,
 } from '@lucide/vue'
@@ -359,14 +413,26 @@ function Bot(props) {
 }
 Bot.props = { pose: String }
 
-/* ── hero rotation ── */
+/* ── hero slider ── */
 const slides = [
-  { title: 'Knowledge at your', em: 'Fingertips.', sub: 'Grow. Learn. Succeed — your complete study companion for every grade and board.' },
-  { title: 'Better Learning.', em: 'Better Results.', sub: 'Learn it, practise it, ask when stuck. Smart tools that turn effort into top marks.' },
-  { title: 'All Boards. All Subjects.', em: 'Zero Confusion.', sub: 'Syllabus-aligned learning across Pakistan — anytime, anywhere, on any device.' },
+  { title: 'Knowledge at your', em: 'Fingertips.', sub: 'Grow. Learn. Succeed — your complete study companion for every grade and board.', view: 'selftest' },
+  { title: 'Better Learning.', em: 'Better Results.', sub: 'Learn it, practise it, ask when stuck. Smart AI tutors that turn effort into top marks.', view: 'tutor' },
+  { title: 'Practice tests,', em: 'anytime.', sub: 'Take real-exam style objective & subjective tests and track your scores instantly — day or night.', view: 'result' },
+  { title: 'All Boards. All Subjects.', em: 'Zero Confusion.', sub: 'Syllabus-aligned learning across Pakistan — pick your grade and everything opens up.', view: 'grades' },
+  { title: '10,000+', em: 'Registered Students.', sub: 'Join thousands racing up the province-wide leaderboard with smart, exam-ready learning.', view: 'leaderboard' },
+]
+const leadersHero = [
+  { n: 'Ayesha K.', s: 96, me: false }, { n: 'You', s: 92, me: true },
+  { n: 'Bilal M.', s: 88, me: false }, { n: 'Sara A.', s: 85, me: false },
 ]
 const slide = ref(0)
+const dir = ref(1)
 let slideTimer = null
+function schedule() { clearInterval(slideTimer); if (!reduce) slideTimer = setInterval(() => go(1), 5000) }
+function go(d) { dir.value = d; slide.value = (slide.value + d + slides.length) % slides.length; schedule() }
+function goTo(i) { dir.value = i > slide.value ? 1 : -1; slide.value = i; schedule() }
+function pauseSlides() { clearInterval(slideTimer) }
+function resumeSlides() { schedule() }
 
 const heroStats = [
   { val: '10K+', label: 'Students' }, { val: '300K+', label: 'Questions' },
@@ -489,7 +555,7 @@ function runStats() {
 }
 
 onMounted(() => {
-  if (!reduce) slideTimer = setInterval(() => { slide.value = (slide.value + 1) % slides.length }, 4500)
+  schedule()
   window.addEventListener('scroll', onScroll, { passive: true }); onScroll()
 
   revealObs = new IntersectionObserver((entries) => {
@@ -574,9 +640,29 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-hero-stats span { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--t-text3); }
 .hl-hero-device { position: relative; display: flex; justify-content: center; }
 .hl-hero-bot { position: absolute; right: 4%; bottom: -10px; width: 84px; }
-.hl-rot-enter-active, .hl-rot-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+.hl-rot-enter-active, .hl-rot-leave-active, .hl-rot-back-enter-active, .hl-rot-back-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
 .hl-rot-enter-from { opacity: 0; transform: translateY(14px); }
 .hl-rot-leave-to { opacity: 0; transform: translateY(-12px); }
+.hl-rot-back-enter-from { opacity: 0; transform: translateY(-14px); }
+.hl-rot-back-leave-to { opacity: 0; transform: translateY(12px); }
+
+/* slider controls */
+.hl-slider-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+@media (max-width: 940px) { .hl-slider-nav { justify-content: center; } }
+.hl-snav-arrow { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--t-border); background: var(--t-surface); color: var(--t-text2); cursor: pointer; transition: color 0.2s, border-color 0.2s; }
+.hl-snav-arrow:hover { color: var(--t-accent); border-color: var(--t-accent); }
+.hl-dots { display: flex; align-items: center; gap: 7px; }
+.hl-dot { width: 9px; height: 9px; border-radius: 99px; border: 0; padding: 0; cursor: pointer; background: var(--t-border); transition: width 0.25s, background 0.25s; }
+.hl-dot.on { width: 26px; background: linear-gradient(90deg, var(--t-accent), var(--t-yellow)); }
+.hl-slide-count { font-family: 'Space Grotesk'; font-size: 12px; font-weight: 600; color: var(--t-text3); font-variant-numeric: tabular-nums; }
+
+/* device screen swap */
+.hl-screen-wrap { height: 100%; }
+.hl-screen-enter-active, .hl-screen-leave-active, .hl-screen-back-enter-active, .hl-screen-back-leave-active { transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1); }
+.hl-screen-enter-from { opacity: 0; transform: translateX(40px) scale(0.97); }
+.hl-screen-leave-to { opacity: 0; transform: translateX(-40px) scale(0.97); }
+.hl-screen-back-enter-from { opacity: 0; transform: translateX(-40px) scale(0.97); }
+.hl-screen-back-leave-to { opacity: 0; transform: translateX(40px) scale(0.97); }
 
 /* ticker */
 .hl-ticker { position: relative; z-index: 2; overflow: hidden; padding: 14px 0; border-top: 1px solid var(--t-border); border-bottom: 1px solid var(--t-border); }
@@ -792,6 +878,28 @@ a.hl-ci-row:hover { color: var(--t-accent); }
 :deep(.ui-q-bar) { height: 8px; border-radius: 99px; background: var(--t-hover); }
 :deep(.ui-opt) { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--t-text3); border: 1px solid var(--t-border); }
 :deep(.ui-opt.pick) { color: #fff; background: var(--t-accent); border-color: var(--t-accent); }
+/* chat */
+:deep(.ui-chat) { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 12px; overflow: hidden; }
+:deep(.ui-msg) { max-width: 86%; padding: 9px 12px; border-radius: 13px; font-size: 12px; line-height: 1.5; }
+:deep(.ui-msg.user) { align-self: flex-end; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); border-bottom-right-radius: 4px; }
+:deep(.ui-msg.ai) { align-self: flex-start; color: var(--t-text1); background: var(--t-hover); border: 1px solid var(--t-border); border-bottom-left-radius: 4px; }
+:deep(.ui-chatbar) { display: flex; align-items: center; justify-content: space-between; margin: 0 12px 12px; padding: 10px 13px; border-radius: 12px; font-size: 11.5px; color: var(--t-text3); background: var(--t-hover); border: 1px solid var(--t-border); }
+:deep(.ui-chatbar svg) { color: var(--t-accent); }
+/* grade picker */
+:deep(.ui-grades) { padding: 14px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+:deep(.ui-gchip) { display: grid; place-items: center; height: 38px; border-radius: 11px; font-size: 12px; font-weight: 700; color: var(--t-text2); background: var(--t-hover); border: 1px solid var(--t-border); }
+:deep(.ui-gchip.on) { color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); border-color: transparent; }
+:deep(.ui-board) { margin: 6px 14px; padding: 12px 14px; border-radius: 12px; background: var(--t-acc-alpha-sm); border: 1px solid var(--t-accent); display: flex; flex-direction: column; gap: 2px; }
+:deep(.ui-board span) { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t-text3); }
+:deep(.ui-board b) { font-size: 13px; color: var(--t-accent); font-family: 'Space Grotesk'; }
+/* leaderboard */
+:deep(.ui-lblist) { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+:deep(.ui-lbrow) { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 10px; border-radius: 11px; background: var(--t-hover); border: 1px solid var(--t-border); }
+:deep(.ui-lbrow.me) { background: var(--t-acc-alpha-sm); border-color: var(--t-accent); }
+:deep(.ui-lbr) { width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; background: var(--t-text3); }
+:deep(.ui-lbr.r1) { background: #f59e0b; } :deep(.ui-lbr.r2) { background: #94a3b8; } :deep(.ui-lbr.r3) { background: #b45309; }
+:deep(.ui-lbn) { font-size: 12.5px; color: var(--t-text1); }
+:deep(.ui-lbrow b) { font-family: 'Space Grotesk'; font-size: 12.5px; color: var(--t-accent); }
 
 /* robot */
 :deep(.hl-bot) { overflow: visible; }
