@@ -1,4 +1,4 @@
-// Single axios instance for the eStudy backend (/api). Attaches the JWT to every
+// Single axios instance for the Balochistan Academy Portal backend (/api). Attaches the JWT to every
 // request and bounces to login on 401. The Ollama path (ollamaService.js) uses its
 // own fetch and is intentionally NOT routed through here.
 import axios from 'axios'

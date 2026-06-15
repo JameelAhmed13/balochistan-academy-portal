@@ -7,13 +7,13 @@
     <!-- ── NAV ── -->
     <nav class="hl-nav glass" :class="{ scrolled }">
       <a href="#top" class="hl-logo">
-        <span class="hl-logo-mark">e</span>
-        <span class="hl-logo-text">Study<em>Card</em></span>
+        <span class="hl-logo-mark">B</span>
+        <span class="hl-logo-text">Balochistan Academy<em>&nbsp;Portal</em></span>
       </a>
       <div class="hl-nav-links">
         <a href="#about" class="hl-nlink">About</a>
+        <a href="#how" class="hl-nlink">How it works</a>
         <a href="#features" class="hl-nlink">Features</a>
-        <a href="#system" class="hl-nlink">How it works</a>
         <a href="#contact" class="hl-nlink">Contact</a>
       </div>
       <div class="hl-nav-right">
@@ -36,14 +36,13 @@
         </Transition>
         <div class="hl-hero-btns reveal">
           <RouterLink to="/login" class="hl-btn hl-btn-primary">Start Learning Free <ArrowRight :size="16" /></RouterLink>
-          <a href="#system" class="hl-btn hl-btn-ghost"><ArrowDown :size="16" /> See how it works</a>
+          <a href="#how" class="hl-btn hl-btn-ghost"><ArrowDown :size="16" /> See how it works</a>
         </div>
         <div class="hl-hero-stats reveal">
           <div v-for="s in heroStats" :key="s.label"><b>{{ s.val }}</b><span>{{ s.label }}</span></div>
         </div>
       </div>
 
-      <!-- hero device: iPhone with student self-test UI -->
       <div class="hl-hero-device reveal">
         <Phone>
           <div class="ui-app">
@@ -74,52 +73,130 @@
       </div>
     </div>
 
-    <!-- ── ABOUT ── -->
+    <!-- ── ABOUT (redesigned, two-column) ── -->
     <section id="about" class="hl-sec hl-about">
-      <div class="hl-about-card glass reveal">
-        <span class="hl-kicker"><BookOpen :size="14" /> About E-Study Card</span>
-        <p class="hl-about-text">
-          E-Study Card is a modern learning companion built to simplify education for students across Pakistan.
-          Whether preparing for <strong>board exams, entry tests</strong>, or self-study, our platform offers smart
-          tools, interactive resources, and progress tracking to keep learners on the right path. With expert-designed
-          notes, past papers, quizzes, and mock tests, students gain the confidence they need to excel — and parents
-          stay connected through dedicated monitoring. <strong>Our goal:</strong> a stress-free, engaging, and
-          result-driven learning journey for every student.
-        </p>
+      <div class="hl-about-grid">
+        <div class="hl-about-copy reveal">
+          <span class="hl-kicker"><BookOpen :size="14" /> About Balochistan Academy Portal</span>
+          <h2 class="hl-h2">A complete learning companion <em>for every Pakistani student.</em></h2>
+          <p class="hl-about-text">
+            Balochistan Academy Portal is a modern learning companion built to simplify education for students across
+            Pakistan. Whether preparing for <strong>board exams, entry tests</strong>, or self-study, it offers smart
+            tools, interactive resources, and progress tracking to keep learners on the right path.
+          </p>
+          <p class="hl-about-text">
+            With expert-designed notes, past papers, quizzes, and mock tests, students gain the confidence to excel —
+            and parents stay connected through dedicated monitoring. <strong>Our goal:</strong> a stress-free,
+            engaging, result-driven learning journey for every student.
+          </p>
+          <div class="hl-about-cta">
+            <RouterLink to="/login" class="hl-btn hl-btn-primary">Create free account <ArrowRight :size="16" /></RouterLink>
+          </div>
+        </div>
+        <div class="hl-about-side reveal">
+          <div v-for="h in aboutHighlights" :key="h.label" class="hl-about-hl glass">
+            <span class="hl-about-hl-ic"><component :is="h.icon" :size="20" /></span>
+            <div><b>{{ h.val }}</b><span>{{ h.label }}</span></div>
+          </div>
+          <Bot pose="bot-wave" class="hl-about-bot" />
+        </div>
       </div>
     </section>
 
-    <!-- ── LEARN / PRACTICE / ASK ── -->
-    <section class="hl-sec">
+    <!-- ── HOW IT WORKS — 4 capability cards side by side ── -->
+    <section id="how" class="hl-sec">
       <div class="hl-sec-head reveal">
-        <h2 class="hl-h2">Better Learning. <em>Better Results.</em></h2>
-        <p class="hl-sec-sub">Three simple moves — learn it, practice it, ask when stuck.</p>
+        <span class="hl-kicker center"><Sparkles :size="14" /> How it works</span>
+        <h2 class="hl-h2">From first lesson to <em>the merit list.</em></h2>
+        <p class="hl-sec-sub">Four AI-powered steps that take every student from learning to topping the board.</p>
       </div>
-      <div class="hl-trio">
-        <div v-for="(c, i) in trio" :key="c.title" class="hl-trio-card glass reveal" :style="{ transitionDelay: i * 80 + 'ms' }">
-          <span class="hl-trio-ic" :style="{ color: c.color }"><component :is="c.icon" :size="22" /></span>
+      <div class="hl-caps">
+        <article v-for="(c, i) in capabilities" :key="c.title" class="hl-cap glass reveal" :style="{ transitionDelay: i * 70 + 'ms' }">
+          <!-- mini scene -->
+          <div class="cap-scene" aria-hidden="true">
+            <div class="cap-scene-head"><span>{{ c.scene }}</span><span class="cap-online"><i />ONLINE</span></div>
+            <!-- per-type illustration -->
+            <div v-if="c.type === 'tutor'" class="cap-tutor">
+              <div class="cap-board"><i /><i class="w70" /><b>a = F / m = 5 m/s²</b></div>
+            </div>
+            <div v-else-if="c.type === 'paper'" class="cap-paper">
+              <div class="cap-pcard"><span class="cap-ptag">MODEL PAPER · 9th</span><i /><i class="w80" /><i class="w60" />
+                <div class="cap-mcq"><span v-for="o in ['A','B','C','D']" :key="o" :class="{ pick: o === 'B' }">{{ o }}</span></div>
+              </div>
+            </div>
+            <div v-else-if="c.type === 'examiner'" class="cap-exam">
+              <div class="cap-rows">
+                <div><i class="w80" /><span class="cap-ck ok">✓</span></div>
+                <div><i class="w65" /><span class="cap-ck ok">✓</span></div>
+                <div><i class="w70" /><span class="cap-ck no">✕</span></div>
+              </div>
+              <div class="cap-score">87<small>%</small></div>
+            </div>
+            <div v-else class="cap-arena">
+              <div class="cap-podium"><span class="p2" /><span class="p1">🏆</span><span class="p3" /></div>
+              <span class="cap-rank">RANK #01</span>
+            </div>
+            <Bot :pose="c.pose" class="cap-bot" />
+          </div>
+          <div class="cap-meta">
+            <span class="cap-ic"><component :is="c.icon" :size="20" /></span>
+            <span class="cap-num">{{ String(i + 1).padStart(2, '0') }}</span>
+          </div>
           <h3>{{ c.title }}</h3>
           <p>{{ c.desc }}</p>
-        </div>
+          <ul class="cap-chips"><li v-for="ch in c.chips" :key="ch"><Check :size="11" /> {{ ch }}</li></ul>
+        </article>
       </div>
     </section>
 
-    <!-- ── KEY FEATURES ── -->
+    <!-- ── ONE PLATFORM — 8 feature cards ── -->
     <section id="features" class="hl-sec">
       <div class="hl-sec-head reveal">
-        <span class="hl-kicker center"><LayoutGrid :size="14" /> Key Features</span>
-        <h2 class="hl-h2">Everything in <em>one platform</em></h2>
-        <p class="hl-sec-sub">Comprehensive tools and resources to make learning smarter, faster, and stress-free.</p>
+        <span class="hl-kicker center"><LayoutGrid :size="14" /> Everything you need</span>
+        <h2 class="hl-h2">One platform. <em>Infinite possibilities.</em></h2>
+        <p class="hl-sec-sub">From AI tutoring to competitive tests, coins to reports — built for the Balochistan Board.</p>
       </div>
       <div class="hl-feat-grid">
-        <div v-for="(f, i) in features" :key="f" class="hl-feat reveal" :style="{ transitionDelay: (i % 4) * 60 + 'ms' }">
-          <Check :size="15" class="hl-feat-ck" /><span>{{ f }}</span>
+        <div v-for="(f, i) in features" :key="f.title" class="hl-feat glass reveal" :style="{ transitionDelay: (i % 4) * 60 + 'ms' }">
+          <span class="hl-feat-ic"><component :is="f.icon" :size="20" /></span>
+          <h3>{{ f.title }}</h3>
+          <p>{{ f.desc }}</p>
         </div>
       </div>
     </section>
 
-    <!-- ── PRACTICE TESTS — desktop + phone mockups ── -->
-    <section id="system" class="hl-sec hl-split">
+    <!-- ── WATCH AI STUDY YOUR STUDENTS ── -->
+    <section class="hl-sec hl-ai">
+      <div class="hl-sec-head reveal">
+        <span class="hl-kicker center"><BrainCircuit :size="14" /> AI Intelligence</span>
+        <h2 class="hl-h2">Watch AI study <em>your students.</em></h2>
+        <p class="hl-sec-sub">Every answer feeds the engine — it tracks, adapts and personalizes each session in real time.</p>
+      </div>
+      <div class="hl-ai-stage reveal">
+        <div v-for="(st, i) in students" :key="st.name" class="hl-scard glass" :class="'pos' + (i + 1)">
+          <div class="hl-sc-top">
+            <span class="hl-sc-av" :style="{ background: st.av }">{{ st.name[0] }}</span>
+            <span class="hl-sc-id"><b>{{ st.name }}</b><i>{{ st.subject }}</i></span>
+            <span class="hl-sc-score" :style="{ color: st.color }">{{ st.score }}</span>
+          </div>
+          <div v-for="bar in st.bars" :key="bar.label" class="hl-bar">
+            <span>{{ bar.label }}</span>
+            <i class="hl-bar-track"><i class="hl-bar-fill" :style="{ width: aiOn ? bar.pct + '%' : '0%', background: bar.color }" /></i>
+            <b>{{ bar.pct }}%</b>
+          </div>
+        </div>
+        <div class="hl-ai-core">
+          <i class="hl-ai-ring r1" /><i class="hl-ai-ring r2" />
+          <div class="hl-ai-brain"><BrainCircuit :size="30" /><span>AI ENGINE</span></div>
+        </div>
+        <span class="hl-ai-badge b1 glass"><Target :size="12" /> Weakness detected: Kinematics</span>
+        <span class="hl-ai-badge b2 glass"><Lightbulb :size="12" /> Recommended: 5 more MCQs</span>
+        <span class="hl-ai-badge b3 glass"><TrendingUp :size="12" /> +18% this week</span>
+      </div>
+    </section>
+
+    <!-- ── PRACTICE TESTS — desktop + phone ── -->
+    <section class="hl-sec hl-split">
       <div class="hl-split-copy reveal">
         <span class="hl-kicker"><ClipboardCheck :size="14" /> Practice anytime</span>
         <h2 class="hl-h2">Objective &amp; Subjective<br /><em>tests, day or night.</em></h2>
@@ -132,10 +209,7 @@
       <div class="hl-split-devices reveal">
         <Browser class="hl-browser">
           <div class="ui-dash">
-            <div class="ui-dash-side">
-              <span class="ui-dash-logo">eStudy</span>
-              <i v-for="n in 5" :key="n" :class="{ on: n === 2 }" />
-            </div>
+            <div class="ui-dash-side"><span class="ui-dash-logo">Portal</span><i v-for="n in 5" :key="n" :class="{ on: n === 2 }" /></div>
             <div class="ui-dash-main">
               <div class="ui-dash-head"><b>Objective Test · Physics</b><span class="ui-score">87%</span></div>
               <div class="ui-q" v-for="q in 3" :key="q">
@@ -158,45 +232,10 @@
       </div>
     </section>
 
-    <!-- ── FULL SYSTEM STORY ── -->
-    <section class="hl-sec hl-split reverse">
-      <div class="hl-split-copy reveal">
-        <span class="hl-kicker"><GraduationCap :size="14" /> All Boards. All Subjects.</span>
-        <h2 class="hl-h2">From your grade to the <em>merit list.</em></h2>
-        <p class="hl-sec-sub left">Pick your grade and the whole syllabus opens up — chat with an AI tutor, take
-          tests, and climb the leaderboard. Admins manage grades, syllabus and tutors; students just learn.</p>
-        <div class="hl-flow">
-          <span v-for="(f, i) in flow" :key="f"><b>{{ i + 1 }}</b>{{ f }}</span>
-        </div>
-      </div>
-      <div class="hl-split-devices reveal">
-        <Phone class="hl-split-phone">
-          <div class="ui-app">
-            <div class="ui-appbar"><Bot2 :size="13" /> AI Tutor · Physics</div>
-            <div class="ui-chat">
-              <div class="ui-msg user">Explain Newton's 2nd law?</div>
-              <div class="ui-msg ai">Force = mass × acceleration. So a = F/m — the heavier the object, the smaller the acceleration for the same force.</div>
-              <div class="ui-msg user">Give me a question.</div>
-            </div>
-            <div class="ui-chatbar"><span>Ask anything…</span><Send :size="12" /></div>
-          </div>
-        </Phone>
-        <Browser class="hl-browser">
-          <div class="ui-dash">
-            <div class="ui-dash-side"><span class="ui-dash-logo">Admin</span><i v-for="n in 5" :key="n" :class="{ on: n === 3 }" /></div>
-            <div class="ui-dash-main">
-              <div class="ui-dash-head"><b>Leaderboard · Grade 10</b><Trophy :size="14" /></div>
-              <div class="ui-lb" v-for="(p, i) in leaders" :key="p"><span class="ui-lb-rank" :class="'r'+(i+1)">{{ i+1 }}</span><span class="ui-lb-name">{{ p }}</span><i class="ui-lb-bar" :style="{ width: [92,85,78][i] + '%' }" /><b>{{ [92,85,78][i] }}%</b></div>
-            </div>
-          </div>
-        </Browser>
-      </div>
-    </section>
-
     <!-- ── WHY CHOOSE ── -->
     <section class="hl-sec">
       <div class="hl-sec-head reveal">
-        <span class="hl-kicker center"><Star :size="14" /> Why Choose E-Study Card?</span>
+        <span class="hl-kicker center"><Star :size="14" /> Why Choose Balochistan Academy Portal?</span>
         <h2 class="hl-h2">Smart tools. <em>Reliable resources.</em></h2>
       </div>
       <div class="hl-why">
@@ -244,7 +283,7 @@
         </form>
         <div class="hl-contact-info glass reveal">
           <a :href="`mailto:${info.email}`" class="hl-ci-row"><Mail :size="16" /><span>{{ info.email }}</span></a>
-          <a href="https://www.estudycard.com" target="_blank" rel="noopener" class="hl-ci-row"><Globe :size="16" /><span>www.estudycard.com</span></a>
+          <a :href="`https://${info.web}`" target="_blank" rel="noopener" class="hl-ci-row"><Globe :size="16" /><span>{{ info.web }}</span></a>
           <div class="hl-ci-row"><MapPin :size="16" /><span>{{ info.address }}</span></div>
           <a :href="`tel:${info.phone1}`" class="hl-ci-row"><Phone2 :size="16" /><span>{{ info.phone1 }}</span></a>
           <a :href="`tel:${info.phone2}`" class="hl-ci-row"><Phone2 :size="16" /><span>{{ info.phone2 }}</span></a>
@@ -257,12 +296,12 @@
     <footer class="hl-footer">
       <div class="hl-foot-grid">
         <div class="hl-foot-brand">
-          <a href="#top" class="hl-logo"><span class="hl-logo-mark">e</span><span class="hl-logo-text">Study<em>Card</em></span></a>
+          <a href="#top" class="hl-logo"><span class="hl-logo-mark">B</span><span class="hl-logo-text">Balochistan Academy<em>&nbsp;Portal</em></span></a>
           <p>High-quality educational resources — digital textbooks, notes, and smart preparation tools. Learning made easy, engaging, and accessible for all students.</p>
         </div>
         <nav class="hl-foot-col" aria-label="Platform">
           <b>Platform</b>
-          <a href="#about">About</a><a href="#features">Features</a><a href="#system">How it works</a>
+          <a href="#about">About</a><a href="#how">How it works</a><a href="#features">Features</a>
           <RouterLink to="/login">Login / Register</RouterLink>
         </nav>
         <nav class="hl-foot-col" aria-label="Legal">
@@ -276,7 +315,7 @@
           <a :href="`tel:${info.phone2}`">{{ info.phone2 }}</a>
         </nav>
       </div>
-      <div class="hl-foot-bottom">© 2026 E-Study Card · All Rights Reserved · New Century Educational System</div>
+      <div class="hl-foot-bottom">© 2026 Balochistan Academy Portal · All Rights Reserved · New Century Educational System</div>
     </footer>
   </div>
 </template>
@@ -286,8 +325,9 @@ import { ref, reactive, onMounted, onBeforeUnmount, h } from 'vue'
 import {
   ArrowRight, ArrowDown, Sparkles, Check, X, Send, Star, BookOpen, LayoutGrid,
   ClipboardCheck, ClipboardList, PenLine, GraduationCap, Trophy, Mail, Globe,
-  MapPin, Phone as Phone2, ChevronDown, ChevronLeft, BookMarked, Brain, MessagesSquare,
-  Sun, Moon, Library, UserCheck, FileStack, Bot as Bot2,
+  MapPin, Phone as Phone2, ChevronDown, ChevronLeft, Sun, Moon,
+  BrainCircuit, Target, Lightbulb, TrendingUp, Bot as Bot2, FileText, Video,
+  Coins, Library, Users, BookMarked,
 } from '@lucide/vue'
 import { useThemeStore } from '@/stores/theme'
 
@@ -302,7 +342,7 @@ function Phone(_p, { slots }) {
 }
 function Browser(_p, { slots }) {
   return h('div', { class: 'dv-browser glass' }, [
-    h('div', { class: 'dv-bar' }, [h('i'), h('i'), h('i'), h('span', { class: 'dv-url' }, 'app.estudycard.com')]),
+    h('div', { class: 'dv-bar' }, [h('i'), h('i'), h('i'), h('span', { class: 'dv-url' }, 'portal.estudycard.com')]),
     h('div', { class: 'dv-browser-screen' }, slots.default?.()),
   ])
 }
@@ -340,26 +380,57 @@ const selfTestRows = [
   { s: 'Pak Studies', c: 'linear-gradient(135deg,#ec4899,#be185d)' },
 ]
 
-const trio = [
-  { title: 'Learn', desc: 'E-books, smart key notes and video lectures crafted by subject experts — aligned to your curriculum.', icon: BookMarked, color: '#6366f1' },
-  { title: 'Practice', desc: 'Unit & topic-wise MCQs, objective and subjective self-tests with instant, real-exam-style grading.', icon: ClipboardCheck, color: '#10b981' },
-  { title: 'Ask', desc: 'Stuck on a concept? The AI Assistant and Ask-a-Question button answer in seconds, day or night.', icon: MessagesSquare, color: '#f59e0b' },
+const aboutHighlights = [
+  { icon: BookMarked, val: '10 Subjects', label: 'ECD to Grade 12' },
+  { icon: ClipboardCheck, val: 'Self-Tests', label: 'Objective + Subjective' },
+  { icon: BrainCircuit, val: 'AI Tutors', label: 'Available 24/7' },
+  { icon: Trophy, val: 'Competitions', label: 'Province leaderboards' },
 ]
 
+/* ── 4 capability cards ── */
+const capabilities = [
+  { type: 'tutor', scene: 'AI TUTOR', pose: 'bot-wave', icon: Bot2, title: 'Learn live with your AI tutor',
+    desc: 'Ask anything, anytime — your AI teacher explains every concept in Urdu or English until it clicks, with chat and video.',
+    chips: ['24/7 doubt solving', 'Chat + video', 'Urdu + English'] },
+  { type: 'paper', scene: 'PAPER ENGINE', pose: '', icon: Sparkles, title: 'AI writes your paper',
+    desc: 'Gemini drafts fresh objective and subjective papers in the exact Balochistan Board pattern — never the same test twice.',
+    chips: ['Board pattern', 'Unlimited papers', 'Difficulty dial'] },
+  { type: 'examiner', scene: 'AI EXAMINER', pose: '', icon: ClipboardCheck, title: 'Marked by AI in seconds',
+    desc: 'Submit your answers and watch the AI examiner stamp every line — marks, corrections and a model answer, instantly.',
+    chips: ['Instant marks', 'Per-line feedback', 'Weak-topic alerts'] },
+  { type: 'arena', scene: 'ARENA · LIVE', pose: 'bot-wave', icon: Trophy, title: 'Compete across the province',
+    desc: 'Daily streaks, weekly quizzes and monthly competitions — earn coins and race the whole province up the merit list.',
+    chips: ['Daily streaks', 'Coins & rewards', 'Province ranks'] },
+]
+
+/* ── 8 platform features ── */
 const features = [
-  'SLOs Level Mapping', 'Difficulty Level Categorization', 'Exercise & Conceptual Questions',
-  'E-Books & Key Notes', 'MCQs with Explanations', 'Video Lectures & Lecture Notes',
-  'Past Papers & Model Papers', 'Unit & Topic-wise MCQs', 'Self-Test (Objective & Subjective)',
-  'AI Assistant & Ask-a-Question', 'Scientific Calculator · Dictionary · Log Table', 'Quick-Response Interface',
+  { icon: Bot2, title: '8 AI Tutors', desc: 'Einstein, Ghalib, Curie & more — each subject gets a legendary AI mentor.' },
+  { icon: FileText, title: 'Daily Tests', desc: 'Auto-generated MCQ and subjective tests with instant AI grading.' },
+  { icon: Trophy, title: 'Competition', desc: 'Monthly institute-wide exams with leaderboards and mega challenges.' },
+  { icon: Coins, title: 'Coins & Rewards', desc: 'Earn real coins for test performance. Withdraw via Easypaisa.' },
+  { icon: Video, title: 'Video Lessons', desc: 'AI-voiced video lessons with voice Q&A powered by Google TTS.' },
+  { icon: TrendingUp, title: 'Reports', desc: 'Detailed charts for students, parents and teachers in one dashboard.' },
+  { icon: PenLine, title: 'Subjective AI', desc: 'Write long answers with voice input. Gemini grades & gives feedback.' },
+  { icon: Library, title: 'Digital Library', desc: '10 subjects, key notes, past papers, simulations and virtual labs.' },
 ]
 
-const flow = ['Pick your grade', 'Open the syllabus', 'Learn with AI tutor', 'Take tests', 'Climb the leaderboard']
-const leaders = ['Ayesha K.', 'Bilal M.', 'Sara A.']
+/* ── AI intelligence students ── */
+const students = [
+  { name: 'Ahmed K.', subject: 'Physics', score: '92%', color: '#22c55e', av: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+    bars: [{ label: 'Accuracy', pct: 92, color: '#6366f1' }, { label: 'Speed', pct: 78, color: '#06b6d4' }, { label: 'Retention', pct: 85, color: '#f59e0b' }] },
+  { name: 'Bilal M.', subject: 'Math', score: '95%', color: '#f59e0b', av: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+    bars: [{ label: 'Accuracy', pct: 95, color: '#22c55e' }, { label: 'Speed', pct: 88, color: '#6366f1' }, { label: 'Retention', pct: 90, color: '#f59e0b' }] },
+  { name: 'Fatima R.', subject: 'Chemistry', score: '87%', color: '#06b6d4', av: 'linear-gradient(135deg,#ec4899,#8b5cf6)',
+    bars: [{ label: 'Accuracy', pct: 87, color: '#a78bfa' }, { label: 'Speed', pct: 91, color: '#06b6d4' }, { label: 'Retention', pct: 82, color: '#f59e0b' }] },
+  { name: 'Sara A.', subject: 'Biology', score: '89%', color: '#f87171', av: 'linear-gradient(135deg,#10b981,#059669)',
+    bars: [{ label: 'Accuracy', pct: 89, color: '#f87171' }, { label: 'Speed', pct: 74, color: '#06b6d4' }, { label: 'Retention', pct: 93, color: '#a78bfa' }] },
+]
 
 const why = [
   { title: 'Interactive Textbooks & Notes', desc: 'Downloadable e-books and concise smart notes crafted by subject experts — always available, always aligned with your curriculum.', icon: Library },
-  { title: 'Personalized Learning', desc: 'From Grade 1 to 12, choose your subjects and explore notes, quizzes, solved questions and practice tests designed for your level.', icon: UserCheck },
-  { title: 'Past Papers for Practice', desc: 'Work through real past exam papers to master time management, identify key patterns, and prepare effectively for your exams.', icon: FileStack },
+  { title: 'Personalized Learning', desc: 'From Grade 1 to 12, choose your subjects and explore notes, quizzes, solved questions and practice tests designed for your level.', icon: Users },
+  { title: 'Past Papers for Practice', desc: 'Work through real past exam papers to master time management, identify key patterns, and prepare effectively for your exams.', icon: FileText },
 ]
 
 const stats = [
@@ -372,7 +443,7 @@ const statOut = reactive(stats.map(() => '0'))
 let statsDone = false
 
 const info = {
-  email: 'info@estudycard.com',
+  email: 'info@estudycard.com', web: 'www.estudycard.com',
   address: 'Office No. 1, Ground Floor, Waseem Kareem Plaza, Main Swabi-Jehangira Road, Punjpir, Swabi, KPK',
   phone1: '0938-280154', phone2: '0300-0746850',
 }
@@ -397,6 +468,7 @@ async function submitLead() {
 const pageEl = ref(null)
 const statsEl = ref(null)
 const scrolled = ref(false)
+const aiOn = ref(false)
 const mx = ref(-500); const my = ref(-500)
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 let revealObs = null
@@ -425,12 +497,14 @@ onMounted(() => {
       if (en.isIntersecting) {
         en.target.dataset.in = '1'
         if (en.target === statsEl.value) runStats()
+        if (en.target.classList.contains('hl-ai-stage')) aiOn.value = true
         if (!en.target.classList.contains('hl-stats')) revealObs.unobserve(en.target)
       }
     })
   }, { threshold: 0.12 })
   pageEl.value.querySelectorAll('.reveal').forEach((el) => { reduce ? (el.dataset.in = '1') : revealObs.observe(el) })
   if (statsEl.value) revealObs.observe(statsEl.value)
+  if (reduce) aiOn.value = true
 })
 onBeforeUnmount(() => { clearInterval(slideTimer); window.removeEventListener('scroll', onScroll); revealObs?.disconnect() })
 </script>
@@ -450,7 +524,6 @@ onBeforeUnmount(() => { clearInterval(slideTimer); window.removeEventListener('s
 
 h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system-ui, sans-serif; }
 
-/* headings */
 .hl-h1 { font-weight: 700; font-size: clamp(2.4rem, 5.2vw, 4.2rem); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 18px; }
 .hl-h1 em { font-style: normal; background: linear-gradient(100deg, var(--t-accent), var(--t-accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hl-h2 { font-weight: 700; font-size: clamp(1.8rem, 3.6vw, 2.9rem); line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 14px; }
@@ -461,16 +534,11 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-sec-sub.left { margin: 0; }
 
 /* nav */
-.hl-nav {
-  position: fixed; top: 12px; left: 16px; right: 16px; z-index: 50; border-radius: 16px;
-  display: flex; align-items: center; justify-content: space-between; padding: 9px 16px;
-  border: 1px solid transparent; background: transparent; box-shadow: none;
-  transition: padding 0.25s;
-}
+.hl-nav { position: fixed; top: 12px; left: 16px; right: 16px; z-index: 50; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border: 1px solid transparent; background: transparent; box-shadow: none; transition: padding 0.25s; }
 .hl-nav.scrolled { background: var(--t-glass-bg); border-color: var(--t-glass-border); box-shadow: var(--t-glass-shadow); -webkit-backdrop-filter: var(--t-glass-blur); backdrop-filter: var(--t-glass-blur); }
 .hl-logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
 .hl-logo-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; font-family: 'Space Grotesk'; font-weight: 700; font-size: 18px; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); }
-.hl-logo-text { font-weight: 700; font-size: 17px; color: var(--t-text1); }
+.hl-logo-text { font-weight: 700; font-size: 15.5px; color: var(--t-text1); white-space: nowrap; }
 .hl-logo-text em { font-style: normal; color: var(--t-accent); }
 .hl-nav-links { display: flex; gap: 4px; }
 .hl-nlink { padding: 8px 13px; border-radius: 9px; font-size: 13.5px; font-weight: 600; color: var(--t-text2); text-decoration: none; transition: color 0.2s, background 0.2s; }
@@ -478,7 +546,7 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-nav-right { display: flex; align-items: center; gap: 8px; }
 .hl-icon-btn { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--t-border); background: var(--t-surface); color: var(--t-text2); cursor: pointer; transition: color 0.2s, border-color 0.2s; }
 .hl-icon-btn:hover { color: var(--t-accent); border-color: var(--t-accent); }
-@media (max-width: 720px) { .hl-nav-links { display: none; } }
+@media (max-width: 820px) { .hl-nav-links { display: none; } .hl-logo-text { font-size: 13.5px; } }
 
 /* buttons */
 .hl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 24px; border-radius: 13px; font-size: 14.5px; font-weight: 700; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s; }
@@ -506,7 +574,6 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-hero-stats span { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--t-text3); }
 .hl-hero-device { position: relative; display: flex; justify-content: center; }
 .hl-hero-bot { position: absolute; right: 4%; bottom: -10px; width: 84px; }
-
 .hl-rot-enter-active, .hl-rot-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
 .hl-rot-enter-from { opacity: 0; transform: translateY(14px); }
 .hl-rot-leave-to { opacity: 0; transform: translateY(-12px); }
@@ -524,36 +591,112 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-sec-head { text-align: center; margin-bottom: 48px; }
 
 /* about */
-.hl-about-card { padding: 40px 44px; border-radius: 24px; text-align: center; }
-.hl-about-text { font-size: clamp(1rem, 1.5vw, 1.18rem); line-height: 1.8; color: var(--t-text2); margin: 0; }
+.hl-about-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 44px; align-items: center; }
+@media (max-width: 880px) { .hl-about-grid { grid-template-columns: 1fr; gap: 32px; } }
+.hl-about-text { font-size: 15.5px; line-height: 1.8; color: var(--t-text2); margin: 0 0 14px; }
 .hl-about-text strong { color: var(--t-text1); }
+.hl-about-cta { margin-top: 10px; }
+.hl-about-side { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.hl-about-hl { padding: 18px; border-radius: 18px; display: flex; align-items: center; gap: 12px; }
+.hl-about-hl-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; color: var(--t-accent); background: var(--t-acc-alpha-sm); border: 1px solid var(--t-glass-border); }
+.hl-about-hl b { display: block; font-family: 'Space Grotesk'; font-size: 15px; color: var(--t-text1); }
+.hl-about-hl span { font-size: 11.5px; color: var(--t-text3); }
+.hl-about-bot { position: absolute; right: -10px; bottom: -40px; width: 72px; opacity: 0.9; }
+@media (max-width: 880px) { .hl-about-bot { display: none; } }
 
-/* trio */
-.hl-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-@media (max-width: 820px) { .hl-trio { grid-template-columns: 1fr; } }
-.hl-trio-card { padding: 28px 26px; border-radius: 20px; }
-.hl-trio-ic { display: grid; place-items: center; width: 50px; height: 50px; border-radius: 14px; margin-bottom: 16px; background: var(--t-acc-alpha-sm); border: 1px solid var(--t-glass-border); }
-.hl-trio-card h3 { font-size: 19px; font-weight: 700; margin: 0 0 9px; color: var(--t-text1); }
-.hl-trio-card p { font-size: 14px; line-height: 1.65; color: var(--t-text2); margin: 0; }
+/* capability cards */
+.hl-caps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+@media (max-width: 1080px) { .hl-caps { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .hl-caps { grid-template-columns: 1fr; } }
+.hl-cap { padding: 16px; border-radius: 22px; display: flex; flex-direction: column; }
+.cap-scene { position: relative; height: 130px; border-radius: 14px; overflow: hidden; padding: 11px 13px; background: linear-gradient(160deg, #0c0a1f, #16122e); border: 1px solid rgba(129,140,248,0.2); margin-bottom: 16px; }
+.cap-scene-head { display: flex; justify-content: space-between; align-items: center; font-size: 8.5px; font-weight: 700; letter-spacing: 0.12em; color: #8d86b8; }
+.cap-online { display: inline-flex; align-items: center; gap: 4px; color: #fbbf24; }
+.cap-online i { width: 5px; height: 5px; border-radius: 99px; background: #fbbf24; }
+.cap-bot { position: absolute; right: 8px; bottom: 4px; width: 46px; }
+/* tutor scene */
+.cap-board { margin-top: 12px; width: 64%; padding: 9px 10px; border-radius: 8px; background: rgba(5,3,13,0.6); border: 1px solid rgba(129,140,248,0.25); }
+.cap-board i { display: block; height: 5px; border-radius: 9px; background: rgba(129,140,248,0.35); margin-bottom: 5px; }
+.cap-board i.w70 { width: 70%; }
+.cap-board b { font-family: 'Space Grotesk'; font-size: 11px; color: #fbbf24; }
+/* paper scene */
+.cap-pcard { margin-top: 8px; width: 66%; padding: 9px 10px; border-radius: 8px; background: #ece9fb; transform: rotate(-2deg); }
+.cap-ptag { font-size: 7px; font-weight: 800; letter-spacing: 0.1em; color: #4a35a6; }
+.cap-pcard > i { display: block; height: 4px; border-radius: 9px; background: #c9c2ec; margin: 5px 0; }
+.cap-pcard > i.w80 { width: 80%; } .cap-pcard > i.w60 { width: 60%; }
+.cap-mcq { display: flex; gap: 4px; margin-top: 6px; }
+.cap-mcq span { width: 16px; height: 16px; border-radius: 5px; display: grid; place-items: center; font-size: 8px; font-weight: 800; color: #4a35a6; border: 1px solid #c9c2ec; }
+.cap-mcq span.pick { color: #fff; background: #fbbf24; border-color: #fbbf24; }
+/* examiner scene */
+.cap-rows { margin-top: 12px; width: 58%; display: flex; flex-direction: column; gap: 9px; }
+.cap-rows > div { position: relative; display: flex; align-items: center; }
+.cap-rows i { display: block; height: 6px; border-radius: 9px; background: rgba(129,140,248,0.3); }
+.cap-rows i.w80 { width: 80%; } .cap-rows i.w65 { width: 65%; } .cap-rows i.w70 { width: 70%; }
+.cap-ck { position: absolute; right: -18px; width: 14px; height: 14px; border-radius: 99px; display: grid; place-items: center; font-size: 8px; }
+.cap-ck.ok { color: #34d399; background: rgba(52,211,153,0.15); } .cap-ck.no { color: #fb7185; background: rgba(251,113,133,0.15); }
+.cap-score { position: absolute; right: 42px; top: 38px; font-family: 'Space Grotesk'; font-weight: 700; font-size: 26px; color: #fbbf24; }
+.cap-score small { font-size: 12px; }
+/* arena scene */
+.cap-podium { margin-top: 26px; display: flex; align-items: flex-end; gap: 5px; padding-left: 8px; }
+.cap-podium span { width: 22px; border-radius: 4px 4px 0 0; background: rgba(129,140,248,0.35); display: grid; place-items: end center; font-size: 12px; }
+.cap-podium .p1 { height: 44px; background: rgba(251,191,36,0.4); } .cap-podium .p2 { height: 30px; } .cap-podium .p3 { height: 22px; }
+.cap-rank { position: absolute; right: 10px; top: 36px; padding: 3px 8px; border-radius: 99px; font-size: 8px; font-weight: 800; color: #05030d; background: linear-gradient(135deg,#a8a4ff,#fbbf24); }
+.cap-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cap-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: var(--t-accent); background: var(--t-acc-alpha-sm); border: 1px solid var(--t-glass-border); }
+.cap-num { font-family: 'Space Grotesk'; font-weight: 700; font-size: 26px; color: transparent; -webkit-text-stroke: 1px var(--t-border); }
+.hl-cap h3 { font-size: 17px; font-weight: 700; margin: 0 0 8px; color: var(--t-text1); }
+.hl-cap p { font-size: 13px; line-height: 1.6; color: var(--t-text2); margin: 0 0 14px; flex: 1; }
+.cap-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.cap-chips li { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; color: var(--t-accent); background: var(--t-acc-alpha-sm); border: 1px solid var(--t-glass-border); }
 
 /* features */
-.hl-feat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.hl-feat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 @media (max-width: 980px) { .hl-feat-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .hl-feat-grid { grid-template-columns: 1fr; } }
-.hl-feat { display: flex; align-items: center; gap: 11px; padding: 15px 17px; border-radius: 14px; background: var(--t-surface); border: 1px solid var(--t-border); font-size: 14px; font-weight: 600; color: var(--t-text1); transition: border-color 0.2s, transform 0.2s; }
-.hl-feat:hover { border-color: var(--t-accent); transform: translateY(-2px); }
-.hl-feat-ck { flex-shrink: 0; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); border-radius: 99px; padding: 3px; width: 20px; height: 20px; }
+.hl-feat { padding: 24px 22px; border-radius: 18px; transition: transform 0.2s, border-color 0.2s; }
+.hl-feat:hover { transform: translateY(-3px); }
+.hl-feat-ic { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; margin-bottom: 14px; color: var(--t-accent); background: var(--t-acc-alpha-sm); border: 1px solid var(--t-glass-border); }
+.hl-feat h3 { font-size: 16.5px; font-weight: 700; margin: 0 0 7px; color: var(--t-text1); }
+.hl-feat p { font-size: 13.5px; line-height: 1.6; color: var(--t-text2); margin: 0; }
 
-/* split sections */
+/* AI intelligence */
+.hl-ai-stage { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; grid-template-rows: auto auto; gap: 20px 40px; align-items: center; max-width: 1000px; margin: 0 auto; }
+.hl-scard { padding: 16px 18px; border-radius: 18px; }
+.hl-scard.pos1 { grid-column: 1; grid-row: 1; } .hl-scard.pos2 { grid-column: 3; grid-row: 1; }
+.hl-scard.pos3 { grid-column: 1; grid-row: 2; } .hl-scard.pos4 { grid-column: 3; grid-row: 2; }
+.hl-ai-core { grid-column: 2; grid-row: 1 / 3; position: relative; width: 150px; height: 150px; display: grid; place-items: center; }
+.hl-ai-ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(129,140,248,0.4); }
+.hl-ai-ring.r1 { inset: 0; animation: hl-spin 22s linear infinite; } .hl-ai-ring.r2 { inset: 22px; border-color: rgba(251,191,36,0.3); animation: hl-spin 16s linear infinite reverse; }
+.hl-ai-brain { width: 92px; height: 92px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--t-accent); background: var(--t-surface); border: 1px solid var(--t-accent); box-shadow: 0 0 36px var(--t-acc-alpha-md); }
+.hl-ai-brain span { font-size: 8px; font-weight: 800; letter-spacing: 0.16em; }
+@keyframes hl-spin { to { transform: rotate(360deg); } }
+.hl-sc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.hl-sc-av { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: #fff; font-weight: 700; font-size: 14px; }
+.hl-sc-id { flex: 1; } .hl-sc-id b { display: block; font-size: 13.5px; color: var(--t-text1); } .hl-sc-id i { font-style: normal; font-size: 11px; color: var(--t-text3); }
+.hl-sc-score { font-family: 'Space Grotesk'; font-weight: 700; font-size: 17px; }
+.hl-bar { display: grid; grid-template-columns: 60px 1fr 32px; align-items: center; gap: 8px; margin-bottom: 6px; }
+.hl-bar span { font-size: 10.5px; font-weight: 600; color: var(--t-text3); }
+.hl-bar b { font-size: 10.5px; font-weight: 700; color: var(--t-text2); text-align: right; }
+.hl-bar-track { display: block; height: 5px; border-radius: 99px; background: var(--t-hover); overflow: hidden; }
+.hl-bar-fill { display: block; height: 100%; border-radius: 99px; width: 0; transition: width 1.1s cubic-bezier(0.22,1,0.36,1) 0.3s; }
+.hl-ai-badge { position: absolute; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; color: var(--t-text1); z-index: 3; }
+.hl-ai-badge svg { color: var(--t-gold); }
+.hl-ai-badge.b1 { top: -14px; left: 50%; transform: translateX(-50%); }
+.hl-ai-badge.b2 { bottom: -14px; left: 50%; transform: translateX(-50%); }
+.hl-ai-badge.b3 { top: 46%; right: -10px; }
+@media (max-width: 880px) {
+  .hl-ai-stage { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+  .hl-scard.pos1, .hl-scard.pos2, .hl-scard.pos3, .hl-scard.pos4 { grid-column: auto; grid-row: auto; }
+  .hl-ai-core { display: none; } .hl-ai-badge { display: none; }
+}
+@media (max-width: 520px) { .hl-ai-stage { grid-template-columns: 1fr; } }
+
+/* split */
 .hl-split { display: grid; grid-template-columns: 1fr 1.05fr; gap: 54px; align-items: center; }
-.hl-split.reverse .hl-split-copy { order: 2; }
-@media (max-width: 940px) { .hl-split, .hl-split.reverse .hl-split-copy { grid-template-columns: 1fr; order: 0; } }
+@media (max-width: 940px) { .hl-split { grid-template-columns: 1fr; } }
 .hl-ticks { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-direction: column; gap: 11px; }
 .hl-ticks li { display: flex; align-items: center; gap: 9px; font-size: 14.5px; font-weight: 600; color: var(--t-text1); }
 .hl-ticks svg { color: var(--t-accent); }
-.hl-flow { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
-.hl-flow span { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px 7px 7px; border-radius: 99px; font-size: 13px; font-weight: 600; color: var(--t-text1); background: var(--t-surface); border: 1px solid var(--t-border); }
-.hl-flow b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 99px; font-size: 11px; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); }
 .hl-split-devices { position: relative; display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 360px; }
 .hl-split-phone { position: relative; z-index: 2; }
 @media (max-width: 560px) { .hl-split-devices { flex-direction: column; } }
@@ -586,8 +729,8 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-form-done b { font-family: 'Space Grotesk'; font-size: 20px; color: var(--t-text1); }
 .hl-form-done p { font-size: 14px; color: var(--t-text2); margin: 0; }
 .hl-done-badge { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 99px; margin-bottom: 10px; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); }
-.hl-spin { width: 15px; height: 15px; border-radius: 99px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; animation: hl-spin 0.7s linear infinite; }
-@keyframes hl-spin { to { transform: rotate(360deg); } }
+.hl-spin { width: 15px; height: 15px; border-radius: 99px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; animation: hl-spinner 0.7s linear infinite; }
+@keyframes hl-spinner { to { transform: rotate(360deg); } }
 .hl-contact-info { padding: 26px; border-radius: 22px; display: flex; flex-direction: column; gap: 14px; }
 .hl-ci-row { display: flex; align-items: flex-start; gap: 12px; font-size: 13.5px; color: var(--t-text2); text-decoration: none; transition: color 0.2s; }
 .hl-ci-row svg { flex-shrink: 0; color: var(--t-accent); margin-top: 2px; }
@@ -604,7 +747,7 @@ a.hl-ci-row:hover { color: var(--t-accent); }
 .hl-foot-col a:hover { color: var(--t-accent); }
 .hl-foot-bottom { max-width: 1180px; margin: 36px auto 0; padding-top: 20px; border-top: 1px solid var(--t-border); font-size: 12.5px; color: var(--t-text3); text-align: center; }
 
-/* ── device frames ── */
+/* device frames */
 :deep(.dv-phone) { position: relative; width: 250px; flex-shrink: 0; padding: 9px; border-radius: 40px; background: linear-gradient(160deg, var(--t-accent2), var(--t-bg2) 55%, var(--t-accent)); box-shadow: var(--t-glass-shadow), 0 0 0 1px var(--t-glass-border); }
 :deep(.dv-notch) { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 3; width: 64px; height: 18px; border-radius: 99px; background: #05060c; }
 :deep(.dv-phone-screen) { position: relative; height: 480px; border-radius: 32px; overflow: hidden; background: var(--t-surface); border: 1px solid var(--t-border); }
@@ -615,12 +758,12 @@ a.hl-ci-row:hover { color: var(--t-accent); }
 :deep(.dv-url) { margin-left: 10px; padding: 3px 12px; border-radius: 7px; font-size: 11px; color: var(--t-text3); background: var(--t-hover); flex: 1; }
 :deep(.dv-browser-screen) { height: 300px; overflow: hidden; background: var(--t-bg); }
 
-/* ── mini app UIs ── */
+/* mini app UIs */
 :deep(.ui-app) { height: 100%; display: flex; flex-direction: column; padding-top: 40px; }
 :deep(.ui-appbar) { display: flex; align-items: center; gap: 6px; padding: 10px 14px; font-size: 12px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); }
 :deep(.ui-list) { padding: 12px; display: flex; flex-direction: column; gap: 9px; }
 :deep(.ui-row) { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--t-hover); border: 1px solid var(--t-border); }
-:deep(.ui-row.open) { background: var(--t-acc-alpha-sm); border-color: var(--t-accent); grid-template-columns: auto 1fr auto; }
+:deep(.ui-row.open) { background: var(--t-acc-alpha-sm); border-color: var(--t-accent); }
 :deep(.ui-row-av) { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; }
 :deep(.ui-row-info) { display: flex; flex-direction: column; }
 :deep(.ui-row-info b) { font-size: 12.5px; color: var(--t-text1); }
@@ -629,7 +772,6 @@ a.hl-ci-row:hover { color: var(--t-accent); }
 :deep(.ui-row-actions) { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 4px; }
 :deep(.ui-pill) { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px; border-radius: 9px; font-size: 11.5px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); }
 :deep(.ui-pill:nth-child(2)) { color: var(--t-accent); background: var(--t-surface); border: 1px solid var(--t-accent); }
-
 :deep(.ui-result) { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 18px; }
 :deep(.ui-ring) { position: relative; width: 96px; height: 96px; }
 :deep(.ui-ring svg) { width: 96px; height: 96px; transform: rotate(-90deg); }
@@ -638,14 +780,6 @@ a.hl-ci-row:hover { color: var(--t-accent); }
 :deep(.ui-ring b) { position: absolute; inset: 0; display: grid; place-items: center; font-family: 'Space Grotesk'; font-weight: 700; font-size: 22px; color: var(--t-accent); }
 :deep(.ui-result-lbl) { font-size: 13px; font-weight: 700; color: var(--t-text1); }
 :deep(.ui-bar) { width: 80%; height: 9px; border-radius: 99px; background: var(--t-acc-alpha-md); }
-
-:deep(.ui-chat) { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 12px; overflow: hidden; }
-:deep(.ui-msg) { max-width: 85%; padding: 9px 12px; border-radius: 13px; font-size: 12px; line-height: 1.5; }
-:deep(.ui-msg.user) { align-self: flex-end; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); border-bottom-right-radius: 4px; }
-:deep(.ui-msg.ai) { align-self: flex-start; color: var(--t-text1); background: var(--t-hover); border: 1px solid var(--t-border); border-bottom-left-radius: 4px; }
-:deep(.ui-chatbar) { display: flex; align-items: center; justify-content: space-between; margin: 0 12px 12px; padding: 10px 13px; border-radius: 12px; font-size: 11.5px; color: var(--t-text3); background: var(--t-hover); border: 1px solid var(--t-border); }
-:deep(.ui-chatbar svg) { color: var(--t-accent); }
-
 :deep(.ui-dash) { display: grid; grid-template-columns: 78px 1fr; height: 100%; }
 :deep(.ui-dash-side) { padding: 12px 10px; background: var(--t-bg2); border-right: 1px solid var(--t-border); display: flex; flex-direction: column; gap: 8px; }
 :deep(.ui-dash-logo) { font-family: 'Space Grotesk'; font-weight: 700; font-size: 13px; color: var(--t-accent); margin-bottom: 6px; }
@@ -653,18 +787,11 @@ a.hl-ci-row:hover { color: var(--t-accent); }
 :deep(.ui-dash-side i.on) { background: linear-gradient(90deg, var(--t-accent), var(--t-accent2)); }
 :deep(.ui-dash-main) { padding: 14px; }
 :deep(.ui-dash-head) { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 13px; color: var(--t-text1); }
-:deep(.ui-dash-head svg) { color: var(--t-gold); }
 :deep(.ui-score) { font-family: 'Space Grotesk'; font-weight: 700; color: var(--t-accent); }
 :deep(.ui-q) { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
 :deep(.ui-q-bar) { height: 8px; border-radius: 99px; background: var(--t-hover); }
 :deep(.ui-opt) { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--t-text3); border: 1px solid var(--t-border); }
 :deep(.ui-opt.pick) { color: #fff; background: var(--t-accent); border-color: var(--t-accent); }
-:deep(.ui-lb) { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 8px; margin-bottom: 11px; }
-:deep(.ui-lb-rank) { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; }
-:deep(.ui-lb-rank.r1) { background: #f59e0b; } :deep(.ui-lb-rank.r2) { background: #94a3b8; } :deep(.ui-lb-rank.r3) { background: #b45309; }
-:deep(.ui-lb-name) { font-size: 12px; color: var(--t-text1); }
-:deep(.ui-lb-bar) { width: 70px; height: 7px; border-radius: 99px; background: linear-gradient(90deg, var(--t-accent), var(--t-accent2)); }
-:deep(.ui-lb b) { font-size: 11px; color: var(--t-text2); font-family: 'Space Grotesk'; }
 
 /* robot */
 :deep(.hl-bot) { overflow: visible; }
@@ -673,6 +800,9 @@ a.hl-ci-row:hover { color: var(--t-accent); }
 :deep(.hl-bot .b-eye) { fill: var(--t-accent); }
 :deep(.hl-bot .b-core) { fill: var(--t-gold); }
 :deep(.hl-bot .b-limb) { fill: var(--t-surface); stroke: var(--t-accent); stroke-width: 2; }
+:deep(.cap-scene .hl-bot .b-shell), :deep(.cap-scene .hl-bot .b-limb) { fill: #16122e; stroke: #818cf8; }
+:deep(.cap-scene .hl-bot .b-visor) { fill: #0c0a1f; }
+:deep(.cap-scene .hl-bot .b-eye) { fill: #a99cff; }
 :deep(.hl-bot.bot-wave .b-arm-r) { transform-box: fill-box; transform-origin: 50% 12%; animation: hl-wave 1.7s ease-in-out infinite; }
 @keyframes hl-wave { 0%, 100% { transform: rotate(8deg); } 50% { transform: rotate(-100deg); } }
 
