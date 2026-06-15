@@ -14,6 +14,7 @@
   --t-text3:          #8b90a6;
   --t-accent:         #6366f1;
   --t-accent2:        #8b5cf6;
+  --t-yellow:         #eab308;
   --t-gold:           #d97706;
   --t-hover:          rgba(99, 102, 241, 0.05);
   --t-hover2:         rgba(99, 102, 241, 0.09);
@@ -56,6 +57,7 @@ html.dark {
   --t-text3:          #5c6182;
   --t-accent:         #818cf8;
   --t-accent2:        #a78bfa;
+  --t-yellow:         #facc15;
   --t-gold:           #fbbf24;
   --t-hover:          rgba(255, 255, 255, 0.05);
   --t-hover2:         rgba(255, 255, 255, 0.08);

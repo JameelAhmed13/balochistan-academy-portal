@@ -525,9 +525,9 @@ onBeforeUnmount(() => { clearInterval(slideTimer); window.removeEventListener('s
 h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system-ui, sans-serif; }
 
 .hl-h1 { font-weight: 700; font-size: clamp(2.4rem, 5.2vw, 4.2rem); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 18px; }
-.hl-h1 em { font-style: normal; background: linear-gradient(100deg, var(--t-accent), var(--t-accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hl-h1 em { font-style: normal; background: linear-gradient(100deg, var(--t-accent), var(--t-accent2) 52%, var(--t-yellow)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hl-h2 { font-weight: 700; font-size: clamp(1.8rem, 3.6vw, 2.9rem); line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 14px; }
-.hl-h2 em { font-style: normal; background: linear-gradient(100deg, var(--t-accent), var(--t-accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hl-h2 em { font-style: normal; background: linear-gradient(100deg, var(--t-accent), var(--t-accent2) 52%, var(--t-yellow)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hl-kicker { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t-accent); margin-bottom: 14px; }
 .hl-kicker.center { justify-content: center; }
 .hl-sec-sub { font-size: clamp(1rem, 1.4vw, 1.12rem); line-height: 1.7; color: var(--t-text2); max-width: 620px; margin: 0 auto; }
@@ -537,7 +537,7 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-nav { position: fixed; top: 12px; left: 16px; right: 16px; z-index: 50; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border: 1px solid transparent; background: transparent; box-shadow: none; transition: padding 0.25s; }
 .hl-nav.scrolled { background: var(--t-glass-bg); border-color: var(--t-glass-border); box-shadow: var(--t-glass-shadow); -webkit-backdrop-filter: var(--t-glass-blur); backdrop-filter: var(--t-glass-blur); }
 .hl-logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
-.hl-logo-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; font-family: 'Space Grotesk'; font-weight: 700; font-size: 18px; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); }
+.hl-logo-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; font-family: 'Space Grotesk'; font-weight: 700; font-size: 18px; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2) 55%, var(--t-yellow)); }
 .hl-logo-text { font-weight: 700; font-size: 15.5px; color: var(--t-text1); white-space: nowrap; }
 .hl-logo-text em { font-style: normal; color: var(--t-accent); }
 .hl-nav-links { display: flex; gap: 4px; }
@@ -570,7 +570,7 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-hero-stats { display: flex; gap: 30px; flex-wrap: wrap; }
 @media (max-width: 940px) { .hl-hero-stats { justify-content: center; } }
 .hl-hero-stats div { display: flex; flex-direction: column; }
-.hl-hero-stats b { font-family: 'Space Grotesk'; font-weight: 700; font-size: 22px; background: linear-gradient(120deg, var(--t-accent), var(--t-accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hl-hero-stats b { font-family: 'Space Grotesk'; font-weight: 700; font-size: 22px; background: linear-gradient(120deg, var(--t-accent), var(--t-accent2) 55%, var(--t-yellow)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hl-hero-stats span { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--t-text3); }
 .hl-hero-device { position: relative; display: flex; justify-content: center; }
 .hl-hero-bot { position: absolute; right: 4%; bottom: -10px; width: 84px; }
@@ -713,7 +713,7 @@ h1, h2, h3, .hl-logo-text, .hl-h1, .hl-h2 { font-family: 'Space Grotesk', system
 .hl-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 @media (max-width: 720px) { .hl-stats { grid-template-columns: repeat(2, 1fr); } }
 .hl-stat { padding: 30px 18px; border-radius: 20px; text-align: center; }
-.hl-stat b { display: block; font-family: 'Space Grotesk'; font-weight: 700; font-size: clamp(1.7rem, 3.4vw, 2.5rem); background: linear-gradient(120deg, var(--t-accent), var(--t-accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; font-variant-numeric: tabular-nums; }
+.hl-stat b { display: block; font-family: 'Space Grotesk'; font-weight: 700; font-size: clamp(1.7rem, 3.4vw, 2.5rem); background: linear-gradient(120deg, var(--t-accent), var(--t-accent2) 55%, var(--t-yellow)); -webkit-background-clip: text; background-clip: text; color: transparent; font-variant-numeric: tabular-nums; }
 .hl-stat span { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--t-text3); }
 
 /* contact */
