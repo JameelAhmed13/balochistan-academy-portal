@@ -26,21 +26,34 @@ builder.Host.UseSerilog((ctx, lc) =>
 {
     lc.ReadFrom.Configuration(ctx.Configuration)
       .Enrich.FromLogContext()
-      .WriteTo.Console();
+      .WriteTo.Console()
+      .WriteTo.File(
+          Path.Combine(AppContext.BaseDirectory, "logs", "app-.log"),
+          rollingInterval: Serilog.RollingInterval.Day,
+          retainedFileCountLimit: 7,
+          outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}");
 
-    // Only add SQL Server structured logging in non-Development environments
-    // where the sink will reliably connect. In Development, console is enough.
+    // SQL Server sink — only in Production, wrapped so a bad connection string
+    // or missing SQL login does not crash the process on startup.
     if (!ctx.HostingEnvironment.IsDevelopment())
     {
         var connStr = ctx.Configuration.GetConnectionString("Default");
         if (!string.IsNullOrWhiteSpace(connStr))
         {
-            lc.WriteTo.MSSqlServer(connStr,
-                sinkOptions: new Serilog.Sinks.MSSqlServer.MSSqlServerSinkOptions
-                {
-                    TableName = "AppLogs",
-                    AutoCreateSqlTable = true,
-                });
+            try
+            {
+                lc.WriteTo.MSSqlServer(connStr,
+                    sinkOptions: new Serilog.Sinks.MSSqlServer.MSSqlServerSinkOptions
+                    {
+                        TableName          = "AppLogs",
+                        AutoCreateSqlTable = true,
+                    });
+            }
+            catch (Exception ex)
+            {
+                // Bootstrap logger is still active here — this surfaces in the IIS stdout log.
+                Log.Warning(ex, "SQL Server log sink failed to initialize — file sink is active");
+            }
         }
     }
 });
@@ -100,7 +113,7 @@ builder.Services.AddCors(opts => opts.AddDefaultPolicy(p =>
      .AllowCredentials()));
 
 // ── AutoMapper ───────────────────────────────────────────────────────────────
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(Program)));
 
 // ── FluentValidation ─────────────────────────────────────────────────────────
 builder.Services.AddFluentValidationAutoValidation();
