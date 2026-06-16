@@ -210,9 +210,16 @@ app.MapHub<BalochiAcademy.API.Hubs.NotificationHub>("/hubs/notifications");
 // ── Seed initial data ────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
-    var db        = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
-    var passwords = scope.ServiceProvider.GetRequiredService<IPasswordService>();
-    await BalochiAcademy.API.Infrastructure.DatabaseSeeder.SeedAsync(db, passwords);
+    try
+    {
+        var db        = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+        var passwords = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+        await BalochiAcademy.API.Infrastructure.DatabaseSeeder.SeedAsync(db, passwords);
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Database seeding failed — fix the connection string and restart");
+    }
 }
 
 app.Run();
