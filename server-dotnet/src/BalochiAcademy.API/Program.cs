@@ -1,11 +1,17 @@
 using System.Text;
+using BalochiAcademy.API.Authorization;
 using BalochiAcademy.API.Services;
 using BalochiAcademy.Application.Common.Interfaces;
+using BalochiAcademy.Application.Common.Mappings;
 using BalochiAcademy.Infrastructure.Identity;
 using BalochiAcademy.Infrastructure.Persistence;
 using BalochiAcademy.Infrastructure.Services;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -46,6 +52,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(opts =>
 
 builder.Services.AddScoped<IApplicationDbContext>(sp =>
     sp.GetRequiredService<ApplicationDbContext>());
+
+// ── Repository / Unit of Work ─────────────────────────────────────────────────
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // ── Auth Services ────────────────────────────────────────────────────────────
 builder.Services.AddScoped<ITokenService,    TokenService>();
@@ -90,6 +99,27 @@ builder.Services.AddCors(opts => opts.AddDefaultPolicy(p =>
      .AllowAnyMethod()
      .AllowCredentials()));
 
+// ── AutoMapper ───────────────────────────────────────────────────────────────
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
+// ── FluentValidation ─────────────────────────────────────────────────────────
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<MappingProfile>();
+
+// ── Memory Cache (for permission service) ────────────────────────────────────
+builder.Services.AddMemoryCache();
+
+// ── Permission-Based Authorization ───────────────────────────────────────────
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+// Wraps the default policy provider so built-in policies (AdminOnly, etc.) still resolve
+builder.Services.AddSingleton<IAuthorizationPolicyProvider>(sp =>
+{
+    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AuthorizationOptions>>();
+    var defaultProvider = new DefaultAuthorizationPolicyProvider(options);
+    return new PermissionPolicyProvider(defaultProvider);
+});
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
 // ── Controllers + SignalR ────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
@@ -103,17 +133,31 @@ builder.Services.AddSwaggerGen(c =>
 
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title   = "Balochistan Academy Portal API",
-        Version = "v1",
-        Description = "REST API for the Balochistan Academy Portal — student learning platform",
+        Title       = "Balochistan Academy Portal API",
+        Version     = "v1",
+        Description = "REST API for the Balochistan Academy Portal — student learning platform.\n\n" +
+                      "Authenticate via **POST /api/auth/login**, copy the `token` field, " +
+                      "and click **Authorize** → paste `Bearer {token}`.",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name  = "USS — Ultra Soft System",
+            Email = "support@ultrasoftsystem.com",
+        },
     });
+
+    // Include XML documentation comments from the API project
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+        c.IncludeXmlComments(xmlPath);
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header. Example: \"Bearer {token}\"",
-        Name        = "Authorization",
-        In          = ParameterLocation.Header,
-        Type        = SecuritySchemeType.Http,
-        Scheme      = "bearer",
+        Description  = "JWT Authorization header. Example: \"Bearer {token}\"",
+        Name         = "Authorization",
+        In           = ParameterLocation.Header,
+        Type         = SecuritySchemeType.Http,
+        Scheme       = "bearer",
         BearerFormat = "JWT",
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -134,15 +178,14 @@ var app = builder.Build();
 // ── Middleware pipeline ───────────────────────────────────────────────────────
 app.UseSerilogRequestLogging();
 
-if (app.Environment.IsDevelopment())
+// Swagger enabled in all environments for API documentation (Phase 8)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Balochistan Academy API v1");
-        c.RoutePrefix = "docs";
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Balochistan Academy API v1");
+    c.RoutePrefix = "docs";
+    c.DocumentTitle = "Balochistan Academy Portal — API Docs";
+});
 
 app.UseCors();
 app.UseAuthentication();

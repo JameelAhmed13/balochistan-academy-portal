@@ -8,6 +8,8 @@
   <ItemGroup>
     <PackageReference Include="MediatR"                        Version="12.*" />
     <PackageReference Include="Microsoft.EntityFrameworkCore"  Version="9.*" />
+    <PackageReference Include="AutoMapper"                     Version="12.*" />
+    <PackageReference Include="FluentValidation"               Version="11.*" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BalochiAcademy.Domain\BalochiAcademy.Domain.csproj" />

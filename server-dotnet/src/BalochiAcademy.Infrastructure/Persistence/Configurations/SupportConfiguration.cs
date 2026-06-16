@@ -153,3 +153,15 @@ public class QuestionConfigurationExtra : IEntityTypeConfiguration<Question>
          .HasForeignKey(e => e.CreatedById).OnDelete(DeleteBehavior.NoAction);
     }
 }
+
+public class StudentProgressConfiguration : IEntityTypeConfiguration<StudentProgress>
+{
+    public void Configure(EntityTypeBuilder<StudentProgress> b)
+    {
+        b.HasKey(e => e.Id);
+        b.Property(e => e.AvgPercent).HasPrecision(18, 4);
+        b.HasOne(e => e.User).WithMany(u => u.Progress)
+         .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(e => e.UserId);
+    }
+}
