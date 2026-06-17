@@ -113,7 +113,11 @@ builder.Services.AddCors(opts => opts.AddDefaultPolicy(p =>
      .AllowCredentials()));
 
 // ── AutoMapper ───────────────────────────────────────────────────────────────
-builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(Program)));
+// Scan both assemblies: API (future profiles) + Application (MappingProfile)
+builder.Services.AddAutoMapper(cfg => {
+    cfg.AddMaps(typeof(Program));       // API assembly
+    cfg.AddMaps(typeof(MappingProfile)); // Application assembly — contains User→UserDto etc.
+});
 
 // ── FluentValidation ─────────────────────────────────────────────────────────
 builder.Services.AddFluentValidationAutoValidation();
