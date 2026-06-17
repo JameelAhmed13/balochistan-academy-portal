@@ -35,7 +35,7 @@ builder.Host.UseSerilog((ctx, lc) =>
 
     // SQL Server sink — only in Production, wrapped so a bad connection string
     // or missing SQL login does not crash the process on startup.
-    if (!ctx.HostingEnvironment.IsDevelopment())
+    if (ctx.HostingEnvironment.IsDevelopment())
     {
         var connStr = ctx.Configuration.GetConnectionString("Default");
         if (!string.IsNullOrWhiteSpace(connStr))
@@ -207,18 +207,21 @@ app.UseMiddleware<BalochiAcademy.API.Middleware.ExceptionMiddleware>();
 app.MapControllers();
 app.MapHub<BalochiAcademy.API.Hubs.NotificationHub>("/hubs/notifications");
 
-// ── Seed initial data ────────────────────────────────────────────────────────
+// ── Migrate database + Seed initial data ────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     try
     {
-        var db        = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+        // MigrateAsync creates the DB if missing and applies any pending migrations.
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await context.Database.MigrateAsync();
+
         var passwords = scope.ServiceProvider.GetRequiredService<IPasswordService>();
-        await BalochiAcademy.API.Infrastructure.DatabaseSeeder.SeedAsync(db, passwords);
+        await BalochiAcademy.API.Infrastructure.DatabaseSeeder.SeedAsync(context, passwords);
     }
     catch (Exception ex)
     {
-        Log.Warning(ex, "Database seeding failed — fix the connection string and restart");
+        Log.Warning(ex, "Database migration/seeding failed — fix the connection string and restart");
     }
 }
 
