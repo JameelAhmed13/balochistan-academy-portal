@@ -339,9 +339,8 @@
           <a :href="`mailto:${info.email}`" class="hl-ci-row"><Mail :size="16" /><span>{{ info.email }}</span></a>
           <a :href="`https://${info.web}`" target="_blank" rel="noopener" class="hl-ci-row"><Globe :size="16" /><span>{{ info.web }}</span></a>
           <div class="hl-ci-row"><MapPin :size="16" /><span>{{ info.address }}</span></div>
-          <a :href="`tel:${info.phone1}`" class="hl-ci-row"><Phone2 :size="16" /><span>{{ info.phone1 }}</span></a>
-          <a :href="`tel:${info.phone2}`" class="hl-ci-row"><Phone2 :size="16" /><span>{{ info.phone2 }}</span></a>
-          <a href="https://wa.me/923000746850" target="_blank" rel="noopener" class="hl-btn hl-btn-ghost full" style="margin-top:auto">Chat on WhatsApp</a>
+          <a :href="`tel:${info.phone.replace(/\\s/g, '')}`" class="hl-ci-row"><Phone2 :size="16" /><span>{{ info.phone }}</span></a>
+          <a :href="info.whatsapp" target="_blank" rel="noopener" class="hl-btn hl-btn-ghost full" style="margin-top:auto">Chat on WhatsApp</a>
         </div>
       </div>
     </section>
@@ -355,21 +354,26 @@
         </div>
         <nav class="hl-foot-col" aria-label="Platform">
           <b>Platform</b>
-          <a href="#about">About</a><a href="#how">How it works</a><a href="#features">Features</a>
+          <RouterLink :to="{ path: '/', hash: '#about' }">About</RouterLink>
+          <RouterLink :to="{ path: '/', hash: '#how' }">How it works</RouterLink>
+          <RouterLink :to="{ path: '/', hash: '#features' }">Features</RouterLink>
           <RouterLink to="/login">Login / Register</RouterLink>
         </nav>
         <nav class="hl-foot-col" aria-label="Legal">
           <b>Legal</b>
-          <a href="#">Privacy Policy</a><a href="#">Refund Policy</a><a href="#">Terms &amp; Conditions</a><a href="#">Cancellation Policy</a>
+          <RouterLink to="/privacy">Privacy Policy</RouterLink>
+          <RouterLink to="/refund">Refund Policy</RouterLink>
+          <RouterLink to="/terms">Terms &amp; Conditions</RouterLink>
+          <RouterLink to="/cancellation">Cancellation Policy</RouterLink>
         </nav>
         <nav class="hl-foot-col" aria-label="Contact">
           <b>Contact Us</b>
           <a :href="`mailto:${info.email}`">{{ info.email }}</a>
-          <a :href="`tel:${info.phone1}`">{{ info.phone1 }}</a>
-          <a :href="`tel:${info.phone2}`">{{ info.phone2 }}</a>
+          <a :href="`tel:${info.phone.replace(/\\s/g, '')}`">{{ info.phone }}</a>
+          <span>{{ info.address }}</span>
         </nav>
       </div>
-      <div class="hl-foot-bottom">© 2026 Balochistan Academy Portal · All Rights Reserved · New Century Educational System</div>
+      <div class="hl-foot-bottom">© 2026 Balochistan Academy Portal · All Rights Reserved · Ultrasoft System</div>
     </footer>
   </div>
 </template>
@@ -396,7 +400,7 @@ function Phone(_p, { slots }) {
 }
 function Browser(_p, { slots }) {
   return h('div', { class: 'dv-browser glass' }, [
-    h('div', { class: 'dv-bar' }, [h('i'), h('i'), h('i'), h('span', { class: 'dv-url' }, 'portal.estudycard.com')]),
+    h('div', { class: 'dv-bar' }, [h('i'), h('i'), h('i'), h('span', { class: 'dv-url' }, 'balochistanacademyportal.com')]),
     h('div', { class: 'dv-browser-screen' }, slots.default?.()),
   ])
 }
@@ -440,10 +444,10 @@ const heroStats = [
 ]
 const subjects = ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'English', 'Urdu', 'Pak Studies', 'Computer Science', 'General Knowledge', 'Islamiyat']
 const selfTestRows = [
-  { s: 'Urdu', c: 'linear-gradient(135deg,#6366f1,#8b5cf6)' },
+  { s: 'Urdu', c: 'linear-gradient(135deg,#7c6af5,#5b43cc)' },
   { s: 'Biology', c: 'linear-gradient(135deg,#10b981,#059669)' },
-  { s: 'Physics', c: 'linear-gradient(135deg,#f59e0b,#d97706)' },
-  { s: 'Pak Studies', c: 'linear-gradient(135deg,#ec4899,#be185d)' },
+  { s: 'Physics', c: 'linear-gradient(135deg,#fbbf24,#d97706)' },
+  { s: 'Pak Studies', c: 'linear-gradient(135deg,#06b6d4,#0891b2)' },
 ]
 
 const aboutHighlights = [
@@ -483,14 +487,14 @@ const features = [
 
 /* ── AI intelligence students ── */
 const students = [
-  { name: 'Ahmed K.', subject: 'Physics', score: '92%', color: '#22c55e', av: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-    bars: [{ label: 'Accuracy', pct: 92, color: '#6366f1' }, { label: 'Speed', pct: 78, color: '#06b6d4' }, { label: 'Retention', pct: 85, color: '#f59e0b' }] },
-  { name: 'Bilal M.', subject: 'Math', score: '95%', color: '#f59e0b', av: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
-    bars: [{ label: 'Accuracy', pct: 95, color: '#22c55e' }, { label: 'Speed', pct: 88, color: '#6366f1' }, { label: 'Retention', pct: 90, color: '#f59e0b' }] },
-  { name: 'Fatima R.', subject: 'Chemistry', score: '87%', color: '#06b6d4', av: 'linear-gradient(135deg,#ec4899,#8b5cf6)',
-    bars: [{ label: 'Accuracy', pct: 87, color: '#a78bfa' }, { label: 'Speed', pct: 91, color: '#06b6d4' }, { label: 'Retention', pct: 82, color: '#f59e0b' }] },
-  { name: 'Sara A.', subject: 'Biology', score: '89%', color: '#f87171', av: 'linear-gradient(135deg,#10b981,#059669)',
-    bars: [{ label: 'Accuracy', pct: 89, color: '#f87171' }, { label: 'Speed', pct: 74, color: '#06b6d4' }, { label: 'Retention', pct: 93, color: '#a78bfa' }] },
+  { name: 'Ahmed K.', subject: 'Physics', score: '92%', color: '#22c55e', av: 'linear-gradient(135deg,#7c6af5,#5b43cc)',
+    bars: [{ label: 'Accuracy', pct: 92, color: '#7c6af5' }, { label: 'Speed', pct: 78, color: '#06b6d4' }, { label: 'Retention', pct: 85, color: '#fbbf24' }] },
+  { name: 'Bilal M.', subject: 'Math', score: '95%', color: '#fbbf24', av: 'linear-gradient(135deg,#06b6d4,#0891b2)',
+    bars: [{ label: 'Accuracy', pct: 95, color: '#22c55e' }, { label: 'Speed', pct: 88, color: '#7c6af5' }, { label: 'Retention', pct: 90, color: '#fbbf24' }] },
+  { name: 'Fatima R.', subject: 'Chemistry', score: '87%', color: '#06b6d4', av: 'linear-gradient(135deg,#06b6d4,#0891b2)',
+    bars: [{ label: 'Accuracy', pct: 87, color: '#7c6af5' }, { label: 'Speed', pct: 91, color: '#06b6d4' }, { label: 'Retention', pct: 82, color: '#fbbf24' }] },
+  { name: 'Sara A.', subject: 'Biology', score: '89%', color: '#10b981', av: 'linear-gradient(135deg,#10b981,#059669)',
+    bars: [{ label: 'Accuracy', pct: 89, color: '#10b981' }, { label: 'Speed', pct: 74, color: '#06b6d4' }, { label: 'Retention', pct: 93, color: '#7c6af5' }] },
 ]
 
 const why = [
@@ -509,9 +513,10 @@ const statOut = reactive(stats.map(() => '0'))
 let statsDone = false
 
 const info = {
-  email: 'info@estudycard.com', web: 'www.estudycard.com',
-  address: 'Office No. 1, Ground Floor, Waseem Kareem Plaza, Main Swabi-Jehangira Road, Punjpir, Swabi, KPK',
-  phone1: '0938-280154', phone2: '0300-0746850',
+  email: 'info@balochistanacademyportal.com', web: 'www.balochistanacademyportal.com',
+  address: 'Ultrasoft System, Technology Hub, Building #1, Baba Fareed Housing Scheme, Airport Road, Quetta',
+  phone: '+92 370 3153540',
+  whatsapp: 'https://wa.me/923703153540',
 }
 
 /* ── contact form → n8n lead webhook ── */
@@ -580,6 +585,18 @@ onBeforeUnmount(() => { clearInterval(slideTimer); window.removeEventListener('s
   position: relative; min-height: 100vh; overflow-x: clip;
   background: var(--t-bg); color: var(--t-text1);
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* Landing matches the login page — cosmic violet → cyan → gold */
+  --t-accent:  #7c6af5;
+  --t-accent2: #06b6d4;
+  --t-yellow:  #fbbf24;
+  --t-acc-alpha-sm: rgba(124, 106, 245, 0.10);
+  --t-acc-alpha-md: rgba(124, 106, 245, 0.18);
+  --t-logo-glow:    rgba(124, 106, 245, 0.40);
+}
+html.dark .hl {
+  --t-aurora1: rgba(124, 106, 245, 0.22);
+  --t-aurora2: rgba(6, 182, 212, 0.16);
+  --t-aurora3: rgba(251, 191, 36, 0.10);
 }
 .hl-aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .hl-aurora i { position: absolute; width: 520px; height: 520px; border-radius: 50%; filter: blur(100px); }
@@ -829,7 +846,7 @@ a.hl-ci-row:hover { color: var(--t-accent); }
 .hl-foot-brand p { margin: 14px 0 0; font-size: 13.5px; line-height: 1.7; color: var(--t-text3); max-width: 320px; }
 .hl-foot-col { display: flex; flex-direction: column; gap: 9px; }
 .hl-foot-col b { font-family: 'Space Grotesk'; font-size: 14px; color: var(--t-text1); margin-bottom: 4px; }
-.hl-foot-col a { font-size: 13px; font-weight: 500; color: var(--t-text3); text-decoration: none; transition: color 0.2s; }
+.hl-foot-col a, .hl-foot-col span { font-size: 13px; font-weight: 500; color: var(--t-text3); text-decoration: none; transition: color 0.2s; line-height: 1.5; }
 .hl-foot-col a:hover { color: var(--t-accent); }
 .hl-foot-bottom { max-width: 1180px; margin: 36px auto 0; padding-top: 20px; border-top: 1px solid var(--t-border); font-size: 12.5px; color: var(--t-text3); text-align: center; }
 

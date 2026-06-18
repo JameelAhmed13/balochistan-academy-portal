@@ -30,7 +30,7 @@ export default {
           800: '#92400e',
           900: '#78350f',
         },
-        // Distinctive violet accent (not generic SaaS blue)
+        // Cosmic violet accent (primary brand) — matches landing & login
         accent: {
           50:  '#f0f0ff',
           100: '#e3e3ff',
@@ -43,6 +43,20 @@ export default {
           800: '#4a35a6',
           900: '#3b2a84',
           950: '#231967',
+        },
+        // Cyan — secondary accent (gradient partner)
+        cyan: {
+          50:  '#ecfeff',
+          100: '#cffafe',
+          200: '#a5f3fc',
+          300: '#67e8f9',
+          400: '#22d3ee',
+          500: '#06b6d4',
+          600: '#0891b2',
+          700: '#0e7490',
+          800: '#155e75',
+          900: '#164e63',
+          950: '#083344',
         },
         sidebar:       '#070c1a',
         'sidebar-hover': '#131e35',
@@ -101,8 +115,8 @@ export default {
         'gold-glow':    '0 0 40px rgba(251,191,36,0.3), 0 4px 20px rgba(245,158,11,0.2)',
       },
       backgroundImage: {
-        'mesh-dark':     'radial-gradient(at 40% 20%, hsla(260,60%,12%,1) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(240,50%,8%,1) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(270,55%,10%,1) 0px, transparent 50%)',
-        'mesh-hero':     'radial-gradient(at 20% 30%, hsla(265,80%,15%,0.8) 0px, transparent 55%), radial-gradient(at 80% 70%, hsla(240,70%,10%,0.9) 0px, transparent 55%), radial-gradient(at 50% 0%, hsla(280,60%,12%,0.7) 0px, transparent 50%)',
+        'mesh-dark':     'radial-gradient(at 40% 20%, hsla(260,60%,12%,1) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(190,50%,8%,1) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(270,55%,10%,1) 0px, transparent 50%)',
+        'mesh-hero':     'radial-gradient(at 20% 30%, hsla(265,80%,15%,0.8) 0px, transparent 55%), radial-gradient(at 80% 70%, hsla(190,70%,10%,0.9) 0px, transparent 55%), radial-gradient(at 50% 0%, hsla(280,60%,12%,0.7) 0px, transparent 50%)',
         'noise':         "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")",
       },
     },
