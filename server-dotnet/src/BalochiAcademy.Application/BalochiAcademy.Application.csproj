@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BalochiAcademy.Application</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR"                        Version="12.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore"  Version="9.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BalochiAcademy.Domain\BalochiAcademy.Domain.csproj" />
+  </ItemGroup>
+</Project>
