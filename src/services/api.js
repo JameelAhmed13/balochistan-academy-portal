@@ -1,6 +1,5 @@
 // Single axios instance for the Balochistan Academy Portal backend (/api). Attaches the JWT to every
-// request and bounces to login on 401. The Ollama path (ollamaService.js) uses its
-// own fetch and is intentionally NOT routed through here.
+// request, auto-refreshes on 401, and bounces to login only when refresh also fails.
 import axios from 'axios'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
@@ -16,11 +15,33 @@ api.interceptors.request.use((config) => {
 let onUnauthorized = null
 export function setUnauthorizedHandler(fn) { onUnauthorized = fn }
 
+// Deduplicate concurrent 401 → refresh calls so only one refresh request flies
+let _refreshPromise = null
+
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
-    if (err.response?.status === 401 && onUnauthorized) onUnauthorized()
-    // surface the server's { error } message
+  async (err) => {
+    const original = err.config
+    if (err.response?.status === 401 && !original._retry) {
+      original._retry = true
+      const refreshToken = localStorage.getItem('bap_refresh_token')
+      if (refreshToken) {
+        try {
+          if (!_refreshPromise) {
+            _refreshPromise = axios.post(`${API_BASE}/auth/refresh`, { refreshToken })
+              .finally(() => { _refreshPromise = null })
+          }
+          const { data } = await _refreshPromise
+          localStorage.setItem('bap_token', data.token)
+          localStorage.setItem('bap_refresh_token', data.refreshToken)
+          original.headers.Authorization = `Bearer ${data.token}`
+          return api(original)
+        } catch {
+          // refresh failed — fall through to logout
+        }
+      }
+      if (onUnauthorized) onUnauthorized()
+    }
     const msg = err.response?.data?.error || err.message || 'Request failed'
     return Promise.reject(Object.assign(new Error(msg), { status: err.response?.status, data: err.response?.data }))
   },

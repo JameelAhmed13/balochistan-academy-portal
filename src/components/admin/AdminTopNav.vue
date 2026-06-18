@@ -128,6 +128,7 @@ const initial = computed(() => (auth.user?.name || 'A').charAt(0).toUpperCase())
 const menus = [
   { key: 'curriculum', label: 'Curriculum', icon: BookOpen, items: [
     { label: 'Dashboard',          path: '/app/admin',          icon: LayoutDashboard, desc: 'Overview & quick stats' },
+    { label: 'Grade Bands',        path: '/app/admin/bands',    icon: Layers,          desc: 'Primary, Middle, Secondary…' },
     { label: 'Grades',             path: '/app/admin/grades',   icon: GraduationCap,   desc: 'Define grades & their subjects' },
     { label: 'Syllabus',           path: '/app/admin/syllabus', icon: FolderTree,      desc: 'Units, topics & learning objectives' },
     { label: 'AI Tutors',          path: '/app/admin/tutors',   icon: Users,           desc: 'Persona tutors per subject/grade' },

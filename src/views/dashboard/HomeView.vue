@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { TrendingUp } from '@lucide/vue'
 import { useStudentStore } from '@/stores/student'
 import { useAuthStore } from '@/stores/auth'
@@ -75,6 +75,8 @@ const theme = useThemeStore()
 
 const student = useStudentStore()
 const auth = useAuthStore()
+
+onMounted(() => student.fetchStats().catch(() => {}))
 
 const kpis = computed(() => {
   const passRate = student.totalTests ? Math.round((student.passedTests / student.totalTests) * 100) : 0

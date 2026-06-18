@@ -7,6 +7,7 @@ import api from '@/services/api'
 // constants for the dynamic admin/student flows.
 export const useCatalogStore = defineStore('catalog', () => {
   const grades = ref([])
+  const bands = ref([])
   const subjects = ref([])        // all subjects (admin); per-grade via subjectsForGrade
   const tutors = ref([])
   const gradeSubjects = ref({})   // gradeCode -> [subject]
@@ -28,6 +29,7 @@ export const useCatalogStore = defineStore('catalog', () => {
   }
 
   // ── reads ──────────────────────────────────────────────────────────
+  async function fetchBands() { bands.value = (await api.get('/bands')).data }
   async function fetchGrades() { grades.value = (await api.get('/grades')).data }
   async function fetchTutors() { tutors.value = (await api.get('/tutors')).data }
   async function fetchSubjectsForGrade(code) {
@@ -59,6 +61,11 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   }
 
+  // ── admin: bands ────────────────────────────────────────────────────
+  async function createBand(payload) { await api.post('/admin/bands', payload); await fetchBands() }
+  async function updateBand(id, payload) { await api.put(`/admin/bands/${id}`, payload); await fetchBands() }
+  async function deleteBand(id) { await api.delete(`/admin/bands/${id}`); await fetchBands() }
+
   // ── admin: subjects (all) + writes ──────────────────────────────────
   async function fetchAllSubjects() { subjects.value = (await api.get('/admin/subjects')).data.map(decorate) }
 
@@ -87,9 +94,10 @@ export const useCatalogStore = defineStore('catalog', () => {
   async function deleteObjective(id) { await api.delete(`/admin/syllabus/objectives/${id}`) }
 
   return {
-    grades, subjects, tutors, gradeSubjects, syllabus, loaded, loading, error,
+    grades, bands, subjects, tutors, gradeSubjects, syllabus, loaded, loading, error,
     enabledGrades, gradeByCode, subjectsForGrade, findSubject, tutorsForGrade, syllabusFor,
-    fetchGrades, fetchTutors, fetchSubjectsForGrade, fetchSyllabus, bootstrap, fetchAllSubjects,
+    fetchBands, fetchGrades, fetchTutors, fetchSubjectsForGrade, fetchSyllabus, bootstrap, fetchAllSubjects,
+    createBand, updateBand, deleteBand,
     createGrade, updateGrade, deleteGrade, setGradeSubjects,
     createSubject, updateSubject, deleteSubject,
     createTutor, updateTutor, deleteTutor,

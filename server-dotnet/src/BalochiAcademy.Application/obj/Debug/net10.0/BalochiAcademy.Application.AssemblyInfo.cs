@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BalochiAcademy.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+addb5f07f0f1680e027fa806297c996d71100fd6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+177d27935a8a58841bf8ed634ac6b0af618b9264")]
 [assembly: System.Reflection.AssemblyProductAttribute("BalochiAcademy.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BalochiAcademy.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

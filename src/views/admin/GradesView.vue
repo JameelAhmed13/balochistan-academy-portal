@@ -37,7 +37,15 @@
         <h2>{{ editing ? 'Edit grade' : 'Add grade' }}</h2>
         <label>Code <input v-model="form.code" :disabled="editing" placeholder="e.g. 9 or ECD" /></label>
         <label>Label <input v-model="form.label" placeholder="e.g. Grade 9" /></label>
-        <label>Band <input v-model="form.band" placeholder="e.g. 9-12" /></label>
+        <label>Band
+          <div class="adm-band-row">
+            <select v-model="form.band" class="adm-select">
+              <option value="">— select band —</option>
+              <option v-for="b in catalog.bands" :key="b.id" :value="b.name">{{ b.name }}</option>
+            </select>
+            <button type="button" class="adm-refresh" @click="catalog.fetchBands()" title="Refresh bands">↺</button>
+          </div>
+        </label>
         <label>Sort order <input v-model.number="form.sort_order" type="number" /></label>
         <label class="adm-check"><input v-model="form.enabled" type="checkbox" /> Enabled</label>
         <p v-if="err" class="adm-err">{{ err }}</p>
@@ -80,8 +88,7 @@ const saving = ref(false)
 const err = ref('')
 
 onMounted(async () => {
-  await catalog.fetchGrades()
-  await catalog.fetchAllSubjects()
+  await Promise.all([catalog.fetchGrades(), catalog.fetchAllSubjects(), catalog.fetchBands()])
 })
 
 function openCreate() { editing.value = false; err.value = ''; form.value = { code: '', label: '', band: '', sort_order: 99, enabled: true } }
@@ -145,4 +152,8 @@ async function saveSubjects() {
 .adm-subgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .adm-dialog-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
 .adm-err { color: #f87171; font-size: .85rem; margin: 0; }
+.adm-band-row { display: flex; gap: 8px; align-items: center; }
+.adm-select { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--t-border); background: var(--t-bg); color: var(--t-text1); font-size: .9rem; }
+.adm-refresh { flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--t-border); background: var(--t-hover); color: var(--t-text2); cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.adm-refresh:hover { border-color: var(--t-accent); color: var(--t-accent); }
 </style>
