@@ -11,7 +11,7 @@
         <div class="text-white font-bold text-lg">🎓 Full Access — Only Rs. 999/year</div>
         <div class="text-white/80 text-sm mt-0.5">Unlock all AI features, unlimited tests, and coin rewards</div>
       </div>
-      <button type="button" class="btn-secondary text-amber-700 font-semibold shrink-0">Activate Now</button>
+      <RouterLink to="/app/checkout" class="btn-secondary text-amber-700 font-semibold shrink-0">Activate Now</RouterLink>
     </div>
 
     <!-- Getting Started Guide (shown only to new users) -->

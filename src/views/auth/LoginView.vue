@@ -19,6 +19,21 @@
     <div class="frame-corner fc-tl" /><div class="frame-corner fc-tr" />
     <div class="frame-corner fc-bl" /><div class="frame-corner fc-br" />
 
+    <!-- ── Top header ── -->
+    <header class="lp-header">
+      <RouterLink to="/" class="lp-hd-brand">
+        <img src="@/assets/logo.png" alt="Balochistan Academy Portal" class="lp-hd-logo" />
+        <span class="lp-hd-name">Balochistan Academy<em>&nbsp;Portal</em></span>
+      </RouterLink>
+      <div class="lp-hd-actions">
+        <button class="lp-hd-btn icon" type="button" :aria-label="theme.isDark ? 'Switch to light mode' : 'Switch to dark mode'" @click="theme.toggle()">
+          <Sun v-if="theme.isDark" :size="16" /><Moon v-else :size="16" />
+        </button>
+        <RouterLink to="/" class="lp-hd-btn"><ArrowLeft :size="15" /> Back to home</RouterLink>
+      </div>
+    </header>
+
+    <div class="login-body">
     <!-- Left panel — AI showcase -->
     <div class="login-left">
       <div class="left-content">
@@ -269,11 +284,12 @@
             <span class="hint-label">ADMIN</span>
             Admins sign in with their username &amp; password
           </div>
-          <a href="https://wa.me/923001234567" target="_blank" class="wa-link">
+          <a href="https://wa.me/923703153540" target="_blank" class="wa-link">
             Need access? <span>WhatsApp us →</span>
           </a>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -282,11 +298,14 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import { Sun, Moon, ArrowLeft } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import api from '@/services/api'
 
 const router = useRouter()
 const auth = useAuthStore()
+const theme = useThemeStore()
 const toast = useToast()
 
 const form = ref({ username: '', password: '' })
@@ -327,7 +346,7 @@ async function loadGrades() {
 function routeAfterAuth(user) {
   if (user.role === 'admin') router.push('/app/admin')
   else if (!user.gradeCode) router.push('/app/select-grade')
-  else router.push('/app')
+  else router.push('/app/hub') // Hub is the student's starter screen after login/register
 }
 
 async function handleLogin() {
@@ -410,10 +429,34 @@ onUnmounted(() => cancelAnimationFrame(animHandle))
 <style scoped>
 /* ─── Base ─── */
 .login-page {
-  min-height: 100vh; display: flex; position: relative; overflow: hidden;
-  background: #030712;
+  min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden;
+  background: radial-gradient(circle at 20% 8%, #0a1020, #030712 62%);
   cursor: none;
 }
+.login-body { flex: 1; display: flex; min-height: 0; position: relative; z-index: 3; }
+
+/* ─── Top header ─── */
+.lp-header {
+  position: relative; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 22px;
+}
+.lp-hd-brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.lp-hd-logo { width: 40px; height: 40px; border-radius: 11px; object-fit: contain; }
+.lp-hd-name { font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 15px; color: #f1f5f9; white-space: nowrap; }
+.lp-hd-name em { font-style: normal; color: #a78bfa; }
+.lp-hd-actions { display: flex; align-items: center; gap: 8px; }
+.lp-hd-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 15px; border-radius: 11px; font-size: 13px; font-weight: 700;
+  text-decoration: none; cursor: pointer;
+  color: #e2e8f0; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  transition: color .2s, border-color .2s, background .2s, transform .2s;
+}
+.lp-hd-btn:hover { color: #fff; border-color: rgba(124,106,245,0.5); transform: translateY(-1px); }
+.lp-hd-btn.icon { padding: 9px; }
+@media (max-width: 600px) { .lp-hd-name { display: none; } }
 
 /* ─── Aurora background ─── */
 .aurora-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
@@ -722,4 +765,77 @@ code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.35rem; border-radiu
 .wa-link { color: rgba(148,163,184,0.5); font-size: 0.78rem; text-decoration: none; text-align: center; transition: color 0.2s; }
 .wa-link span { color: #4ade80; }
 .wa-link:hover { color: rgba(148,163,184,0.9); }
+
+/* ════════════════════════════════════════════════════════════
+   LIGHT THEME — kept violet/cyan/gold identity, light surfaces
+   ════════════════════════════════════════════════════════════ */
+html:not(.dark) .login-page { background: radial-gradient(circle at 20% 8%, #eef0fb, #f7f8fe 60%); }
+html:not(.dark) .grid-overlay {
+  background-image: linear-gradient(rgba(124,106,245,0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(124,106,245,0.05) 1px, transparent 1px);
+}
+html:not(.dark) .frame-corner { border-color: rgba(124,106,245,0.35); }
+
+/* header */
+html:not(.dark) .lp-hd-name { color: #0f1424; }
+html:not(.dark) .lp-hd-name em { color: #6b54e8; }
+html:not(.dark) .lp-hd-btn { color: #4b5168; background: #ffffff; border-color: #e5e7f2; }
+html:not(.dark) .lp-hd-btn:hover { color: #6b54e8; border-color: #6b54e8; }
+
+/* left showcase panel */
+html:not(.dark) .brand-name,
+html:not(.dark) .left-headline,
+html:not(.dark) .showcase-name { color: #0f1424; }
+html:not(.dark) .brand-tagline,
+html:not(.dark) .showcase-subject,
+html:not(.dark) .showcase-msg { color: #4b5168; }
+html:not(.dark) .headline-grad {
+  background: linear-gradient(90deg, #6b54e8, #0891b2 60%, #b45309);
+  -webkit-background-clip: text; background-clip: text;
+}
+html:not(.dark) .left-stat { background: #ffffff; border-color: #e7e9f5; }
+html:not(.dark) .stat-num { color: #b45309; }
+html:not(.dark) .stat-lbl { color: #6b7280; }
+html:not(.dark) .ai-showcase-card { background: #ffffff; border-color: rgba(124,106,245,0.18); box-shadow: 0 10px 36px rgba(15,20,36,0.10); }
+html:not(.dark) .chip { background: rgba(124,106,245,0.10); border-color: rgba(124,106,245,0.22); color: #6b54e8; }
+
+/* glass card + form */
+html:not(.dark) .glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82) 42%, rgba(124,106,245,0.06));
+  border-color: rgba(124,106,245,0.16);
+  box-shadow: 0 24px 70px rgba(15,20,36,0.14), 0 0 0 1px rgba(124,106,245,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+html:not(.dark) .glass-card::before {
+  background:
+    radial-gradient(130% 80% at 0% 0%, rgba(255,255,255,0.5), transparent 55%),
+    linear-gradient(115deg, transparent 30%, rgba(124,106,245,0.05) 47%, transparent 64%);
+  background-size: 100% 100%, 250% 100%;
+}
+html:not(.dark) .form-title { color: #0f1424; }
+html:not(.dark) .form-sub { color: #6b7280; }
+html:not(.dark) .form-icon { background: rgba(124,106,245,0.10); border-color: rgba(124,106,245,0.22); box-shadow: 0 0 24px rgba(124,106,245,0.14); }
+html:not(.dark) .mode-toggle { background: rgba(124,106,245,0.05); border-color: rgba(124,106,245,0.14); }
+html:not(.dark) .mode-tab { color: #6b7280; }
+html:not(.dark) .mode-tab:hover { color: #0f1424; }
+html:not(.dark) .field-label { color: #6b7280; }
+html:not(.dark) .field-wrap.focused .field-label,
+html:not(.dark) .field-wrap.focused .field-icon { color: #6b54e8; }
+html:not(.dark) .field-icon { color: rgba(75,81,104,0.5); }
+html:not(.dark) .glass-input {
+  background: #ffffff; border-color: #d7dbeb; color: #0f1424;
+  box-shadow: inset 0 1px 0 rgba(15,20,36,0.03);
+}
+html:not(.dark) .glass-input::placeholder { color: #9aa0b4; }
+html:not(.dark) .glass-input:focus {
+  background: #ffffff; border-color: rgba(124,106,245,0.5);
+  box-shadow: 0 0 0 3px rgba(124,106,245,0.14);
+}
+html:not(.dark) .glass-select option { background: #ffffff; color: #0f1424; }
+html:not(.dark) .switch-prompt { color: #6b7280; }
+html:not(.dark) .link-btn { color: #6b54e8; }
+html:not(.dark) .link-btn:hover { color: #4a35a6; }
+html:not(.dark) .demo-hint { background: rgba(217,119,6,0.07); border-color: rgba(217,119,6,0.18); color: #6b5a50; }
+html:not(.dark) .hint-label { background: rgba(217,119,6,0.16); color: #b45309; }
+html:not(.dark) .wa-link { color: #6b7280; }
+html:not(.dark) .wa-link:hover { color: #0f1424; }
 </style>

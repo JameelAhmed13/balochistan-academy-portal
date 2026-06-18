@@ -45,6 +45,9 @@
         <RouterLink to="/app" class="atn-site" title="Back to student site">
           <ExternalLink class="w-4 h-4" /> <span class="atn-site-lbl">View Site</span>
         </RouterLink>
+        <button type="button" class="atn-icon-btn" :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'" :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'" @click="theme.toggle()">
+          <component :is="isDark ? Sun : Moon" class="w-4 h-4" />
+        </button>
         <RouterLink to="/app/admin/notifications" class="atn-icon-btn" title="Notifications" aria-label="Notifications">
           <Bell class="w-4 h-4" />
         </RouterLink>
@@ -57,6 +60,7 @@
               <div class="atn-user-name">{{ auth.user?.name || 'Admin' }}</div>
               <div class="atn-user-role">Administrator</div>
             </div>
+            <RouterLink to="/app/admin/profile" class="atn-user-item" @click="userOpen = false"><UserCog class="w-4 h-4" /> Edit profile</RouterLink>
             <button type="button" class="atn-user-item" @click="theme.toggle?.()">
               <component :is="isDark ? Sun : Moon" class="w-4 h-4" /> {{ isDark ? 'Light mode' : 'Dark mode' }}
             </button>
@@ -100,7 +104,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import {
   LayoutDashboard, BookOpen, ClipboardList, Users, BarChart2, Settings, Bell,
-  Menu, X, ChevronDown, ExternalLink, LogOut, Sun, Moon,
+  Menu, X, ChevronDown, ExternalLink, LogOut, Sun, Moon, UserCog, UploadCloud,
   FileText, FolderTree, GraduationCap, Coins, MessageSquareWarning, BellRing,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
@@ -130,8 +134,9 @@ const menus = [
     { label: 'Subjects & Content', path: '/app/admin/content',  icon: FolderTree,      desc: 'Subjects, books, units & topics' },
   ] },
   { key: 'assessments', label: 'Assessments', icon: ClipboardList, items: [
-    { label: 'Question Bank',  path: '/app/admin/questions', icon: FileText,      desc: 'Manage MCQ & subjective items' },
-    { label: 'Tests & Papers', path: '/app/admin/tests',     icon: ClipboardList, desc: 'Create, assign & track tests' },
+    { label: 'Question Bank',     path: '/app/admin/questions', icon: FileText,      desc: 'Manage MCQ & subjective items' },
+    { label: 'Tests & Papers',    path: '/app/admin/tests',     icon: ClipboardList, desc: 'Create, assign & track tests' },
+    { label: 'Upload Assessments', path: '/app/admin/upload-assessments', icon: UploadCloud, desc: 'Bulk-upload assessment files' },
   ] },
   { key: 'people', label: 'People', icon: Users, items: [
     { label: 'Users & Roles',   path: '/app/admin/users', icon: GraduationCap, desc: 'Students, teachers & admins' },
@@ -159,7 +164,7 @@ function signOut() { auth.logout(); router.push('/login') }
   background: var(--t-header); border-bottom: 1px solid var(--t-header-border);
   box-shadow: var(--t-header-shadow); backdrop-filter: var(--t-blur);
 }
-.atn-inner { display: flex; align-items: center; gap: 0.5rem; height: 64px; padding: 0 1rem; max-width: 1400px; margin: 0 auto; }
+.atn-inner { display: flex; align-items: center; gap: 0.5rem; height: 64px; padding: 0 2rem; max-width: none; margin: 0; }
 
 .atn-brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; flex-shrink: 0; margin-right: 0.5rem; }
 .atn-logo { width: 36px; height: 36px; object-fit: contain; border-radius: 8px; }

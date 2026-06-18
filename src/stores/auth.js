@@ -53,6 +53,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // update own profile (+ optional password change); refreshes the cached user
+  async function updateProfile(payload) {
+    const { data } = await api.put('/auth/me', payload)
+    user.value = data.user
+    persist()
+    return data.user
+  }
+
   async function logout() {
     try { if (token.value) await api.post('/auth/logout') } catch { /* ignore */ }
     user.value = null
@@ -83,5 +91,5 @@ export const useAuthStore = defineStore('auth', () => {
   // wire the 401 handler so any expired token logs out
   setUnauthorizedHandler(() => { logout() })
 
-  return { user, token, isLoggedIn, isAdmin, hasGrade, login, register, fetchMe, logout, loginHistory, loadLoginHistory, updateCoins }
+  return { user, token, isLoggedIn, isAdmin, hasGrade, login, register, fetchMe, updateProfile, logout, loginHistory, loadLoginHistory, updateCoins }
 })

@@ -4,23 +4,23 @@
 
 /* ─── Theme Tokens ─── */
 :root {
-  /* Light theme defaults — indigo + violet refresh */
-  --t-bg:             #f4f5fb;
+  /* Light theme defaults — Cosmic (violet → cyan → gold), matches landing & login */
+  --t-bg:             #f4f6fb;
   --t-bg2:            #ffffff;
   --t-surface:        #ffffff;
   --t-border:         #e5e7f2;
   --t-text1:          #0f1424;
   --t-text2:          #4b5168;
   --t-text3:          #8b90a6;
-  --t-accent:         #6366f1;
-  --t-accent2:        #8b5cf6;
-  --t-yellow:         #eab308;
+  --t-accent:         #6b54e8;
+  --t-accent2:        #0891b2;
+  --t-yellow:         #d97706;
   --t-gold:           #d97706;
-  --t-hover:          rgba(99, 102, 241, 0.05);
-  --t-hover2:         rgba(99, 102, 241, 0.09);
+  --t-hover:          rgba(108, 84, 232, 0.05);
+  --t-hover2:         rgba(108, 84, 232, 0.09);
   --t-sidebar:        #ffffff;
   --t-sidebar-border: #e5e7f2;
-  --t-sidebar-shadow: 1px 0 24px rgba(79, 70, 229, 0.06);
+  --t-sidebar-shadow: 1px 0 24px rgba(91, 67, 204, 0.06);
   --t-header:         rgba(255, 255, 255, 0.85);
   --t-header-border:  #e5e7f2;
   --t-header-shadow:  0 1px 3px rgba(15, 20, 36, 0.06);
@@ -30,14 +30,14 @@
   --t-aurora1:        transparent;
   --t-aurora2:        transparent;
   --t-aurora3:        transparent;
-  --t-acc-alpha-sm:   rgba(99, 102, 241, 0.08);
-  --t-acc-alpha-md:   rgba(99, 102, 241, 0.14);
-  --t-logo-glow:      rgba(99, 102, 241, 0.3);
+  --t-acc-alpha-sm:   rgba(108, 84, 232, 0.08);
+  --t-acc-alpha-md:   rgba(108, 84, 232, 0.14);
+  --t-logo-glow:      rgba(108, 84, 232, 0.3);
   --t-input-bg:       #ffffff;
   --t-input-border:   #cdd2e6;
-  --t-input-focus:    rgba(99, 102, 241, 0.25);
+  --t-input-focus:    rgba(108, 84, 232, 0.25);
   --t-dropdown-bg:    #ffffff;
-  --t-dropdown-item:  rgba(99, 102, 241, 0.06);
+  --t-dropdown-item:  rgba(108, 84, 232, 0.06);
   /* mirror-glass */
   --t-glass-bg:       rgba(255, 255, 255, 0.62);
   --t-glass-border:   rgba(255, 255, 255, 0.85);
@@ -47,7 +47,7 @@
 }
 
 html.dark {
-  /* Dark theme — deep indigo-black + violet refresh */
+  /* Dark theme — Cosmic (violet → cyan → gold), matches landing & login */
   --t-bg:             #0a0a14;
   --t-bg2:            #0e0e1c;
   --t-surface:        #141426;
@@ -55,9 +55,9 @@ html.dark {
   --t-text1:          #f2f3fb;
   --t-text2:          #a4a9c4;
   --t-text3:          #5c6182;
-  --t-accent:         #818cf8;
-  --t-accent2:        #a78bfa;
-  --t-yellow:         #facc15;
+  --t-accent:         #a78bfa;
+  --t-accent2:        #22d3ee;
+  --t-yellow:         #fbbf24;
   --t-gold:           #fbbf24;
   --t-hover:          rgba(255, 255, 255, 0.05);
   --t-hover2:         rgba(255, 255, 255, 0.08);
@@ -70,15 +70,15 @@ html.dark {
   --t-blur:           blur(24px) saturate(160%);
   --t-shadow:         0 4px 24px rgba(0,0,0,0.5), 0 1px 6px rgba(0,0,0,0.3);
   --t-shadow-md:      0 8px 40px rgba(0,0,0,0.6), 0 2px 10px rgba(0,0,0,0.3);
-  --t-aurora1:        rgba(129, 140, 248, 0.18);
-  --t-aurora2:        rgba(167, 139, 250, 0.12);
-  --t-aurora3:        rgba(99, 102, 241, 0.08);
-  --t-acc-alpha-sm:   rgba(129, 140, 248, 0.12);
-  --t-acc-alpha-md:   rgba(129, 140, 248, 0.20);
-  --t-logo-glow:      rgba(129, 140, 248, 0.5);
+  --t-aurora1:        rgba(167, 139, 250, 0.18);
+  --t-aurora2:        rgba(34, 211, 238, 0.12);
+  --t-aurora3:        rgba(124, 106, 245, 0.08);
+  --t-acc-alpha-sm:   rgba(167, 139, 250, 0.12);
+  --t-acc-alpha-md:   rgba(167, 139, 250, 0.20);
+  --t-logo-glow:      rgba(167, 139, 250, 0.5);
   --t-input-bg:       rgba(255, 255, 255, 0.04);
   --t-input-border:   rgba(255, 255, 255, 0.12);
-  --t-input-focus:    rgba(129, 140, 248, 0.32);
+  --t-input-focus:    rgba(167, 139, 250, 0.32);
   --t-dropdown-bg:    rgba(14, 14, 28, 0.98);
   --t-dropdown-item:  rgba(255, 255, 255, 0.05);
   /* mirror-glass */
@@ -122,6 +122,12 @@ html.dark {
     background: var(--t-bg);
     color: var(--t-text1);
     transition: background-color 0.25s, color 0.15s;
+  }
+
+  /* ── Headings use the landing display font (Space Grotesk) system-wide ── */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Syne', system-ui, sans-serif;
+    letter-spacing: -0.01em;
   }
 
   /* ── Global focus-visible ring (keyboard navigation) ── */
