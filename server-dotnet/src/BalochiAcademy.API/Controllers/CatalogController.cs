@@ -13,20 +13,40 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
 {
     // ── PUBLIC ────────────────────────────────────────────────────────────────
 
+    /// <summary>GET /api/bands — all grade bands ordered by sort order</summary>
+    [HttpGet("bands")]
+    public async Task<IActionResult> GetBands(CancellationToken ct)
+        => Ok(await uow.Repository<GradeBand>().Query()
+            .OrderBy(b => b.SortOrder).ThenBy(b => b.Name)
+            .Select(b => new { b.Id, b.Name, b.SortOrder })
+            .ToListAsync(ct));
+
     /// <summary>GET /api/grades — enabled grades with subject counts</summary>
     [HttpGet("grades")]
     public async Task<IActionResult> GetGrades(CancellationToken ct)
     {
-        var grades = await uow.Repository<Grade>().Query()
-            .Where(g => g.IsEnabled)
-            .OrderBy(g => g.SortOrder)
-            .Select(g => new
-            {
-                g.Code, g.Label, g.Band, g.SortOrder, g.IsEnabled,
-                SubjectCount = g.GradeSubjects.Count,
-            })
-            .ToListAsync(ct);
-        return Ok(grades);
+        try
+        {
+            var grades = await uow.Repository<Grade>().Query()
+               .Where(g => g.IsEnabled)
+               .OrderBy(g => g.SortOrder)
+               .Select(g => new
+               {
+                   g.Code,
+                   g.Label,
+                   g.Band,
+                   g.SortOrder,
+                   g.IsEnabled,
+                   SubjectCount = g.GradeSubjects.Count,
+               })
+               .ToListAsync(ct);
+            return Ok(grades);
+        }
+        catch (Exception ex)
+        {
+
+            return Problem(ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>GET /api/grades/{code}/subjects</summary>
@@ -50,18 +70,30 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
             .OrderBy(u => u.SortOrder).ThenBy(u => u.Number)
             .Select(u => new
             {
-                u.Id, u.Name, u.Number, u.SortOrder, u.Description,
+                u.Id,
+                u.Name,
+                u.Number,
+                u.SortOrder,
+                u.Description,
                 Topics = u.Topics.OrderBy(t => t.SortOrder).Select(t => new
                 {
-                    t.Id, t.Name, t.SortOrder,
+                    t.Id,
+                    t.Name,
+                    t.SortOrder,
                     Objectives = t.Objectives.Select(o => new
                     {
-                        o.Id, o.Code, o.ObjectiveText, o.CognitiveLevel
+                        o.Id,
+                        o.Code,
+                        o.ObjectiveText,
+                        o.CognitiveLevel
                     }),
                 }),
                 Objectives = u.Objectives.Where(o => o.TopicId == null).Select(o => new
                 {
-                    o.Id, o.Code, o.ObjectiveText, o.CognitiveLevel
+                    o.Id,
+                    o.Code,
+                    o.ObjectiveText,
+                    o.CognitiveLevel
                 }),
             })
             .ToListAsync(ct);
@@ -84,7 +116,64 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
         if (!string.IsNullOrEmpty(subject))
             q = q.Where(t => t.Subject != null && t.Subject.Name == subject);
 
-        return Ok(await q.ToListAsync(ct));
+        var result = await q.Select(t => new
+        {
+            t.Id,
+            t.SubjectId,
+            t.GradeCode,
+            t.Persona,
+            t.Slug,
+            t.Icon,
+            t.Color,
+            t.Description,
+            t.IsActive,
+            Subject = t.Subject == null ? null : new
+            {
+                t.Subject.Id,
+                t.Subject.Name,
+                t.Subject.NameUr,
+                t.Subject.Icon,
+                t.Subject.Color,
+                t.Subject.Medium,
+            },
+        }).ToListAsync(ct);
+        return Ok(result);
+    }
+
+    // ── ADMIN: Grade Bands ────────────────────────────────────────────────────
+
+    [HttpPost("admin/bands"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> CreateBand([FromBody] GradeBand req, CancellationToken ct)
+    {
+        if (await uow.Repository<GradeBand>().Query().AnyAsync(b => b.Name == req.Name, ct))
+            return Conflict(new { error = "Band name already exists" });
+        uow.Repository<GradeBand>().Add(req);
+        await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Create", "GradeBand", newValues: req, ct: ct);
+        return Created($"/api/admin/bands/{req.Id}", new { req.Id, req.Name, req.SortOrder });
+    }
+
+    [HttpPut("admin/bands/{id:int}"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> UpdateBand(int id, [FromBody] GradeBand req, CancellationToken ct)
+    {
+        var band = await uow.Repository<GradeBand>().FindAsync([id], ct);
+        if (band == null) return NotFound();
+        band.Name      = req.Name;
+        band.SortOrder = req.SortOrder;
+        await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Update", "GradeBand", entityId: id, newValues: band, ct: ct);
+        return Ok(new { band.Id, band.Name, band.SortOrder });
+    }
+
+    [HttpDelete("admin/bands/{id:int}"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> DeleteBand(int id, CancellationToken ct)
+    {
+        var band = await uow.Repository<GradeBand>().FindAsync([id], ct);
+        if (band == null) return NotFound();
+        uow.Repository<GradeBand>().Remove(band);
+        await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Delete", "GradeBand", oldValues: band, ct: ct);
+        return NoContent();
     }
 
     // ── ADMIN: Grades ─────────────────────────────────────────────────────────
@@ -106,8 +195,11 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
 
         var grade = new Grade
         {
-            Code = req.Code, Label = req.Label,
-            Band = req.Band, SortOrder = req.SortOrder, IsEnabled = req.IsEnabled,
+            Code = req.Code,
+            Label = req.Label,
+            Band = req.Band,
+            SortOrder = req.SortOrder,
+            IsEnabled = req.IsEnabled,
         };
         uow.Repository<Grade>().Add(grade);
         await uow.SaveChangesAsync(ct);
@@ -122,8 +214,8 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
         var grade = await uow.Repository<Grade>().FindAsync([code], ct);
         if (grade == null) return NotFound();
         var old = new { grade.Label, grade.Band, grade.SortOrder, grade.IsEnabled };
-        if (req.Label     != null) grade.Label     = req.Label;
-        if (req.Band      != null) grade.Band      = req.Band;
+        if (req.Label != null) grade.Label = req.Label;
+        if (req.Band != null) grade.Band = req.Band;
         if (req.SortOrder != null) grade.SortOrder = req.SortOrder.Value;
         if (req.IsEnabled != null) grade.IsEnabled = req.IsEnabled.Value;
         await uow.SaveChangesAsync(ct);
@@ -178,7 +270,7 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
         var subject = await uow.Repository<Subject>().FindAsync([id], ct);
         if (subject == null) return NotFound();
         subject.Name = req.Name; subject.NameUr = req.NameUr;
-        subject.Icon = req.Icon; subject.Color  = req.Color;
+        subject.Icon = req.Icon; subject.Color = req.Color;
         subject.Medium = req.Medium;
         await uow.SaveChangesAsync(ct);
         return Ok(subject);

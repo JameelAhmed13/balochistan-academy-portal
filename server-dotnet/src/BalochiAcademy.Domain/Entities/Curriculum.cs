@@ -78,6 +78,12 @@ public class LearningObjective : AuditableEntity
     public Topic? Topic { get; set; }
 }
 
+public class GradeBand : AuditableEntity
+{
+    public string Name      { get; set; } = string.Empty;
+    public int    SortOrder { get; set; }
+}
+
 public class AiTutor : AuditableEntity
 {
     public int?    SubjectId    { get; set; }

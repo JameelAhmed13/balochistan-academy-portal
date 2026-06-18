@@ -101,7 +101,7 @@ import { onClickOutside } from '@vueuse/core'
 import {
   LayoutDashboard, BookOpen, ClipboardList, Users, BarChart2, Settings, Bell,
   Menu, X, ChevronDown, ExternalLink, LogOut, Sun, Moon,
-  FileText, FolderTree, GraduationCap, Coins, MessageSquareWarning, BellRing,
+  FileText, FolderTree, GraduationCap, Coins, MessageSquareWarning, BellRing, Layers,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -124,6 +124,7 @@ const initial = computed(() => (auth.user?.name || 'A').charAt(0).toUpperCase())
 const menus = [
   { key: 'curriculum', label: 'Curriculum', icon: BookOpen, items: [
     { label: 'Dashboard',          path: '/app/admin',          icon: LayoutDashboard, desc: 'Overview & quick stats' },
+    { label: 'Grade Bands',        path: '/app/admin/bands',    icon: Layers,          desc: 'Primary, Middle, Secondary…' },
     { label: 'Grades',             path: '/app/admin/grades',   icon: GraduationCap,   desc: 'Define grades & their subjects' },
     { label: 'Syllabus',           path: '/app/admin/syllabus', icon: FolderTree,      desc: 'Units, topics & learning objectives' },
     { label: 'AI Tutors',          path: '/app/admin/tutors',   icon: Users,           desc: 'Persona tutors per subject/grade' },
