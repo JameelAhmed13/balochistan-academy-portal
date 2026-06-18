@@ -175,6 +175,48 @@ CREATE TABLE IF NOT EXISTS coin_ledger (
   ts      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- ── STUDY SCHEDULE (AI/adaptive study planner — spec §3–5, §9) ───────
+-- Admin-set exam dates per grade+subject (spec §1.1)
+CREATE TABLE IF NOT EXISTS exam_dates (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  grade_code  TEXT NOT NULL REFERENCES grades(code) ON DELETE CASCADE,
+  subject_id  INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  exam_date   TEXT NOT NULL,                  -- ISO date
+  paper_type  TEXT DEFAULT 'combined',        -- objective|subjective|combined
+  total_marks INTEGER DEFAULT 100,
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (grade_code, subject_id)
+);
+
+-- One generated plan per student per subject
+CREATE TABLE IF NOT EXISTS student_schedules (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  subject_id  INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  grade_code  TEXT,
+  exam_date   TEXT NOT NULL,
+  daily_hours REAL NOT NULL DEFAULT 2,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (user_id, subject_id)
+);
+
+-- Per-day plan rows (spec §4.2 schedule entry)
+CREATE TABLE IF NOT EXISTS schedule_days (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  schedule_id INTEGER NOT NULL REFERENCES student_schedules(id) ON DELETE CASCADE,
+  day_date    TEXT NOT NULL,                  -- ISO date
+  unit_id     INTEGER REFERENCES units(id) ON DELETE SET NULL,
+  unit_title  TEXT,
+  task        TEXT,
+  mode        TEXT NOT NULL DEFAULT 'study',  -- study|revision
+  est_minutes INTEGER NOT NULL DEFAULT 90,
+  self_test   INTEGER NOT NULL DEFAULT 1,
+  status      TEXT NOT NULL DEFAULT 'pending',-- pending|done|missed|needs_review
+  sort_order  INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_sched_days ON schedule_days(schedule_id);
+
 -- ── derived leaderboard ─────────────────────────────────────────────
 DROP VIEW IF EXISTS leaderboard;
 CREATE VIEW leaderboard AS

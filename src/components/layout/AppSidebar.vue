@@ -72,7 +72,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWindowSize } from '@vueuse/core'
-import { LogOut, Home, Bot, BookOpen, Calendar, Trophy, Coins, HelpCircle, Layers, Medal, Sparkles, FileBarChart } from '@lucide/vue'
+import { LogOut, Home, Bot, BookOpen, Calendar, CalendarClock, Trophy, Coins, HelpCircle, Layers, Medal, Sparkles, FileBarChart } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import NavItem from './NavItem.vue'
 
@@ -88,6 +88,7 @@ const navItems = [
   { name: 'Home',              path: '/app',               icon: Home },
   { name: 'AI Tutor',          path: '/app/ai-tutor',      icon: Bot },
   { name: 'Saathi AI',         path: '/app/saathi',        icon: Sparkles },
+  { name: 'Study Plan',        path: '/app/schedule',      icon: CalendarClock },
   { name: 'Preparation',       path: '/app/preparation',   icon: BookOpen },
   { name: 'My Syllabus',       path: '/app/preparation/syllabus', icon: BookOpen },
   { name: 'Self Test',         path: '/app/self-test',     icon: Layers },

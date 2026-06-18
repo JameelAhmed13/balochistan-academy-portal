@@ -39,6 +39,9 @@ const routes = [
       { path: 'saathi',              name: 'Saathi',            component: () => import('@/views/saathi/SaathiView.vue') },
       { path: 'report',              name: 'PreparationReport', component: () => import('@/views/reports/PreparationReportView.vue') },
 
+      // AI adaptive study plan (spec §3–5, §9)
+      { path: 'schedule',            name: 'StudyPlan',         component: () => import('@/views/schedule/StudyPlanView.vue') },
+
       // Profile (any logged-in user) + subscription checkout
       { path: 'profile',             name: 'Profile',           component: () => import('@/views/profile/ProfileView.vue') },
       { path: 'checkout',            name: 'Checkout',          component: () => import('@/views/subscription/CheckoutView.vue') },

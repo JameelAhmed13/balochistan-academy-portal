@@ -7,6 +7,7 @@ import catalogRoutes from './routes/catalog.routes.js'
 import studentRoutes from './routes/student.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import aiRoutes from './routes/ai.routes.js'
+import scheduleRoutes from './routes/schedule.routes.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -21,6 +22,7 @@ app.use('/api', catalogRoutes) // /api/grades, /api/tutors (public reads)
 app.use('/api', studentRoutes) // /api/practice, /api/attempts, /api/leaderboard ...
 app.use('/api/admin', adminRoutes)
 app.use('/api/ai', aiRoutes)
+app.use('/api/schedule', scheduleRoutes)
 
 // 404 + error handlers
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }))
