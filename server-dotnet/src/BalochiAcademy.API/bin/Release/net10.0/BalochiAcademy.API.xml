@@ -1,0 +1,263 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BalochiAcademy.API</name>
+    </assembly>
+    <members>
+        <member name="T:BalochiAcademy.API.Authorization.PermissionAuthorizationHandler">
+            <summary>
+            Resolves PermissionRequirement by checking whether the authenticated user's
+            role has the required permission in the RolePermissions table.
+            Admins bypass all permission checks (they have unrestricted access by convention).
+            </summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Authorization.PermissionAuthorizationHandler.#ctor(BalochiAcademy.Application.Common.Interfaces.IPermissionService)">
+            <summary>
+            Resolves PermissionRequirement by checking whether the authenticated user's
+            role has the required permission in the RolePermissions table.
+            Admins bypass all permission checks (they have unrestricted access by convention).
+            </summary>
+        </member>
+        <member name="T:BalochiAcademy.API.Authorization.PermissionRequirement">
+            <summary>Authorization requirement for a specific granular permission.</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Authorization.PermissionRequirement.#ctor(System.String)">
+            <summary>Authorization requirement for a specific granular permission.</summary>
+        </member>
+        <member name="T:BalochiAcademy.API.Authorization.PermissionPolicyProvider">
+            <summary>
+            Dynamic policy provider that converts "Permission:{name}" policy names
+            into PermissionRequirement instances at runtime.
+            This allows [Authorize(Policy = "Permission:questions.manage")] without
+            registering every permission combination at startup.
+            </summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Authorization.PermissionPolicyProvider.#ctor(Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider)">
+            <summary>
+            Dynamic policy provider that converts "Permission:{name}" policy names
+            into PermissionRequirement instances at runtime.
+            This allows [Authorize(Policy = "Permission:questions.manage")] without
+            registering every permission combination at startup.
+            </summary>
+        </member>
+        <member name="T:BalochiAcademy.API.Authorization.RequirePermissionAttribute">
+            <summary>
+            Shorthand for [Authorize(Policy = "Permission:{name}")].
+            Usage: [RequirePermission("reports.view")]
+            </summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Authorization.RequirePermissionAttribute.#ctor(System.String)">
+            <summary>
+            Shorthand for [Authorize(Policy = "Permission:{name}")].
+            Usage: [RequirePermission("reports.view")]
+            </summary>
+        </member>
+        <member name="T:BalochiAcademy.API.Controllers.AiController">
+            <summary>Provides DB-sourced context for the front-end AI tutor (RAG grounding).</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.AiController.#ctor(BalochiAcademy.Application.Common.Interfaces.IUnitOfWork)">
+            <summary>Provides DB-sourced context for the front-end AI tutor (RAG grounding).</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.AiController.Context(System.String,System.Nullable{System.Int32},System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            GET /api/ai/context?gradeCode=&amp;subjectId=&amp;sample=6
+            Returns the syllabus outline + representative sample questions
+            that the browser can inject into an Ollama/Gemini prompt.
+            </summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.AuthController.Login(BalochiAcademy.Application.Auth.LoginRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/auth/login</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.AuthController.Register(BalochiAcademy.Application.Auth.RegisterRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/auth/register</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.AuthController.Me(System.Threading.CancellationToken)">
+            <summary>GET /api/auth/me</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.AuthController.UpdateGrade(BalochiAcademy.Application.Auth.UpdateGradeRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/auth/me/grade</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.AuthController.Refresh(BalochiAcademy.Application.Auth.RefreshTokenRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/auth/refresh</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.AuthController.Logout(System.Threading.CancellationToken)">
+            <summary>POST /api/auth/logout</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetGrades(System.Threading.CancellationToken)">
+            <summary>GET /api/grades — enabled grades with subject counts</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetSubjectsForGrade(System.String,System.Threading.CancellationToken)">
+            <summary>GET /api/grades/{code}/subjects</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetSyllabus(System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/grades/{code}/subjects/{subjectId}/syllabus — units→topics→objectives</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetTutors(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>GET /api/tutors?grade=&amp;subject=</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.AdminGetGrades(System.Threading.CancellationToken)">
+            <summary>GET /api/admin/grades — all grades (including disabled)</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.CreateGrade(BalochiAcademy.Application.Grades.CreateGradeRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/grades</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.UpdateGrade(System.String,BalochiAcademy.Application.Grades.UpdateGradeRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/grades/{code}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.DeleteGrade(System.String,System.Threading.CancellationToken)">
+            <summary>DELETE /api/admin/grades/{code}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.SetGradeSubjects(System.String,BalochiAcademy.Application.Grades.SetGradeSubjectsRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/grades/{code}/subjects</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CoinsController.Balance(System.Threading.CancellationToken)">
+            <summary>GET /api/coins/balance</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CoinsController.Transactions(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/coins/transactions</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CoinsController.GetPayoutAccount(System.Threading.CancellationToken)">
+            <summary>GET /api/coins/payout-account</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CoinsController.UpsertPayoutAccount(BalochiAcademy.Application.Coins.UpsertPayoutAccountRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/coins/payout-account — create or replace</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CoinsController.RequestWithdrawal(BalochiAcademy.Application.Coins.CreateWithdrawalRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/coins/withdraw — student requests withdrawal</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CoinsController.MyWithdrawals(System.Threading.CancellationToken)">
+            <summary>GET /api/coins/withdrawals</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CoinsController.AdminWithdrawals(System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/coins/withdrawals — all withdrawal requests</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CoinsController.ProcessWithdrawal(System.Int32,BalochiAcademy.Application.Coins.ProcessWithdrawalRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/coins/withdrawals/{id} — process withdrawal</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ComplaintsController.Create(BalochiAcademy.Application.Complaints.CreateComplaintRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/complaints — student submits a complaint</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ComplaintsController.MyComplaints(System.Threading.CancellationToken)">
+            <summary>GET /api/complaints — student's own complaints</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ComplaintsController.AdminList(System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/complaints</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ComplaintsController.Reply(System.Int32,BalochiAcademy.Application.Complaints.ReplyComplaintRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/complaints/{id} — admin replies</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.List(System.String,System.Nullable{System.Int32},System.String,System.Nullable{System.Int32},System.Threading.CancellationToken)">
+            <summary>GET /api/content?gradeCode=&amp;subjectId=&amp;kind=</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.Create(BalochiAcademy.Domain.Entities.ContentItem,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/content — admin uploads content item</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.Update(System.Int32,BalochiAcademy.Domain.Entities.ContentItem,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/content/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.Delete(System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/admin/content/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.GetCourses(System.String,System.Nullable{System.Int32},System.Threading.CancellationToken)">
+            <summary>GET /api/content/courses?gradeCode=&amp;subjectId=</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.GetCourse(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/content/courses/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.GetNotes(System.Threading.CancellationToken)">
+            <summary>GET /api/content/notes</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.CreateNote(BalochiAcademy.Domain.Entities.StudentNote,System.Threading.CancellationToken)">
+            <summary>POST /api/content/notes</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.UpdateNote(System.Int32,BalochiAcademy.Domain.Entities.StudentNote,System.Threading.CancellationToken)">
+            <summary>PUT /api/content/notes/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.ContentController.DeleteNote(System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/content/notes/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.NotificationsController.GetMine(System.Threading.CancellationToken)">
+            <summary>GET /api/notifications — current user's notifications</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.NotificationsController.MarkRead(System.Int32,System.Threading.CancellationToken)">
+            <summary>PATCH /api/notifications/{id}/read</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.NotificationsController.MarkAllRead(System.Threading.CancellationToken)">
+            <summary>PATCH /api/notifications/read-all</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.NotificationsController.Send(BalochiAcademy.Application.Notifications.SendNotificationRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/notifications — broadcast notification</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.QuestionsController.GetQuestions(BalochiAcademy.Application.Questions.QuestionFilterQuery,System.Threading.CancellationToken)">
+            <summary>GET /api/questions?gradeCode=&amp;subjectId=&amp;kind=&amp;page=&amp;pageSize=</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.QuestionsController.GetById(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/questions/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.QuestionsController.Create(BalochiAcademy.Application.Questions.CreateQuestionRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/questions — admin only</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.QuestionsController.Update(System.Int32,BalochiAcademy.Application.Questions.UpdateQuestionRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/questions/{id} — admin only</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.QuestionsController.Delete(System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/questions/{id} — admin only</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.QuestionsController.Random(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/questions/random?gradeCode=&amp;subjectId=&amp;count=30</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.GetTests(System.String,System.String,System.Boolean,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/tests?gradeCode=&amp;kind=&amp;published=true</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.GetTest(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/tests/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.Create(BalochiAcademy.Application.Tests.CreateTestRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/tests — admin only</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.TogglePublish(System.Int32,System.Threading.CancellationToken)">
+            <summary>PATCH /api/tests/{id}/publish — toggle publish</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.Delete(System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/tests/{id} — admin only</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.SubmitAttempt(BalochiAcademy.Application.Tests.SubmitAttemptRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/tests/attempts — student submits a test attempt</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.MyAttempts(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/tests/attempts — student's own attempts</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.GetAttempt(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/tests/attempts/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.MyStats(System.Threading.CancellationToken)">
+            <summary>GET /api/tests/me/stats</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.Leaderboard(System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/tests/leaderboard</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.UsersController.List(System.String,System.String,System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/users?role=&amp;gradeCode=&amp;page=</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.UsersController.StudentResults(System.Int32,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/users/{id}/results — student's test attempts</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.UsersController.Toggle(System.Int32,System.Threading.CancellationToken)">
+            <summary>PATCH /api/admin/users/{id}/toggle — activate/deactivate</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.UsersController.Analytics(System.Threading.CancellationToken)">
+            <summary>GET /api/admin/analytics — dashboard KPIs</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.UsersController.GetSettings(System.Threading.CancellationToken)">
+            <summary>GET /api/admin/settings</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.UsersController.UpdateSetting(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/settings/{key}</summary>
+        </member>
+        <member name="T:Program">
+            <summary>
+            Auto-generated public partial Program class for top-level statement apps.
+            </summary>
+        </member>
+    </members>
+</doc>

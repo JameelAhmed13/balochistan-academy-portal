@@ -179,8 +179,9 @@ D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcade
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\ref\BalochiAcademy.API.dll
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\BalochiAcademy.API.xml
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\AutoMapper.dll
-D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\FluentValidation.dll
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\FluentValidation.AspNetCore.dll
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\FluentValidation.DependencyInjectionExtensions.dll
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\BalochiAcademy.API.xml
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\dotnet-tools.json
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\appsettings.Production.json

@@ -59,7 +59,7 @@
           "dependencies": {
             "AutoMapper": {
               "target": "Package",
-              "version": "[12.*, )"
+              "version": "[16.1.1, )"
             },
             "FluentValidation": {
               "target": "Package",
@@ -776,6 +776,14 @@
             },
             "Microsoft.EntityFrameworkCore.Tools": {
               "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.*, )"
+            },
+            "Microsoft.Extensions.Configuration.EnvironmentVariables": {
+              "target": "Package",
+              "version": "[9.*, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
               "target": "Package",
               "version": "[9.*, )"
             },
