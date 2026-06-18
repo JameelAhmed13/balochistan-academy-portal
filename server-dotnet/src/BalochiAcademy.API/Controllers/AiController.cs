@@ -1,4 +1,5 @@
 using BalochiAcademy.Application.Common.Interfaces;
+using BalochiAcademy.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,9 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/ai")]
 [Authorize]
-public class AiController(IApplicationDbContext db) : ControllerBase
+public class AiController(IUnitOfWork uow) : ControllerBase
 {
-    private const int MaxSample    = 20;
+    private const int MaxSample     = 20;
     private const int MaxObjectives = 12;
 
     /// <summary>
@@ -32,14 +33,14 @@ public class AiController(IApplicationDbContext db) : ControllerBase
         var syllabusItems = new List<object>();
         if (!string.IsNullOrEmpty(gradeCode) && subjectId.HasValue)
         {
-            var units = await db.Units
+            var units = await uow.Repository<Unit>().Query()
                 .Where(u => u.GradeCode == gradeCode && u.SubjectId == subjectId)
                 .OrderBy(u => u.SortOrder).ThenBy(u => u.Number)
                 .Select(u => new { u.Id, u.Name, u.Description })
                 .ToListAsync(ct);
 
             var unitIds = units.Select(u => u.Id).ToList();
-            var objectives = await db.LearningObjectives
+            var objectives = await uow.Repository<LearningObjective>().Query()
                 .Where(o => o.UnitId != null && unitIds.Contains(o.UnitId!.Value))
                 .GroupBy(o => o.UnitId)
                 .ToDictionaryAsync(
@@ -56,7 +57,7 @@ public class AiController(IApplicationDbContext db) : ControllerBase
         }
 
         // ── sample questions ─────────────────────────────────────────────────
-        var qQuery = db.Questions.Where(q => q.Kind == "objective");
+        var qQuery = uow.Repository<Question>().Query().Where(q => q.Kind == "objective");
         if (!string.IsNullOrEmpty(gradeCode)) qQuery = qQuery.Where(q => q.GradeCode == gradeCode);
         if (subjectId.HasValue)               qQuery = qQuery.Where(q => q.SubjectId == subjectId);
 
@@ -68,11 +69,11 @@ public class AiController(IApplicationDbContext db) : ControllerBase
                 q.Stem,
                 Options = q.OptionsJson,
                 Correct = q.CorrectIndex,
-                Topic   = (string?)null,   // TopicText removed; keep field for API compat
+                Topic   = (string?)null,
             })
             .ToListAsync(ct);
 
-        // ── plain-text snippet (for browser → Ollama injection) ─────────────
+        // ── plain-text snippet ───────────────────────────────────────────────
         var lines = new List<string>();
         if (syllabusItems.Any())
         {
@@ -96,8 +97,7 @@ public class AiController(IApplicationDbContext db) : ControllerBase
 
         return Ok(new
         {
-            gradeCode,
-            subjectId,
+            gradeCode, subjectId,
             syllabus        = syllabusItems,
             sampleQuestions,
             contextText     = string.Join("\n", lines),

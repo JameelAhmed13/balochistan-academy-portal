@@ -320,6 +320,33 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.ToTable("Grades");
                 });
 
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.GradeBand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("GradeBands", (string)null);
+                });
+
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.GradeSubject", b =>
                 {
                     b.Property<string>("GradeCode")
@@ -779,7 +806,8 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("AvgPercent")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");

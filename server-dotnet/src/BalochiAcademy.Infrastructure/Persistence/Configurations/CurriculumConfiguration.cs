@@ -75,6 +75,17 @@ public class LearningObjectiveConfiguration : IEntityTypeConfiguration<LearningO
     }
 }
 
+public class GradeBandConfiguration : IEntityTypeConfiguration<GradeBand>
+{
+    public void Configure(EntityTypeBuilder<GradeBand> b)
+    {
+        b.HasKey(e => e.Id);
+        b.HasIndex(e => e.Name).IsUnique();
+        b.Property(e => e.Name).HasMaxLength(50).IsRequired();
+        b.ToTable("GradeBands");
+    }
+}
+
 public class AiTutorConfiguration : IEntityTypeConfiguration<AiTutor>
 {
     public void Configure(EntityTypeBuilder<AiTutor> b)

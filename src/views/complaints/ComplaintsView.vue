@@ -41,7 +41,7 @@
           <label class="label">Details</label>
           <textarea v-model="form.message" class="input min-h-[120px] resize-y" placeholder="Describe your complaint or suggestion in detail…" required />
         </div>
-        <button type="submit" class="btn-primary"><Send class="w-4 h-4" /> Submit Feedback</button>
+        <button type="submit" :disabled="submitting" class="btn-primary"><Send class="w-4 h-4" /> Submit Feedback</button>
       </form>
     </div>
 
@@ -57,6 +57,9 @@
           </div>
           <div class="font-medium text-sm text-slate-700">{{ s.title }}</div>
           <div class="text-xs text-slate-500 mt-0.5 line-clamp-2">{{ s.message }}</div>
+          <div v-if="s.adminReply" class="mt-2 p-2 rounded-lg bg-indigo-50 border border-indigo-100 text-xs text-indigo-700">
+            <strong>Admin reply:</strong> {{ s.adminReply }}
+          </div>
         </div>
       </div>
     </div>
@@ -64,22 +67,52 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Send } from '@lucide/vue'
 import { useToast } from 'primevue/usetoast'
+import api from '@/services/api'
 
 const toast = useToast()
-const form = ref({ type: 'Complaint', module: 'General', title: '', message: '' })
-const submissions = ref(JSON.parse(localStorage.getItem('bap_complaints') || '[]'))
+const form       = ref({ type: 'Complaint', module: 'General', title: '', message: '' })
+const submissions = ref([])
+const submitting  = ref(false)
 
-function submit() {
-  const s = { ...form.value, id: Date.now(), date: new Date().toISOString(), status: 'Pending' }
-  submissions.value.unshift(s)
-  localStorage.setItem('bap_complaints', JSON.stringify(submissions.value))
-  form.value = { type: 'Complaint', module: 'General', title: '', message: '' }
-  toast.add({ severity: 'success', summary: 'Submitted', detail: 'Thank you for your feedback!', life: 3000 })
+function normalise(c) {
+  return {
+    id:         c.id,
+    type:       c.category || 'Complaint',
+    title:      c.subject,
+    message:    c.description,
+    date:       c.createdAt,
+    status:     c.status || 'open',
+    adminReply: c.adminReply || null,
+  }
+}
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/complaints')
+    submissions.value = data.map(normalise)
+  } catch { /* offline — show empty list */ }
+})
+
+async function submit() {
+  submitting.value = true
+  try {
+    const { data } = await api.post('/complaints', {
+      category:    form.value.type,
+      subject:     form.value.title,
+      description: `[${form.value.module}] ${form.value.message}`,
+    })
+    submissions.value.unshift(normalise(data))
+    form.value = { type: 'Complaint', module: 'General', title: '', message: '' }
+    toast.add({ severity: 'success', summary: 'Submitted', detail: 'Thank you for your feedback!', life: 3000 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: e.message, life: 4000 })
+  } finally {
+    submitting.value = false
+  }
 }
 
 function fmt(iso) { return new Date(iso).toLocaleDateString('en-PK', { dateStyle: 'medium' }) }
 </script>
-

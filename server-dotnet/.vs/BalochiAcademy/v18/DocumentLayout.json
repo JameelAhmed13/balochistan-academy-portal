@@ -1,0 +1,109 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|d:\\office\\uss\\projects\\balochistan-academy-portal\\server-dotnet\\src\\balochiacademy.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|solutionrelative:src\\balochiacademy.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|d:\\office\\uss\\projects\\balochistan-academy-portal\\server-dotnet\\src\\balochiacademy.api\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|solutionrelative:src\\balochiacademy.api\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|d:\\office\\uss\\projects\\balochistan-academy-portal\\server-dotnet\\src\\balochiacademy.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|solutionrelative:src\\balochiacademy.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|d:\\office\\uss\\projects\\balochistan-academy-portal\\server-dotnet\\src\\balochiacademy.api\\controllers\\catalogcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|solutionrelative:src\\balochiacademy.api\\controllers\\catalogcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|d:\\office\\uss\\projects\\balochistan-academy-portal\\server-dotnet\\src\\balochiacademy.api\\controllers\\userscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11111111-0000-0000-0000-000000000001}|src\\BalochiAcademy.API\\BalochiAcademy.API.csproj|solutionrelative:src\\balochiacademy.api\\controllers\\userscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "UsersController.cs",
+              "DocumentMoniker": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\Controllers\\UsersController.cs",
+              "RelativeDocumentMoniker": "src\\BalochiAcademy.API\\Controllers\\UsersController.cs",
+              "ToolTip": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\Controllers\\UsersController.cs",
+              "RelativeToolTip": "src\\BalochiAcademy.API\\Controllers\\UsersController.cs",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAewEgAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-18T08:10:23.727Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "CatalogController.cs",
+              "DocumentMoniker": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\Controllers\\CatalogController.cs",
+              "RelativeDocumentMoniker": "src\\BalochiAcademy.API\\Controllers\\CatalogController.cs",
+              "ToolTip": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\Controllers\\CatalogController.cs",
+              "RelativeToolTip": "src\\BalochiAcademy.API\\Controllers\\CatalogController.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAIAwwB0AAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-18T08:03:04.415Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\Program.cs",
+              "RelativeDocumentMoniker": "src\\BalochiAcademy.API\\Program.cs",
+              "ToolTip": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\Program.cs",
+              "RelativeToolTip": "src\\BalochiAcademy.API\\Program.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAAAMwCwAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T17:15:33.056Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\appsettings.json",
+              "RelativeDocumentMoniker": "src\\BalochiAcademy.API\\appsettings.json",
+              "ToolTip": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\appsettings.json",
+              "RelativeToolTip": "src\\BalochiAcademy.API\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAABWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-06-17T17:15:05.285Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "src\\BalochiAcademy.API\\appsettings.Development.json",
+              "ToolTip": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\appsettings.Development.json",
+              "RelativeToolTip": "src\\BalochiAcademy.API\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-06-17T17:14:34.82Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

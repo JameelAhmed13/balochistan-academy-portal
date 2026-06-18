@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Send, Settings, Info, CheckCircle } from '@lucide/vue'
 import Dialog from 'primevue/dialog'
 import { useToast } from 'primevue/usetoast'
@@ -136,27 +136,41 @@ import { useStudentStore } from '@/stores/student'
 const student = useStudentStore()
 const toast = useToast()
 
-const accountModal = ref(false)
+const accountModal   = ref(false)
 const withdrawAmount = ref(300)
-const accountForm = ref({ name: '', number: '', service: 'Easypaisa' })
+const accountForm    = ref({ name: '', number: '', service: 'Easypaisa' })
+const saving         = ref(false)
+const withdrawing    = ref(false)
 
-const totalCoins = computed(() => student.totalCoins)
-const totalEarned = computed(() => `Rs. ${student.withdrawals.filter(w => w.status === 'approved').reduce((a, w) => a + w.amount * 0.5, 0).toFixed(0)}`)
+const totalCoins    = computed(() => student.totalCoins)
+const totalEarned   = computed(() => `Rs. ${student.withdrawals.filter(w => w.status === 'approved').reduce((a, w) => a + w.amount * 0.5, 0).toFixed(0)}`)
 const pendingAmount = computed(() => `Rs. ${student.withdrawals.filter(w => w.status === 'pending').reduce((a, w) => a + w.amount * 0.5, 0).toFixed(0)}`)
 
-function requestWithdrawal() {
+onMounted(() => student.fetchCoinData())
+
+async function requestWithdrawal() {
+  withdrawing.value = true
   try {
-    student.requestWithdrawal(withdrawAmount.value, student.payoutAccount)
+    await student.requestWithdrawal(withdrawAmount.value)
     toast.add({ severity: 'success', summary: 'Withdrawal Requested', detail: 'Your request has been submitted for review.', life: 4000 })
   } catch (e) {
     toast.add({ severity: 'error', summary: 'Error', detail: e.message, life: 4000 })
+  } finally {
+    withdrawing.value = false
   }
 }
 
-function saveAccount() {
-  student.updatePayoutAccount({ ...accountForm.value })
-  accountModal.value = false
-  toast.add({ severity: 'success', summary: 'Account Updated', life: 3000 })
+async function saveAccount() {
+  saving.value = true
+  try {
+    await student.updatePayoutAccount({ ...accountForm.value })
+    accountModal.value = false
+    toast.add({ severity: 'success', summary: 'Account Updated', life: 3000 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: e.message, life: 4000 })
+  } finally {
+    saving.value = false
+  }
 }
 
 function formatDate(iso) { return new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' }) }

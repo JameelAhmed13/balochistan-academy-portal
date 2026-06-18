@@ -28,9 +28,9 @@ public record CreateTestRequest(
 );
 
 public record SubmitAttemptRequest(
-    [Required] int   TestId,
-    [Required] int   Total,
+    [Required] int    Total,
     [Required] string AttemptType,
+    int?    TestId      = null,
     string? AnswersJson = null,
     int     Score       = 0,
     int     DurationSec = 0
