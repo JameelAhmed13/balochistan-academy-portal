@@ -48,8 +48,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
+import { useConfirm } from '@/composables/useConfirm'
 
 const catalog = useCatalogStore()
+const confirm = useConfirm()
 const loading = ref(false)
 const form = ref(null)
 const editing = ref(false)
@@ -88,7 +90,12 @@ async function save() {
 }
 
 async function remove(b) {
-  if (!confirm(`Delete band "${b.name}"? Grades using this band will keep the name as text.`)) return
+  const ok = await confirm({
+    title: `Delete "${b.name}"`,
+    message: 'Grades already using this band will keep its name as stored text.',
+    confirmLabel: 'Delete Band',
+  })
+  if (!ok) return
   try { await catalog.deleteBand(b.id) } catch (e) { alert(e.response?.data?.error || e.message) }
 }
 </script>

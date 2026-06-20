@@ -68,8 +68,10 @@
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 import { useCatalogStore } from '@/stores/catalog'
+import { useConfirm } from '@/composables/useConfirm'
 
 const catalog = useCatalogStore()
+const confirm = useConfirm()
 const tutors = ref([])
 const form = ref(null)
 const editing = ref(false)
@@ -96,7 +98,12 @@ async function save() {
 }
 
 async function remove(t) {
-  if (!confirm(`Delete tutor ${t.persona}?`)) return
+  const ok = await confirm({
+    title: `Delete ${t.persona}`,
+    message: 'This AI tutor will be permanently removed and unavailable to students.',
+    confirmLabel: 'Delete Tutor',
+  })
+  if (!ok) return
   try { await api.delete(`/admin/tutors/${t.id}`); await load(); await catalog.fetchTutors() } catch (e) { alert(e.message) }
 }
 </script>

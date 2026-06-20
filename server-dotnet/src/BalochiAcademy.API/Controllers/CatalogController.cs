@@ -13,6 +13,14 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
 {
     // ── PUBLIC ────────────────────────────────────────────────────────────────
 
+    /// <summary>GET /api/mediums — all teaching mediums ordered by sort order</summary>
+    [HttpGet("mediums")]
+    public async Task<IActionResult> GetMediums(CancellationToken ct)
+        => Ok(await uow.Repository<Medium>().Query()
+            .OrderBy(m => m.SortOrder).ThenBy(m => m.Name)
+            .Select(m => new { m.Id, m.Name, m.Label, m.SortOrder })
+            .ToListAsync(ct));
+
     /// <summary>GET /api/bands — all grade bands ordered by sort order</summary>
     [HttpGet("bands")]
     public async Task<IActionResult> GetBands(CancellationToken ct)
@@ -138,6 +146,43 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
             },
         }).ToListAsync(ct);
         return Ok(result);
+    }
+
+    // ── ADMIN: Mediums ────────────────────────────────────────────────────────
+
+    [HttpPost("admin/mediums"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> CreateMedium([FromBody] Medium req, CancellationToken ct)
+    {
+        if (await uow.Repository<Medium>().Query().AnyAsync(m => m.Name == req.Name, ct))
+            return Conflict(new { error = "Medium name already exists" });
+        uow.Repository<Medium>().Add(req);
+        await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Create", "Medium", newValues: req, ct: ct);
+        return Created($"/api/admin/mediums/{req.Id}", new { req.Id, req.Name, req.Label, req.SortOrder });
+    }
+
+    [HttpPut("admin/mediums/{id:int}"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> UpdateMedium(int id, [FromBody] Medium req, CancellationToken ct)
+    {
+        var medium = await uow.Repository<Medium>().FindAsync([id], ct);
+        if (medium == null) return NotFound();
+        medium.Name      = req.Name;
+        medium.Label     = req.Label;
+        medium.SortOrder = req.SortOrder;
+        await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Update", "Medium", entityId: id, newValues: medium, ct: ct);
+        return Ok(new { medium.Id, medium.Name, medium.Label, medium.SortOrder });
+    }
+
+    [HttpDelete("admin/mediums/{id:int}"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> DeleteMedium(int id, CancellationToken ct)
+    {
+        var medium = await uow.Repository<Medium>().FindAsync([id], ct);
+        if (medium == null) return NotFound();
+        uow.Repository<Medium>().Remove(medium);
+        await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Delete", "Medium", oldValues: medium, ct: ct);
+        return NoContent();
     }
 
     // ── ADMIN: Grade Bands ────────────────────────────────────────────────────

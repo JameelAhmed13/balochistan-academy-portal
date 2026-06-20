@@ -83,6 +83,9 @@
         <member name="M:BalochiAcademy.API.Controllers.AuthController.Logout(System.Threading.CancellationToken)">
             <summary>POST /api/auth/logout</summary>
         </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetMediums(System.Threading.CancellationToken)">
+            <summary>GET /api/mediums — all teaching mediums ordered by sort order</summary>
+        </member>
         <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetBands(System.Threading.CancellationToken)">
             <summary>GET /api/bands — all grade bands ordered by sort order</summary>
         </member>

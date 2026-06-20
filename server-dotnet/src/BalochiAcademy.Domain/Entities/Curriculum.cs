@@ -84,6 +84,13 @@ public class GradeBand : AuditableEntity
     public int    SortOrder { get; set; }
 }
 
+public class Medium : AuditableEntity
+{
+    public string Name      { get; set; } = string.Empty;  // value stored on Subject.Medium
+    public string Label     { get; set; } = string.Empty;  // display label in dropdowns
+    public int    SortOrder { get; set; }
+}
+
 public class AiTutor : AuditableEntity
 {
     public int?    SubjectId    { get; set; }

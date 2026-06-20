@@ -20,6 +20,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Topic>             Topics             => Set<Topic>();
     public DbSet<LearningObjective> LearningObjectives => Set<LearningObjective>();
     public DbSet<GradeBand>         GradeBands         => Set<GradeBand>();
+    public DbSet<Medium>            Mediums            => Set<Medium>();
     public DbSet<AiTutor>           AiTutors           => Set<AiTutor>();
     public DbSet<Question>          Questions          => Set<Question>();
     public DbSet<Test>              Tests              => Set<Test>();

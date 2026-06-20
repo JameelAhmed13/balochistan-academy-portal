@@ -122,7 +122,7 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9990;
+  z-index: 999990;
   transition: none;
 }
 .cursor-dot {
@@ -133,7 +133,7 @@ onUnmounted(() => {
   border-radius: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  z-index: 9999;
+  z-index: 999999;
   box-shadow: 0 0 8px #fbbf24, 0 0 16px rgba(251,191,36,0.5);
   transition: transform 0.05s;
 }
@@ -145,7 +145,7 @@ onUnmounted(() => {
   border-radius: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  z-index: 9998;
+  z-index: 999998;
   transition: width 0.2s, height 0.2s, border-color 0.2s, background 0.2s;
   box-shadow: 0 0 12px rgba(124,106,245,0.3), inset 0 0 8px rgba(124,106,245,0.1);
 }
@@ -168,7 +168,7 @@ onUnmounted(() => {
   height: 5px;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 9997;
+  z-index: 999997;
   transform: translate(-50%, -50%) scale(1);
   transition: none;
 }

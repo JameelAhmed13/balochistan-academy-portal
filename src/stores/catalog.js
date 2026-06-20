@@ -8,6 +8,7 @@ import api from '@/services/api'
 export const useCatalogStore = defineStore('catalog', () => {
   const grades = ref([])
   const bands = ref([])
+  const mediums = ref([])
   const subjects = ref([])        // all subjects (admin); per-grade via subjectsForGrade
   const tutors = ref([])
   const gradeSubjects = ref({})   // gradeCode -> [subject]
@@ -30,6 +31,7 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   // ── reads ──────────────────────────────────────────────────────────
   async function fetchBands() { bands.value = (await api.get('/bands')).data }
+  async function fetchMediums() { mediums.value = (await api.get('/mediums')).data }
   async function fetchGrades() { grades.value = (await api.get('/grades')).data }
   async function fetchTutors() { tutors.value = (await api.get('/tutors')).data }
   async function fetchSubjectsForGrade(code) {
@@ -66,6 +68,10 @@ export const useCatalogStore = defineStore('catalog', () => {
   async function updateBand(id, payload) { await api.put(`/admin/bands/${id}`, payload); await fetchBands() }
   async function deleteBand(id) { await api.delete(`/admin/bands/${id}`); await fetchBands() }
 
+  async function createMedium(payload) { await api.post('/admin/mediums', payload); await fetchMediums() }
+  async function updateMedium(id, payload) { await api.put(`/admin/mediums/${id}`, payload); await fetchMediums() }
+  async function deleteMedium(id) { await api.delete(`/admin/mediums/${id}`); await fetchMediums() }
+
   // ── admin: subjects (all) + writes ──────────────────────────────────
   async function fetchAllSubjects() { subjects.value = (await api.get('/admin/subjects')).data.map(decorate) }
 
@@ -94,10 +100,11 @@ export const useCatalogStore = defineStore('catalog', () => {
   async function deleteObjective(id) { await api.delete(`/admin/syllabus/objectives/${id}`) }
 
   return {
-    grades, bands, subjects, tutors, gradeSubjects, syllabus, loaded, loading, error,
+    grades, bands, mediums, subjects, tutors, gradeSubjects, syllabus, loaded, loading, error,
     enabledGrades, gradeByCode, subjectsForGrade, findSubject, tutorsForGrade, syllabusFor,
-    fetchBands, fetchGrades, fetchTutors, fetchSubjectsForGrade, fetchSyllabus, bootstrap, fetchAllSubjects,
+    fetchBands, fetchMediums, fetchGrades, fetchTutors, fetchSubjectsForGrade, fetchSyllabus, bootstrap, fetchAllSubjects,
     createBand, updateBand, deleteBand,
+    createMedium, updateMedium, deleteMedium,
     createGrade, updateGrade, deleteGrade, setGradeSubjects,
     createSubject, updateSubject, deleteSubject,
     createTutor, updateTutor, deleteTutor,

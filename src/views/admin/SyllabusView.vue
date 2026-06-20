@@ -79,8 +79,10 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
+import { useConfirm } from '@/composables/useConfirm'
 
 const catalog = useCatalogStore()
+const confirm = useConfirm()
 const gradeCode = ref('')
 const subjectId = ref('')
 const units = ref([])
@@ -112,7 +114,14 @@ async function addUnit() {
   await catalog.addUnit({ grade_code: gradeCode.value, subject_id: Number(subjectId.value), name, number: units.value.length + 1, sort_order: units.value.length })
   await loadSyllabus()
 }
-async function delUnit(u) { if (confirm(`Delete ${u.name} and its topics/objectives?`)) { await catalog.deleteUnit(u.id); await loadSyllabus() } }
+async function delUnit(u) {
+  const ok = await confirm({
+    title: `Delete ${u.name}`,
+    message: 'All topics and learning objectives inside this unit will also be deleted.',
+    confirmLabel: 'Delete Unit',
+  })
+  if (ok) { await catalog.deleteUnit(u.id); await loadSyllabus() }
+}
 async function addTopic(u) {
   const name = newTopic[`u${u.id}`]?.trim(); if (!name) return
   await catalog.addTopic({ unit_id: u.id, name }); newTopic[`u${u.id}`] = ''; await loadSyllabus()

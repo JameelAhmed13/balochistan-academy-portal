@@ -1,12 +1,14 @@
 // Single axios instance for the Balochistan Academy Portal backend (/api). Attaches the JWT to every
 // request, auto-refreshes on 401, and bounces to login only when refresh also fails.
 import axios from 'axios'
+import { useHttpLoaderStore } from '@/stores/httpLoader'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 export const api = axios.create({ baseURL: API_BASE, timeout: 20000 })
 
 api.interceptors.request.use((config) => {
+  useHttpLoaderStore().start()
   const token = localStorage.getItem('bap_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
@@ -19,8 +21,12 @@ export function setUnauthorizedHandler(fn) { onUnauthorized = fn }
 let _refreshPromise = null
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    useHttpLoaderStore().finish()
+    return res
+  },
   async (err) => {
+    useHttpLoaderStore().finish()
     const original = err.config
     if (err.response?.status === 401 && !original._retry) {
       original._retry = true

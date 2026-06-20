@@ -138,6 +138,7 @@ const routes = [
       { path: '',              name: 'Admin',              component: () => import('@/views/admin/AdminView.vue') },
       { path: 'grades',        name: 'AdminGrades',        component: () => import('@/views/admin/GradesView.vue') },
       { path: 'bands',         name: 'AdminBands',         component: () => import('@/views/admin/BandsView.vue') },
+      { path: 'mediums',       name: 'AdminMediums',       component: () => import('@/views/admin/MediumsView.vue') },
       { path: 'syllabus',      name: 'AdminSyllabus',      component: () => import('@/views/admin/SyllabusView.vue') },
       { path: 'tutors',        name: 'AdminTutors',        component: () => import('@/views/admin/TutorsView.vue') },
       { path: 'content',       name: 'AdminContent',       component: () => import('@/views/admin/ContentView.vue') },

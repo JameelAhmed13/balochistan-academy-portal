@@ -23,6 +23,16 @@ public static class DatabaseSeeder
                 await db.SaveChangesAsync();
             }
 
+            // Seed mediums independently (same pattern as grade bands)
+            if (!await db.Mediums.AnyAsync())
+            {
+                db.Mediums.AddRange(
+                    new Medium { Name = "english", Label = "English Medium", SortOrder = 1 },
+                    new Medium { Name = "urdu",    Label = "اردو میڈیم",       SortOrder = 2 }
+                );
+                await db.SaveChangesAsync();
+            }
+
             // Idempotent: skip if any roles already exist
             if (await db.Roles.AnyAsync()) return;
 
@@ -84,16 +94,16 @@ public static class DatabaseSeeder
             db.Grades.AddRange(grades);
 
             // ── STEP 5: Subjects ──────────────────────────────────────────────────
-            var math = new Subject { Name = "Mathematics", NameUr = "ریاضی", Icon = "calculator", Color = "#3B82F6" };
-            var physics = new Subject { Name = "Physics", NameUr = "طبیعیات", Icon = "atom", Color = "#8B5CF6" };
-            var chem = new Subject { Name = "Chemistry", NameUr = "کیمیا", Icon = "flask", Color = "#10B981" };
-            var bio = new Subject { Name = "Biology", NameUr = "حیاتیات", Icon = "leaf", Color = "#22C55E" };
-            var english = new Subject { Name = "English", NameUr = "انگریزی", Icon = "book-open", Color = "#F59E0B" };
-            var urdu = new Subject { Name = "Urdu", NameUr = "اردو", Icon = "pen", Color = "#EF4444" };
-            var islamiat = new Subject { Name = "Islamiat", NameUr = "اسلامیات", Icon = "moon", Color = "#14B8A6" };
-            var pakst = new Subject { Name = "Pakistan Studies", NameUr = "مطالعہ پاکستان", Icon = "map", Color = "#F97316" };
-            var cs = new Subject { Name = "Computer Science", NameUr = "کمپیوٹر سائنس", Icon = "monitor", Color = "#6366F1" };
-            var genSci = new Subject { Name = "General Science", NameUr = "عمومی سائنس", Icon = "microscope", Color = "#0EA5E9" };
+            var math = new Subject { Name = "Mathematics", NameUr = "ریاضی", Icon = "🧮", Color = "grad-blue" };
+            var physics = new Subject { Name = "Physics", NameUr = "طبیعیات", Icon = "⚛️", Color = "grad-violet" };
+            var chem = new Subject { Name = "Chemistry", NameUr = "کیمیا", Icon = "⚗️", Color = "grad-emerald" };
+            var bio = new Subject { Name = "Biology", NameUr = "حیاتیات", Icon = "🌿", Color = "grad-green" };
+            var english = new Subject { Name = "English", NameUr = "انگریزی", Icon = "📖", Color = "grad-amber" };
+            var urdu = new Subject { Name = "Urdu", NameUr = "اردو", Icon = "✒️", Color = "grad-rose" };
+            var islamiat = new Subject { Name = "Islamiat", NameUr = "اسلامیات", Icon = "🌙", Color = "grad-teal" };
+            var pakst = new Subject { Name = "Pakistan Studies", NameUr = "مطالعہ پاکستان", Icon = "🗺️", Color = "grad-orange" };
+            var cs = new Subject { Name = "Computer Science", NameUr = "کمپیوٹر سائنس", Icon = "🖥️", Color = "grad-violet" };
+            var genSci = new Subject { Name = "General Science", NameUr = "عمومی سائنس", Icon = "🔬", Color = "grad-cyan" };
             db.Subjects.AddRange(math, physics, chem, bio, english, urdu, islamiat, pakst, cs, genSci);
 
             // ── STEP 6: Users (Admin + Demo Student) ──────────────────────────────
@@ -178,8 +188,8 @@ public static class DatabaseSeeder
                     SubjectId = math.Id,
                     Persona = "Rafi",
                     Slug = "rafi-math",
-                    Icon = "calculator",
-                    Color = "#3B82F6",
+                    Icon = "🧮",
+                    Color = "grad-blue",
                     Description = "Your Mathematics tutor — algebra, geometry, calculus made simple.",
                     SystemPrompt =
                         "You are Rafi, a friendly and patient Mathematics tutor for Pakistani students. " +
@@ -192,8 +202,8 @@ public static class DatabaseSeeder
                     SubjectId = physics.Id,
                     Persona = "Zainab",
                     Slug = "zainab-physics",
-                    Icon = "atom",
-                    Color = "#8B5CF6",
+                    Icon = "⚛️",
+                    Color = "grad-violet",
                     Description = "Physics tutor — from mechanics to electromagnetism, made intuitive.",
                     SystemPrompt =
                         "You are Zainab, an enthusiastic Physics tutor. Break down complex physics concepts " +
@@ -206,8 +216,8 @@ public static class DatabaseSeeder
                     SubjectId = chem.Id,
                     Persona = "Dr. Karim",
                     Slug = "dr-karim-chemistry",
-                    Icon = "flask",
-                    Color = "#10B981",
+                    Icon = "⚗️",
+                    Color = "grad-emerald",
                     Description = "Chemistry tutor — reactions, bonding, and periodic table mastery.",
                     SystemPrompt =
                         "You are Dr. Karim, a Chemistry tutor with 20 years of teaching experience. " +
@@ -220,8 +230,8 @@ public static class DatabaseSeeder
                     SubjectId = bio.Id,
                     Persona = "Nadia",
                     Slug = "nadia-biology",
-                    Icon = "leaf",
-                    Color = "#22C55E",
+                    Icon = "🌿",
+                    Color = "grad-green",
                     Description = "Biology tutor — cells, genetics, ecosystems and human body systems.",
                     SystemPrompt =
                         "You are Nadia, a Biology tutor who makes life sciences fascinating. " +
@@ -234,8 +244,8 @@ public static class DatabaseSeeder
                     SubjectId = english.Id,
                     Persona = "Sara",
                     Slug = "sara-english",
-                    Icon = "book-open",
-                    Color = "#F59E0B",
+                    Icon = "📖",
+                    Color = "grad-amber",
                     Description = "English Language & Literature tutor — grammar, writing, and comprehension.",
                     SystemPrompt =
                         "You are Sara, an English Language tutor. Help students improve grammar, vocabulary, " +
@@ -249,8 +259,8 @@ public static class DatabaseSeeder
                     GradeCode = null,
                     Persona = "Ustad",
                     Slug = "ustad-general",
-                    Icon = "graduation-cap",
-                    Color = "#6366F1",
+                    Icon = "🎓",
+                    Color = "grad-violet",
                     Description = "General knowledge tutor — Islamiat, Pakistan Studies, and exam strategy.",
                     SystemPrompt =
                         "You are Ustad, a general-purpose academic tutor for Pakistani students. " +
