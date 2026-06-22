@@ -9,6 +9,12 @@ const routes = [
   { path: '/landing3', name: 'Landing3', component: () => import('@/views/Landing3Page.vue'), meta: { public: true } },
   { path: '/landing4', name: 'Landing4', component: () => import('@/views/Landing4Page.vue'), meta: { public: true } },
 
+  // Legal / policy pages (public)
+  { path: '/privacy',      name: 'Privacy',      component: () => import('@/views/legal/LegalView.vue'), meta: { public: true, doc: 'privacy' } },
+  { path: '/refund',       name: 'Refund',       component: () => import('@/views/legal/LegalView.vue'), meta: { public: true, doc: 'refund' } },
+  { path: '/terms',        name: 'Terms',        component: () => import('@/views/legal/LegalView.vue'), meta: { public: true, doc: 'terms' } },
+  { path: '/cancellation', name: 'Cancellation', component: () => import('@/views/legal/LegalView.vue'), meta: { public: true, doc: 'cancellation' } },
+
   // Auth
   { path: '/login', name: 'Login', component: () => import('@/views/auth/LoginView.vue'), meta: { guest: true } },
 
@@ -29,10 +35,13 @@ const routes = [
       { path: 'ai-tutor/:subject/chat',  name: 'AITutorChat',  component: () => import('@/views/ai-tutor/ChatView.vue'), props: true },
       { path: 'ai-tutor/:subject/video', name: 'AITutorVideo', component: () => import('@/views/ai-tutor/VideoView.vue'), props: true },
 
-      // Saathi AI companion + assessment uploads
+      // Saathi AI companion
       { path: 'saathi',              name: 'Saathi',            component: () => import('@/views/saathi/SaathiView.vue') },
-      { path: 'upload-assessments',  name: 'UploadAssessments', component: () => import('@/views/assessments/AssessmentUploadView.vue') },
       { path: 'report',              name: 'PreparationReport', component: () => import('@/views/reports/PreparationReportView.vue') },
+
+      // Profile (any logged-in user) + subscription checkout
+      { path: 'profile',             name: 'Profile',           component: () => import('@/views/profile/ProfileView.vue') },
+      { path: 'checkout',            name: 'Checkout',          component: () => import('@/views/subscription/CheckoutView.vue') },
 
       // Preparation — layout wraps all sub-routes so sidebar stays persistent
       {
@@ -144,6 +153,8 @@ const routes = [
       { path: 'content',       name: 'AdminContent',       component: () => import('@/views/admin/ContentView.vue') },
       { path: 'questions',     name: 'AdminQuestions',     component: () => import('@/views/admin/QuestionsView.vue') },
       { path: 'tests',         name: 'AdminTests',         component: () => import('@/views/admin/TestsView.vue') },
+      { path: 'upload-assessments', name: 'AdminUploadAssessments', component: () => import('@/views/assessments/AssessmentUploadView.vue') },
+      { path: 'profile',       name: 'AdminProfile',       component: () => import('@/views/profile/ProfileView.vue') },
       { path: 'users',         name: 'AdminUsers',         component: () => import('@/views/admin/UsersView.vue') },
       { path: 'coins',         name: 'AdminCoins',         component: () => import('@/views/admin/CoinsAdminView.vue') },
       { path: 'analytics',     name: 'AdminAnalytics',     component: () => import('@/views/admin/AnalyticsView.vue') },
@@ -159,7 +170,11 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior(to) {
+    // Footer "Platform" links navigate to a specific landing section
+    if (to.hash) return { el: to.hash, top: 80, behavior: 'smooth' }
+    return { top: 0 }
+  },
 })
 
 router.beforeEach((to) => {

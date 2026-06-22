@@ -4085,7 +4085,7 @@
     "net10.0": [
       "BalochiAcademy.Application >= 1.0.0",
       "BalochiAcademy.Infrastructure >= 1.0.0",
-      "FluentValidation.AspNetCore >= 11.*",
+      "FluentValidation.AspNetCore >= 11.3.1",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 9.*",
       "Microsoft.EntityFrameworkCore.SqlServer >= 9.*",
       "Microsoft.EntityFrameworkCore.Tools >= 9.*",
@@ -4155,7 +4155,7 @@
         "dependencies": {
           "FluentValidation.AspNetCore": {
             "target": "Package",
-            "version": "[11.*, )"
+            "version": "[11.3.1, )"
           },
           "Microsoft.AspNetCore.Authentication.JwtBearer": {
             "target": "Package",

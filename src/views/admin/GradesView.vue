@@ -257,7 +257,7 @@ async function saveSubjects() {
 </script>
 
 <style scoped>
-.adm { max-width: 1100px; margin: 0 auto; padding: 24px; color: var(--t-text1); }
+.adm { max-width: none; margin: 0; padding: 24px 8px; color: var(--t-text1); }
 .adm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
 .adm-head h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.9rem; margin: 0 0 4px; }
 .adm-head p  { margin: 0; color: var(--t-text2); font-size: .9rem; }

@@ -64,6 +64,14 @@ export const useAuthStore = defineStore('auth', () => {
     return data.user
   }
 
+  // update own profile (+ optional password change); refreshes the cached user
+  async function updateProfile(payload) {
+    const { data } = await api.put('/auth/me', payload)
+    user.value = data.user
+    persist()
+    return data.user
+  }
+
   async function logout() {
     useNotificationsStore().disconnect().catch(() => {})
     try { if (token.value) await api.post('/auth/logout') } catch { /* ignore */ }
@@ -99,7 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user, token, refreshToken,
     isLoggedIn, isAdmin, hasGrade,
-    login, register, fetchMe, updateGrade, logout,
+      login, register, fetchMe, updateGrade, logout, updateProfile,
     loginHistory, loadLoginHistory, updateCoins,
   }
 })

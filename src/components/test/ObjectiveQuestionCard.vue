@@ -34,9 +34,9 @@
     <!-- Reason panel (study mode or after submit) -->
     <Transition name="fade-in">
       <div v-if="(showAnswer || (testMode && submitted)) && question.reason"
-        class="p-3 rounded-xl bg-indigo-50 border border-indigo-100">
-        <div class="text-xs font-semibold text-indigo-700 mb-1">Explanation</div>
-        <p class="text-sm text-indigo-800">{{ question.reason }}</p>
+        class="p-3 rounded-xl bg-accent-50 border border-accent-100">
+        <div class="text-xs font-semibold text-accent-700 mb-1">Explanation</div>
+        <p class="text-sm text-accent-800">{{ question.reason }}</p>
       </div>
     </Transition>
 

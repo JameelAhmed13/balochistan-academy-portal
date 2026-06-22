@@ -72,7 +72,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWindowSize } from '@vueuse/core'
-import { LogOut, Home, Bot, BookOpen, Calendar, Trophy, Coins, HelpCircle, Layers, Grid3X3, Users, Medal, Sparkles, UploadCloud, FileBarChart } from '@lucide/vue'
+import { LogOut, Home, Bot, BookOpen, Calendar, Trophy, Coins, HelpCircle, Layers, Medal, Sparkles, FileBarChart } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import NavItem from './NavItem.vue'
 
@@ -86,17 +86,15 @@ const router = useRouter()
 
 const navItems = [
   { name: 'Home',              path: '/app',               icon: Home },
-  { name: 'Hub',               path: '/app/hub',           icon: Grid3X3 },
   { name: 'AI Tutor',          path: '/app/ai-tutor',      icon: Bot },
   { name: 'Saathi AI',         path: '/app/saathi',        icon: Sparkles },
   { name: 'Preparation',       path: '/app/preparation',   icon: BookOpen },
   { name: 'My Syllabus',       path: '/app/preparation/syllabus', icon: BookOpen },
   { name: 'Self Test',         path: '/app/self-test',     icon: Layers },
-{ name: 'Daily Tests',       path: '/app/daily-tests',   icon: Calendar },
+  { name: 'Daily Tests',       path: '/app/daily-tests',   icon: Calendar },
   { name: 'Competition Tests', path: '/app/competition',   icon: Trophy },
   { name: 'Leaderboard',       path: '/app/competition/leaderboard', icon: Medal },
   { name: 'My Report',         path: '/app/report',        icon: FileBarChart },
-  { name: 'Upload Assessments', path: '/app/upload-assessments', icon: UploadCloud },
   { name: 'Coins Earned',      path: '/app/coins',         icon: Coins },
   { name: 'How It Works',      path: null,                 icon: HelpCircle, external: 'https://youtube.com' },
 ]
