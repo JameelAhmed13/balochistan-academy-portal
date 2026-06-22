@@ -185,3 +185,4 @@ D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcade
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\BalochiAcademy.API.xml
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\dotnet-tools.json
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\appsettings.Production.json
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

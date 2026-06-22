@@ -4085,7 +4085,7 @@
     "net10.0": [
       "BalochiAcademy.Application >= 1.0.0",
       "BalochiAcademy.Infrastructure >= 1.0.0",
-      "FluentValidation.AspNetCore >= 11.*",
+      "FluentValidation.AspNetCore >= 11.3.1",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 9.*",
       "Microsoft.EntityFrameworkCore.SqlServer >= 9.*",
       "Microsoft.EntityFrameworkCore.Tools >= 9.*",
@@ -4094,24 +4094,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Microsoft\\.nuget\\packages\\": {},
+    "C:\\Users\\Rashid\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\eStudy\\server-dotnet\\src\\BalochiAcademy.API\\BalochiAcademy.API.csproj",
+      "projectUniqueName": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\BalochiAcademy.API.csproj",
       "projectName": "BalochiAcademy.API",
-      "projectPath": "D:\\eStudy\\server-dotnet\\src\\BalochiAcademy.API\\BalochiAcademy.API.csproj",
-      "packagesPath": "C:\\Users\\Microsoft\\.nuget\\packages\\",
-      "outputPath": "D:\\eStudy\\server-dotnet\\src\\BalochiAcademy.API\\obj\\",
+      "projectPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\BalochiAcademy.API.csproj",
+      "packagesPath": "C:\\Users\\Rashid\\.nuget\\packages\\",
+      "outputPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "D:\\eStudy\\server-dotnet\\NuGet.Config",
-        "C:\\Users\\Microsoft\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\NuGet.Config",
+        "C:\\Users\\Rashid\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -4127,11 +4127,11 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "D:\\eStudy\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj": {
-              "projectPath": "D:\\eStudy\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj"
+            "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj": {
+              "projectPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj"
             },
-            "D:\\eStudy\\server-dotnet\\src\\BalochiAcademy.Infrastructure\\BalochiAcademy.Infrastructure.csproj": {
-              "projectPath": "D:\\eStudy\\server-dotnet\\src\\BalochiAcademy.Infrastructure\\BalochiAcademy.Infrastructure.csproj"
+            "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Infrastructure\\BalochiAcademy.Infrastructure.csproj": {
+              "projectPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Infrastructure\\BalochiAcademy.Infrastructure.csproj"
             }
           }
         }
@@ -4155,7 +4155,7 @@
         "dependencies": {
           "FluentValidation.AspNetCore": {
             "target": "Package",
-            "version": "[11.*, )"
+            "version": "[11.3.1, )"
           },
           "Microsoft.AspNetCore.Authentication.JwtBearer": {
             "target": "Package",
