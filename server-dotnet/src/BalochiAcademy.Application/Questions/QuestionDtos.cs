@@ -39,7 +39,8 @@ public record CreateQuestionRequest(
     string? CognitiveLevel = null,
     string? Feedback     = null,
     string? SloCode      = null,
-    bool    IsEntranceExam = false
+    bool    IsEntranceExam = false,
+    bool    IsAiGenerated  = false
 );
 
 public record UpdateQuestionRequest(

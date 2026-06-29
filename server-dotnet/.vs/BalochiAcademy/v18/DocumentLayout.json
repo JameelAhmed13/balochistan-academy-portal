@@ -30,15 +30,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
             },
             {
               "$type": "Document",
@@ -50,8 +46,7 @@
               "RelativeToolTip": "src\\BalochiAcademy.API\\Controllers\\UsersController.cs",
               "ViewState": "AgIAAEEAAAAAAAAAAAAewEgAAAA2AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-18T08:10:23.727Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-18T08:10:23.727Z"
             },
             {
               "$type": "Document",
@@ -61,10 +56,9 @@
               "RelativeDocumentMoniker": "src\\BalochiAcademy.API\\Controllers\\CatalogController.cs",
               "ToolTip": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.API\\Controllers\\CatalogController.cs",
               "RelativeToolTip": "src\\BalochiAcademy.API\\Controllers\\CatalogController.cs",
-              "ViewState": "AgIAAAwAAAAAAAAAAIAwwB0AAAAMAAAAAAAAAA==",
+              "ViewState": "AgIAAAwAAAAAAAAAAIAwwCUAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-18T08:03:04.415Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-18T08:03:04.415Z"
             },
             {
               "$type": "Document",
@@ -89,8 +83,7 @@
               "RelativeToolTip": "src\\BalochiAcademy.API\\appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAABWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-17T17:15:05.285Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T17:15:05.285Z"
             },
             {
               "$type": "Document",
@@ -102,8 +95,7 @@
               "RelativeToolTip": "src\\BalochiAcademy.API\\appsettings.Development.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-17T17:14:34.82Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T17:14:34.82Z"
             }
           ]
         }

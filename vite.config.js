@@ -29,6 +29,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           ws: true,   // WebSocket passthrough for SignalR
         },
+        '/uploads': {
+          target: apiTarget,
+          changeOrigin: true,
+        },
         '/ollama': {
           target: ollamaTarget,
           changeOrigin: true,

@@ -22,6 +22,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<GradeBand>         GradeBands         => Set<GradeBand>();
     public DbSet<Medium>            Mediums            => Set<Medium>();
     public DbSet<AiTutor>           AiTutors           => Set<AiTutor>();
+    public DbSet<Book>              Books              => Set<Book>();
     public DbSet<Question>          Questions          => Set<Question>();
     public DbSet<Test>              Tests              => Set<Test>();
     public DbSet<TestQuestion>      TestQuestions      => Set<TestQuestion>();

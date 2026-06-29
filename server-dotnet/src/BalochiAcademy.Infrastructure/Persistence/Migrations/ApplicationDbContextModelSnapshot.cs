@@ -123,6 +123,69 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.Book", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Author")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Board")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CoverUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DownloadUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Edition")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GradeCode")
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Medium")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Publisher")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TitleUr")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GradeCode");
+
+                    b.HasIndex("SubjectId");
+
+                    b.ToTable("Books");
+                });
+
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.CoinLedger", b =>
                 {
                     b.Property<long>("Id")
@@ -1126,6 +1189,9 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BookId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1155,6 +1221,8 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BookId");
 
                     b.HasIndex("SubjectId");
 
@@ -1443,6 +1511,23 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.Book", b =>
+                {
+                    b.HasOne("BalochiAcademy.Domain.Entities.Grade", "Grade")
+                        .WithMany()
+                        .HasForeignKey("GradeCode");
+
+                    b.HasOne("BalochiAcademy.Domain.Entities.Subject", "Subject")
+                        .WithMany("Books")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Grade");
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.CoinLedger", b =>
@@ -1772,6 +1857,10 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.Unit", b =>
                 {
+                    b.HasOne("BalochiAcademy.Domain.Entities.Book", "Book")
+                        .WithMany("Units")
+                        .HasForeignKey("BookId");
+
                     b.HasOne("BalochiAcademy.Domain.Entities.Grade", "Grade")
                         .WithMany("Units")
                         .HasForeignKey("GradeCode")
@@ -1783,6 +1872,8 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Book");
 
                     b.Navigation("Grade");
 
@@ -1882,6 +1973,11 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.Book", b =>
+                {
+                    b.Navigation("Units");
+                });
+
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.Grade", b =>
                 {
                     b.Navigation("AiTutors");
@@ -1923,6 +2019,8 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.Subject", b =>
                 {
                     b.Navigation("AiTutors");
+
+                    b.Navigation("Books");
 
                     b.Navigation("GradeSubjects");
 
