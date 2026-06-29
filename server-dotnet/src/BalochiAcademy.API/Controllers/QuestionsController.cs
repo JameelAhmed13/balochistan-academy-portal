@@ -67,7 +67,7 @@ public class QuestionsController(IUnitOfWork uow, ICurrentUserService cu, IMappe
             ModelAnswer    = req.ModelAnswer,  Difficulty   = req.Difficulty,
             CognitiveLevel = req.CognitiveLevel, Feedback   = req.Feedback,
             SloCode        = req.SloCode,     IsEntranceExam = req.IsEntranceExam,
-            CreatedById    = cu.UserId,
+            IsAiGenerated  = req.IsAiGenerated, CreatedById   = cu.UserId,
         };
         uow.Repository<Question>().Add(question);
         await uow.SaveChangesAsync(ct);

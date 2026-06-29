@@ -185,4 +185,8 @@ D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcade
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\BalochiAcademy.API.xml
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\dotnet-tools.json
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\appsettings.Production.json
-D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\bin\Debug\net10.0\BalochiAcademy.API.staticwebassets.runtime.json
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\compressed\htb3syw9n9-{0}-axiieg0c4w-axiieg0c4w.gz
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\compressed\zae7u88ukf-{0}-axiieg0c4w-axiieg0c4w.gz
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\compressed\n52hkm0qyk-{0}-axiieg0c4w-axiieg0c4w.gz
+D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.API\obj\Debug\net10.0\compressed\cakb6vbohd-{0}-ebmf0b8a13-ebmf0b8a13.gz

@@ -127,9 +127,9 @@ const menus = [
     { label: 'Grade Bands',        path: '/app/admin/bands',    icon: Layers,          desc: 'Primary, Middle, Secondary…' },
     { label: 'Mediums',            path: '/app/admin/mediums',  icon: Globe,           desc: 'English Medium, اردو میڈیم…' },
     { label: 'Grades',             path: '/app/admin/grades',   icon: GraduationCap,   desc: 'Define grades & their subjects' },
+    { label: 'Subjects & Content', path: '/app/admin/content',  icon: FolderTree,      desc: 'Subjects, books, units & topics' },
     { label: 'Syllabus',           path: '/app/admin/syllabus', icon: FolderTree,      desc: 'Units, topics & learning objectives' },
     { label: 'AI Tutors',          path: '/app/admin/tutors',   icon: Users,           desc: 'Persona tutors per subject/grade' },
-    { label: 'Subjects & Content', path: '/app/admin/content',  icon: FolderTree,      desc: 'Subjects, books, units & topics' },
   ] },
   { key: 'assessments', label: 'Assessments', icon: ClipboardList, items: [
     { label: 'Question Bank',  path: '/app/admin/questions', icon: FileText,      desc: 'Manage MCQ & subjective items' },

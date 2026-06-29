@@ -106,8 +106,17 @@
             {{ s.medium }}
           </span>
           <div class="subject-actions">
-            <button class="btn-ghost subject-btn" style="flex:1;justify-content:center;" @click="openEdit(s)">
-              <Pencil class="w-3.5 h-3.5" /> Edit
+            <RouterLink
+              :to="`/app/admin/content/${s.id}/books`"
+              class="btn-ghost subject-btn"
+              style="flex:1;justify-content:center;"
+              title="Manage books"
+            >
+              <BookOpen class="w-3.5 h-3.5" /> Books
+              <span v-if="s.bookCount" class="subject-book-count">{{ s.bookCount }}</span>
+            </RouterLink>
+            <button class="btn-ghost subject-btn" @click="openEdit(s)" title="Edit subject">
+              <Pencil class="w-3.5 h-3.5" />
             </button>
             <button class="btn-ghost subject-btn" style="color:#f87171;" @click="remove(s)">
               <Trash2 class="w-3.5 h-3.5" />
@@ -154,6 +163,15 @@
               <td class="ag-table-muted" style="font-size:0.8rem;">{{ s.color || '—' }}</td>
               <td>
                 <div style="display:flex;gap:0.25rem;">
+                  <RouterLink
+                    :to="`/app/admin/content/${s.id}/books`"
+                    class="btn-ghost"
+                    style="padding:0.35rem;gap:0.3rem;"
+                    title="Manage books"
+                  >
+                    <BookOpen class="w-3.5 h-3.5" />
+                    <span v-if="s.bookCount" class="subject-book-count">{{ s.bookCount }}</span>
+                  </RouterLink>
                   <button class="btn-ghost" style="padding:0.35rem;" @click="openEdit(s)">
                     <Pencil class="w-3.5 h-3.5" />
                   </button>
@@ -247,7 +265,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { ArrowLeft, Plus, Pencil, Trash2, LayoutGrid, List, Search } from '@lucide/vue'
+import { ArrowLeft, Plus, Pencil, Trash2, LayoutGrid, List, Search, BookOpen } from '@lucide/vue'
 import { useCatalogStore } from '@/stores/catalog'
 import { useConfirm } from '@/composables/useConfirm'
 
@@ -448,6 +466,12 @@ async function remove(s) {
 }
 .subject-btn {
   font-size: 0.75rem; padding: 0.35rem 0.5rem;
+}
+.subject-book-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px; font-size: 0.65rem; font-weight: 700; line-height: 1;
+  background: var(--t-accent); color: #fff;
 }
 
 /* ── Modal ── */

@@ -20,6 +20,7 @@ public interface IApplicationDbContext
     DbSet<GradeBand>          GradeBands          { get; }
     DbSet<Medium>             Mediums             { get; }
     DbSet<AiTutor>            AiTutors            { get; }
+    DbSet<Book>               Books               { get; }
     DbSet<Question>           Questions           { get; }
     DbSet<Test>               Tests               { get; }
     DbSet<TestQuestion>       TestQuestions       { get; }
