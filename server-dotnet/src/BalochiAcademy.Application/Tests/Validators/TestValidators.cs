@@ -23,6 +23,23 @@ public class CreateTestRequestValidator : AbstractValidator<CreateTestRequest>
     }
 }
 
+public class UpdateTestRequestValidator : AbstractValidator<UpdateTestRequest>
+{
+    private static readonly string[] ValidKinds = ["objective", "subjective", "mixed", "daily", "weekly", "entrance"];
+
+    public UpdateTestRequestValidator()
+    {
+        RuleFor(x => x.Title).NotEmpty().MaximumLength(200).When(x => x.Title != null);
+        RuleFor(x => x.Kind)
+            .Must(k => k == null || ValidKinds.Contains(k))
+            .WithMessage($"Kind must be one of: {string.Join(", ", ValidKinds)}.")
+            .When(x => x.Kind != null);
+        RuleFor(x => x.GradeCode).MaximumLength(10).When(x => x.GradeCode != null);
+        RuleFor(x => x.DurationMin).InclusiveBetween(1, 300);
+        RuleFor(x => x.TotalMarks).GreaterThan(0).When(x => x.TotalMarks.HasValue);
+    }
+}
+
 public class SubmitAttemptRequestValidator : AbstractValidator<SubmitAttemptRequest>
 {
     private static readonly string[] ValidAttemptTypes =

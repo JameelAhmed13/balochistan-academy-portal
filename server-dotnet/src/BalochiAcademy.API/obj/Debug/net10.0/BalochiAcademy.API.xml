@@ -278,6 +278,12 @@
         <member name="M:BalochiAcademy.API.Controllers.TestsController.Create(BalochiAcademy.Application.Tests.CreateTestRequest,System.Threading.CancellationToken)">
             <summary>POST /api/tests — admin only</summary>
         </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.Update(System.Int32,BalochiAcademy.Application.Tests.UpdateTestRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/tests/{id} — admin only</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.SetQuestions(System.Int32,System.Int32[],System.Threading.CancellationToken)">
+            <summary>PUT /api/tests/{id}/questions — replace question list</summary>
+        </member>
         <member name="M:BalochiAcademy.API.Controllers.TestsController.TogglePublish(System.Int32,System.Threading.CancellationToken)">
             <summary>PATCH /api/tests/{id}/publish — toggle publish</summary>
         </member>
