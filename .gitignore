@@ -38,8 +38,3 @@ server/.env
 *.ntvs*
 *.njsproj
 *.sw?
-
-# .NET build artifacts
-server-dotnet/**/obj/
-server-dotnet/**/bin/
-server-dotnet/**/.vs/
