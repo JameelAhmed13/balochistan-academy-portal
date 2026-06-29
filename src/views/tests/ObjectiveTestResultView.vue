@@ -64,7 +64,8 @@
             <td>
               <div class="qt-answer">
                 <span>{{ q.userAnswer !== undefined ? q.options[q.userAnswer] : 'Skipped' }}</span>
-                <span v-if="q.userAnswer !== undefined" class="qt-wrong">Incorrect</span>
+                <span v-if="q.userAnswer === q.correct" class="qt-correct">Correct</span>
+                <span v-else-if="q.userAnswer !== undefined" class="qt-wrong">Incorrect</span>
                 <span v-else class="qt-skipped">Skipped</span>
               </div>
             </td>
@@ -166,7 +167,11 @@ html.dark .kua-amber { background: rgba(245,127,23,0.2); border-color: rgba(245,
 .qt-badges { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
 .qt-stem { color: var(--t-text1); line-height: 1.4; }
 .qt-answer { display: flex; flex-direction: column; gap: 0.25rem; }
-.qt-wrong { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; background: #ffcdd2; color: #c62828; font-size: 0.7rem; font-weight: 700; width: fit-content; }
+.qt-correct { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; background: #c8e6c9; color: #2e7d32; font-size: 0.7rem; font-weight: 700; width: fit-content; }
+.qt-wrong   { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; background: #ffcdd2; color: #c62828; font-size: 0.7rem; font-weight: 700; width: fit-content; }
 .qt-skipped { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; background: #fff9c4; color: #f57f17; font-size: 0.7rem; font-weight: 700; width: fit-content; }
+html.dark .qt-correct { background: rgba(46,125,50,0.25);  color: #66bb6a; }
+html.dark .qt-wrong   { background: rgba(198,40,40,0.2);   color: #ef9a9a; }
+html.dark .qt-skipped { background: rgba(245,127,23,0.2);  color: #ffcc80; }
 .qt-reason { color: var(--t-text2); font-size: 0.8rem; line-height: 1.4; }
 </style>

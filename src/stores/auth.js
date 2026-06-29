@@ -72,9 +72,10 @@ export const useAuthStore = defineStore('auth', () => {
     return data.user
   }
 
-  async function logout() {
+  function logout() {
     useNotificationsStore().disconnect().catch(() => {})
-    try { if (token.value) await api.post('/auth/logout') } catch { /* ignore */ }
+    // Revoke on server in background — don't await so state clears immediately
+    if (token.value) api.post('/auth/logout').catch(() => {})
     token.value        = null
     refreshToken.value = null
     user.value         = null
