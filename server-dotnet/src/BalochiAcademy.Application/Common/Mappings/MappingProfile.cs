@@ -46,6 +46,9 @@ public class MappingProfile : Profile
                 src.DurationMin,
                 src.TotalMarks,
                 src.IsPublished,
+                src.IsScheduled,
+                src.ScheduledAt,
+                src.EndsAt,
                 src.TestQuestions.Count,
                 src.CreatedAt))
             .ForAllMembers(opt => opt.Ignore());

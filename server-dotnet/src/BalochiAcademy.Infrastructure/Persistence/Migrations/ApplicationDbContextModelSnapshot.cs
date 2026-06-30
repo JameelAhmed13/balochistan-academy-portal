@@ -1042,6 +1042,9 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ScheduledAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("EndsAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("SubjectId")
                         .HasColumnType("int");
 

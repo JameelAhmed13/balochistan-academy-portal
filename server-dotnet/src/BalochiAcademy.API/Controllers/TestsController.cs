@@ -28,7 +28,7 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         var total = await q.CountAsync(ct);
         var items = await q.OrderByDescending(t => t.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
-        return Ok(new { items = mapper.Map<List<TestDto>>(items), total, page, pageSize });
+        return Ok(new { items = mapper.Map<List<TestDto>>(items), totalCount = total, page, pageSize });
     }
 
     /// <summary>GET /api/tests/{id}</summary>
@@ -43,7 +43,20 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         {
             test.Id, test.Title, test.GradeCode, test.SubjectId, test.Kind,
             test.DurationMin, test.TotalMarks, test.IsPublished,
-            Questions = test.TestQuestions.OrderBy(tq => tq.SortOrder).Select(tq => tq.Question),
+            Questions = test.TestQuestions.OrderBy(tq => tq.SortOrder).Select(tq => new {
+                tq.Question.Id,
+                tq.Question.Kind,
+                tq.Question.Stem,
+                tq.Question.GradeCode,
+                tq.Question.SubjectId,
+                tq.Question.Difficulty,
+                tq.Question.Marks,
+                tq.Question.IsAiGenerated,
+                tq.Question.OptionsJson,
+                tq.Question.CorrectIndex,
+                tq.Question.ModelAnswer,
+                tq.Question.Feedback,
+            }),
         });
     }
 
@@ -53,10 +66,12 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
     {
         var test = new Test
         {
-            Title      = req.Title,     Kind       = req.Kind,
-            GradeCode  = req.GradeCode, SubjectId  = req.SubjectId,
-            UnitId     = req.UnitId,    DurationMin = req.DurationMin,
-            TotalMarks = req.TotalMarks, CreatedById = cu.UserId,
+            Title       = req.Title,      Kind        = req.Kind,
+            GradeCode   = req.GradeCode,  SubjectId   = req.SubjectId,
+            UnitId      = req.UnitId,     DurationMin = req.DurationMin,
+            TotalMarks  = req.TotalMarks, IsScheduled = req.IsScheduled,
+            ScheduledAt = req.ScheduledAt, EndsAt     = req.EndsAt,
+            CreatedById = cu.UserId,
         };
         if (req.QuestionIds?.Length > 0)
         {
@@ -67,6 +82,47 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         uow.Repository<Test>().Add(test);
         await uow.SaveChangesAsync(ct);
         return Created($"/api/tests/{test.Id}", mapper.Map<TestDto>(test));
+    }
+
+    /// <summary>PUT /api/tests/{id} — admin only</summary>
+    [HttpPut("{id:int}"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateTestRequest req, CancellationToken ct)
+    {
+        var test = await uow.Repository<Test>().Query()
+            .Include(t => t.TestQuestions)
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (test == null) return NotFound();
+
+        if (req.Title != null) test.Title    = req.Title;
+        if (req.Kind  != null) test.Kind     = req.Kind;
+        test.GradeCode   = req.GradeCode;
+        test.SubjectId   = req.SubjectId;
+        test.UnitId      = req.UnitId;
+        test.DurationMin = req.DurationMin;
+        test.TotalMarks  = req.TotalMarks;
+        test.IsScheduled = req.IsScheduled;
+        test.ScheduledAt = req.ScheduledAt;
+        test.EndsAt      = req.EndsAt;
+
+        await uow.SaveChangesAsync(ct);
+        return Ok(mapper.Map<TestDto>(test));
+    }
+
+    /// <summary>PUT /api/tests/{id}/questions — replace question list</summary>
+    [HttpPut("{id:int}/questions"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> SetQuestions(int id, [FromBody] int[] questionIds, CancellationToken ct)
+    {
+        var test = await uow.Repository<Test>().Query()
+            .Include(t => t.TestQuestions)
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (test == null) return NotFound();
+
+        test.TestQuestions.Clear();
+        foreach (var (qId, i) in questionIds.Select((qId, i) => (qId, i)))
+            test.TestQuestions.Add(new TestQuestion { QuestionId = qId, SortOrder = i });
+
+        await uow.SaveChangesAsync(ct);
+        return Ok(new { testId = id, questionCount = test.TestQuestions.Count });
     }
 
     /// <summary>PATCH /api/tests/{id}/publish — toggle publish</summary>
