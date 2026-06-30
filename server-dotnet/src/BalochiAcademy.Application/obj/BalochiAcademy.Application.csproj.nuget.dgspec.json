@@ -1,24 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj": {}
+    "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj": {}
   },
   "projects": {
-    "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj": {
+    "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj",
+        "projectUniqueName": "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj",
         "projectName": "BalochiAcademy.Application",
-        "projectPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj",
-        "packagesPath": "C:\\Users\\Rashid\\.nuget\\packages\\",
-        "outputPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\obj\\",
+        "projectPath": "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\BalochiAcademy.Application.csproj",
+        "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
+        "outputPath": "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
         ],
         "configFilePaths": [
-          "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\NuGet.Config",
-          "C:\\Users\\Rashid\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\NuGet.Config",
+          "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -31,11 +32,10 @@
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj": {
-                "projectPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj"
+              "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj": {
+                "projectPath": "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj"
               }
             }
           }
@@ -50,11 +50,10 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "AutoMapper": {
@@ -90,7 +89,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -368,21 +367,22 @@
         }
       }
     },
-    "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj": {
+    "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj",
+        "projectUniqueName": "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj",
         "projectName": "BalochiAcademy.Domain",
-        "projectPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj",
-        "packagesPath": "C:\\Users\\Rashid\\.nuget\\packages\\",
-        "outputPath": "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\obj\\",
+        "projectPath": "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj",
+        "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
+        "outputPath": "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
         ],
         "configFilePaths": [
-          "D:\\office\\USS\\Projects\\balochistan-academy-portal\\server-dotnet\\NuGet.Config",
-          "C:\\Users\\Rashid\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\NuGet.Config",
+          "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -395,7 +395,6 @@
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -410,11 +409,10 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "imports": [
             "net461",
@@ -432,7 +430,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

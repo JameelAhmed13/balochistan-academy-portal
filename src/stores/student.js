@@ -88,29 +88,25 @@ export const useStudentStore = defineStore('student', () => {
   }
 
   // ── Save test record locally + fire attempt to backend ──────────────────────
-  async function saveTest(record) {
+  function saveTest(record) {
     const local = { ...record, id: Date.now(), date: new Date().toISOString() }
     testRecords.value.unshift(local)
     localStorage.setItem('bap_tests', JSON.stringify(testRecords.value.slice(0, 200)))
 
-    // Fire attempt to backend for coins/leaderboard (best-effort, non-blocking)
-    try {
-      const attemptType = mapAttemptType(record.type)
-      const res = await api.post('/tests/attempts', {
-        testId:      record.testId || null,
-        score:       record.score       || 0,
-        total:       record.total       || 0,
-        durationSec: record.durationSec || 0,
-        answersJson: record.answers ? JSON.stringify(record.answers) : null,
-        attemptType,
-      })
-      // Update local record ID and stats with server response
+    // Fire-and-forget backend attempt for coins/leaderboard
+    api.post('/tests/attempts', {
+      testId:      record.testId || null,
+      score:       record.score       || 0,
+      total:       record.total       || 0,
+      durationSec: record.durationSec || 0,
+      answersJson: record.answers ? JSON.stringify(record.answers) : null,
+      attemptType: mapAttemptType(record.type),
+    }).then(res => {
       local.serverId = res.data?.id
-      if (res.data?.coinsEarned > 0) {
-        // Refresh stats so totalCoins/dashboard reflects earned coins
-        fetchStats().catch(() => {})
-      }
-    } catch { /* backend unavailable — local record still saved */ }
+      if (res.data?.coinsEarned > 0) fetchStats().catch(() => {})
+    }).catch(() => {})
+
+    return local.id
   }
 
   // ── Submit attempt directly (for views that have a backend test ID) ──────────
