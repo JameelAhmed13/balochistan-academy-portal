@@ -83,6 +83,12 @@
         <member name="M:BalochiAcademy.API.Controllers.AuthController.Logout(System.Threading.CancellationToken)">
             <summary>POST /api/auth/logout</summary>
         </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetMediums(System.Threading.CancellationToken)">
+            <summary>GET /api/mediums — all teaching mediums ordered by sort order</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetBands(System.Threading.CancellationToken)">
+            <summary>GET /api/bands — all grade bands ordered by sort order</summary>
+        </member>
         <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetGrades(System.Threading.CancellationToken)">
             <summary>GET /api/grades — enabled grades with subject counts</summary>
         </member>
@@ -109,6 +115,63 @@
         </member>
         <member name="M:BalochiAcademy.API.Controllers.CatalogController.SetGradeSubjects(System.String,BalochiAcademy.Application.Grades.SetGradeSubjectsRequest,System.Threading.CancellationToken)">
             <summary>PUT /api/admin/grades/{code}/subjects</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetGradesForSubject(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/subjects/{subjectId}/grades — grades linked to this subject</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetBooks(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/subjects/{subjectId}/books — all books for a subject</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.CreateBook(System.Int32,BalochiAcademy.Domain.Entities.Book,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/subjects/{subjectId}/books</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.UpdateBook(System.Int32,System.Int32,BalochiAcademy.Domain.Entities.Book,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/subjects/{subjectId}/books/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.DeleteBook(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/admin/subjects/{subjectId}/books/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetBookUnits(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/books/{bookId}/units</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetBookSyllabus(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/books/{bookId}/syllabus — book units → topics → objectives</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.CreateBookUnit(System.Int32,BalochiAcademy.Domain.Entities.Unit,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/books/{bookId}/units</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.UpdateBookUnit(System.Int32,System.Int32,BalochiAcademy.Domain.Entities.Unit,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/books/{bookId}/units/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.DeleteBookUnit(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/admin/books/{bookId}/units/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetUnitTopics(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/units/{unitId}/topics</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.CreateUnitTopic(System.Int32,BalochiAcademy.Domain.Entities.Topic,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/units/{unitId}/topics</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.UpdateUnitTopic(System.Int32,System.Int32,BalochiAcademy.Domain.Entities.Topic,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/units/{unitId}/topics/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.DeleteUnitTopic(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/admin/units/{unitId}/topics/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetTopicResources(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/topics/{topicId}/resources</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.CreateTopicResource(System.Int32,BalochiAcademy.Domain.Entities.ContentItem,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/topics/{topicId}/resources</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.UpdateTopicResource(System.Int32,System.Int32,BalochiAcademy.Domain.Entities.ContentItem,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/topics/{topicId}/resources/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.DeleteTopicResource(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/admin/topics/{topicId}/resources/{id}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.CatalogController.GetUnitResources(System.Int32,System.Threading.CancellationToken)">
+            <summary>GET /api/admin/units/{unitId}/resources — all items incl. unpublished</summary>
         </member>
         <member name="M:BalochiAcademy.API.Controllers.CoinsController.Balance(System.Threading.CancellationToken)">
             <summary>GET /api/coins/balance</summary>
@@ -215,6 +278,12 @@
         <member name="M:BalochiAcademy.API.Controllers.TestsController.Create(BalochiAcademy.Application.Tests.CreateTestRequest,System.Threading.CancellationToken)">
             <summary>POST /api/tests — admin only</summary>
         </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.Update(System.Int32,BalochiAcademy.Application.Tests.UpdateTestRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/tests/{id} — admin only</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.TestsController.SetQuestions(System.Int32,System.Int32[],System.Threading.CancellationToken)">
+            <summary>PUT /api/tests/{id}/questions — replace question list</summary>
+        </member>
         <member name="M:BalochiAcademy.API.Controllers.TestsController.TogglePublish(System.Int32,System.Threading.CancellationToken)">
             <summary>PATCH /api/tests/{id}/publish — toggle publish</summary>
         </member>
@@ -235,6 +304,11 @@
         </member>
         <member name="M:BalochiAcademy.API.Controllers.TestsController.Leaderboard(System.String,System.Int32,System.Threading.CancellationToken)">
             <summary>GET /api/tests/leaderboard</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.UploadController.Upload(Microsoft.AspNetCore.Http.IFormFile,System.String,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/upload — upload a file and return its public URL.</summary>
+            <param name="file">The file to upload (multipart/form-data).</param>
+            <param name="folder">Sub-folder under uploads/ (alphanumeric, -, _ only). Default: misc.</param>
         </member>
         <member name="M:BalochiAcademy.API.Controllers.UsersController.List(System.String,System.String,System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
             <summary>GET /api/admin/users?role=&amp;gradeCode=&amp;page=</summary>

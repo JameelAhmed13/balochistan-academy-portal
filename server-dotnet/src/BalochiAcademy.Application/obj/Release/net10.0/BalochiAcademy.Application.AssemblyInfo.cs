@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BalochiAcademy.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ffd5a20c01bc050635924cfa16e86c48704ef87e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d3a8ffde64ae28781c2967bc951bfad0233f3b78")]
 [assembly: System.Reflection.AssemblyProductAttribute("BalochiAcademy.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BalochiAcademy.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

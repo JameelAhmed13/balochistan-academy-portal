@@ -1,6 +1,10 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\server-dotnet",
+    "\\server-dotnet\\src",
+    "\\server-dotnet\\src\\BalochiAcademy.API"
   ],
+  "SelectedNode": "\\server-dotnet\\src\\BalochiAcademy.API\\Program.cs",
   "PreviewInSolutionExplorer": false
 }

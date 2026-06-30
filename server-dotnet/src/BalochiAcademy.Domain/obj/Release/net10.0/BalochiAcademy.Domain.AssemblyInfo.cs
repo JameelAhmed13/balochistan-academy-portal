@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BalochiAcademy.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e306cf30ef91b43a1d927ec1d5f5ea87e27970d3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d3a8ffde64ae28781c2967bc951bfad0233f3b78")]
 [assembly: System.Reflection.AssemblyProductAttribute("BalochiAcademy.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BalochiAcademy.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
