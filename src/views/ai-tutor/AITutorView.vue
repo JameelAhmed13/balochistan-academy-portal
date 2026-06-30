@@ -6,17 +6,17 @@
         <Bot class="w-4 h-4" /> Pakistan's First AI Video Tutor Platform
       </div>
       <h2 class="text-2xl font-bold text-slate-800">Learn with AI Legends</h2>
-      <p class="text-slate-500 text-sm mt-1">Powered by Google Gemini Â· Choose your subject tutor</p>
+      <p class="text-slate-500 text-sm mt-1">Powered by Google Gemini · Choose your subject tutor</p>
     </div>
 
     <!-- Entry buttons -->
     <div class="flex gap-3 justify-center flex-wrap">
-      <button class="btn-primary px-6 py-3 text-base rounded-xl">
+      <RouterLink :to="`/app/ai-tutor/${defaultSlug}/video`" class="btn-primary px-6 py-3 text-base rounded-xl flex items-center gap-2">
         <Video class="w-5 h-5" /> Learn from AI Live
-      </button>
-      <button class="btn-secondary px-6 py-3 text-base rounded-xl">
+      </RouterLink>
+      <RouterLink :to="`/app/ai-tutor/${defaultSlug}/chat`" class="btn-secondary px-6 py-3 text-base rounded-xl flex items-center gap-2">
         <MessageSquare class="w-5 h-5" /> Try Text Chat
-      </button>
+      </RouterLink>
     </div>
 
     <!-- Tutor cards -->
@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Bot, Video, MessageSquare } from '@lucide/vue'
 import { AI_TUTORS } from '@/stores/content'
 import { useAuthStore } from '@/stores/auth'
@@ -38,6 +38,7 @@ const auth = useAuthStore()
 const catalog = useCatalogStore()
 // fall back to the static personas if the catalog hasn't loaded / backend is offline
 const tutors = ref(AI_TUTORS)
+const defaultSlug = computed(() => tutors.value[0]?.slug || 'einstein')
 
 onMounted(async () => {
   try {
@@ -46,7 +47,8 @@ onMounted(async () => {
     const list = code ? catalog.tutorsForGrade(code) : catalog.tutors
     if (list.length) {
       tutors.value = list.map((t) => ({
-        slug: t.slug, persona: t.persona, subject: t.subject_name || t.subject || 'General',
+        slug: t.slug, persona: t.persona,
+        subject: t.subject_name || (typeof t.subject === 'object' ? t.subject?.name : t.subject) || 'General',
         icon: t.icon || '🤖', color: t.color || 'grad-blue', desc: t.description || t.desc || '',
         systemPrompt: t.system_prompt,
       }))

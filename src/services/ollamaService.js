@@ -25,6 +25,7 @@ import { buildRolePrompt } from './saathiRoles'
 const BASE = (import.meta.env.VITE_OLLAMA_URL || '/ollama').replace(/\/$/, '')
 const DEFAULT_MODEL = import.meta.env.VITE_OLLAMA_MODEL || 'llama3'
 const TIMEOUT_MS = Number(import.meta.env.VITE_OLLAMA_TIMEOUT_MS || 30000)
+const OLLAMA_API_KEY = (import.meta.env.VITE_OLLAMA_API_KEY || '').trim()
 const DEFAULT_OPTIONS = { temperature: 0.3, top_p: 0.9, num_predict: 1500 }
 
 // Gemini is used as the cloud fallback when local Ollama is unreachable/too slow.
@@ -193,13 +194,15 @@ export async function llmCall(mode, useCase, ctx = {}, opts = {}) {
 }
 
 // Shared POST with timeout + friendly error mapping (used by llmCall and chat).
-async function _ollamaPost(endpoint, payload) {
+async function _ollamaPost(endpoint, payload, timeoutMs = TIMEOUT_MS) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
+    const headers = { 'Content-Type': 'application/json' }
+    if (OLLAMA_API_KEY) headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`
     const res = await fetch(BASE + endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(payload),
       signal: controller.signal,
     })
@@ -212,7 +215,7 @@ async function _ollamaPost(endpoint, payload) {
     return json
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error(`Ollama timed out after ${Math.round(TIMEOUT_MS / 1000)}s — the model may be too slow on this machine.`)
+      throw new Error(`Ollama timed out after ${Math.round(timeoutMs / 1000)}s — the model may be too slow on this machine.`)
     }
     if (err.cause?.code === 'ECONNREFUSED' || /fetch failed|Failed to fetch|NetworkError/i.test(err.message)) {
       throw new Error(`Cannot reach Ollama at ${BASE} — is it running? (try: ollama serve)`)
@@ -226,7 +229,7 @@ async function _ollamaPost(endpoint, payload) {
 /**
  * Raw chat turn with a custom system prompt (used by Saathi). Returns reply text.
  */
-export async function chat({ system, messages = [], model = DEFAULT_MODEL, options = {}, format } = {}) {
+export async function chat({ system, messages = [], model = DEFAULT_MODEL, options = {}, format, timeoutMs } = {}) {
   const msgs = system ? [{ role: 'system', content: system }, ...messages] : [...messages]
   const json = await _ollamaPost('/api/chat', {
     model,
@@ -234,7 +237,7 @@ export async function chat({ system, messages = [], model = DEFAULT_MODEL, optio
     stream: false,
     options: { ...DEFAULT_OPTIONS, ...options },
     ...(format ? { format } : {}),
-  })
+  }, timeoutMs)
   return json.message?.content || ''
 }
 
@@ -253,7 +256,10 @@ async function geminiChat({ system, messages = [], options = {} }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`)
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`Gemini HTTP ${res.status}: ${errBody.slice(0, 300)}`)
+  }
   const d = await res.json()
   return d.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
@@ -264,21 +270,40 @@ async function geminiChat({ system, messages = [], options = {} }) {
  */
 export let lastEngine = null
 export async function chatWithFallback({ system, messages = [], model, options = {}, format } = {}) {
+  // 1. Try Ollama (normal timeout)
   try {
     const out = await chat({ system, messages, model, options, format })
     lastEngine = 'ollama'
     return out
   } catch (ollamaErr) {
     lastError = ollamaErr?.message || String(ollamaErr)
+  }
+
+  // 2. Try Gemini
+  let gemErr = null
+  try {
+    const out = await geminiChat({ system, messages, options })
+    lastEngine = 'gemini'
+    return out
+  } catch (e) {
+    gemErr = e
+  }
+
+  // 3. If Gemini failed with billing/quota (429), retry Ollama with 3× timeout
+  const gemMsg = gemErr?.message || ''
+  if (gemMsg.includes('429') || /quota|billing/i.test(gemMsg)) {
     try {
-      const out = await geminiChat({ system, messages, options })
-      lastEngine = 'gemini'
+      const out = await chat({ system, messages, model, options, format, timeoutMs: TIMEOUT_MS * 3 })
+      lastEngine = 'ollama'
       return out
-    } catch (gemErr) {
+    } catch (retryErr) {
       lastEngine = null
-      throw new Error(`Both engines failed — Ollama: ${lastError}; Gemini: ${gemErr?.message || gemErr}`)
+      throw new Error(`Both engines failed — Ollama (extended): ${retryErr?.message || retryErr}; Gemini: ${gemMsg}`)
     }
   }
+
+  lastEngine = null
+  throw new Error(`Both engines failed — Ollama: ${lastError}; Gemini: ${gemMsg}`)
 }
 
 /**
@@ -425,7 +450,10 @@ async function geminiGenerate(prompt, json = true) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`)
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`Gemini HTTP ${res.status}: ${errBody.slice(0, 300)}`)
+  }
   const d = await res.json()
   return d.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
@@ -483,4 +511,4 @@ export async function generatePredictedPaper({ subject, grade, board, count = 10
   } catch (e) { lastError = e?.message || String(e); return [] }
 }
 
-export const ollamaConfig = { BASE, MODEL: DEFAULT_MODEL, TIMEOUT_MS }
+export const ollamaConfig = { BASE, MODEL: DEFAULT_MODEL, TIMEOUT_MS, GEMINI_MODEL }

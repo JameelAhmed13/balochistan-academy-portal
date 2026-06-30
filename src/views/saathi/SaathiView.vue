@@ -52,7 +52,18 @@
             <AlertTriangle v-else-if="msg.role === 'error'" class="w-3.5 h-3.5" />
             <span v-else>🤝</span>
           </div>
-          <div class="sa-msg-body"
+          <div v-if="msg.role === 'saathi'" class="sa-msg-wrap">
+            <div
+              class="sa-msg-body"
+              :class="lang === 'urdu' ? 'urdu' : ''"
+              :dir="lang === 'urdu' ? 'rtl' : 'ltr'"
+              v-html="formatResponse(msg.text)" />
+            <span v-if="msg.engine" class="sa-msg-badge" :class="msg.engine === 'gemini' ? 'sa-badge-gemini' : 'sa-badge-ollama'">
+              {{ msg.engine === 'gemini' ? '✦ Gemini' : '⚙ Ollama' }} · {{ msg.model }}
+            </span>
+          </div>
+          <div v-else
+            class="sa-msg-body"
             :class="[lang === 'urdu' ? 'urdu' : '', msg.role === 'error' ? 'sa-msg-err' : '']"
             :dir="lang === 'urdu' ? 'rtl' : 'ltr'">{{ msg.text }}</div>
         </div>
@@ -72,19 +83,22 @@
       </form>
       <div class="sa-foot">
         <span v-if="engine" class="sa-engine">
-          <Cpu class="w-3 h-3" /> answered by {{ engine === 'ollama' ? 'local llama3.2:1b' : 'Gemini (fallback)' }}
+          <Cpu class="w-3 h-3" /> answered by {{ engine === 'ollama' ? ollamaModel : 'Gemini (fallback)' }}
         </span>
-        <span class="sa-foot-note">Saathi follows the Grade {{ grade }} PTB/BBISE syllabus · won't invent your scores</span>
+        <div class="sa-foot-right">
+          <span class="sa-foot-note">Saathi follows the Grade {{ grade }} PTB/BBISE syllabus · won't invent your scores</span>
+          <button v-if="messages.length" type="button" @click="clearMode" class="sa-clear-btn">Clear</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { GraduationCap, CalendarDays, ListChecks, Gauge, Users, Sparkles, Send, User, AlertTriangle, Cpu } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
-import { saathiChat, getLastEngine } from '@/services/ollamaService'
+import { saathiChat, getLastEngine, ollamaConfig } from '@/services/ollamaService'
 
 const auth = useAuthStore()
 const grade = computed(() => auth.user?.gradeCode ?? 9)
@@ -96,6 +110,7 @@ const draft = ref('')
 const messages = ref([])
 const loading = ref(false)
 const engine = ref(null)
+const ollamaModel = ollamaConfig.MODEL
 const threadEl = ref(null)
 
 const modes = [
@@ -113,10 +128,37 @@ const modes = [
 const mode = ref('tutor_session')
 const activeMode = computed(() => modes.find((m) => m.key === mode.value) || modes[0])
 
+function loadModeMessages(modeKey) {
+  try { return JSON.parse(localStorage.getItem(`bap_saathi_${modeKey}`) || '[]') } catch { return [] }
+}
+function saveModeMessages() {
+  localStorage.setItem(`bap_saathi_${mode.value}`, JSON.stringify(messages.value.slice(0, 100)))
+}
+function clearMode() {
+  messages.value = []
+  engine.value = null
+  localStorage.removeItem(`bap_saathi_${mode.value}`)
+}
+
+function formatResponse(text) {
+  if (!text) return ''
+  return String(text)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/^#{1,3}\s+(.+)$/gm, '<strong class="sa-md-h">$1</strong>')
+    .replace(/^- (.+)$/gm, '<li class="sa-md-li">$1</li>')
+    .replace(/(<li[\s\S]*?<\/li>)/g, '<ul class="sa-md-ul">$1</ul>')
+    .replace(/\n\n/g, '</p><p class="sa-md-p">')
+    .replace(/\n/g, '<br/>')
+}
+
+onMounted(() => { messages.value = loadModeMessages(mode.value) })
+
 function selectMode(key) {
   if (mode.value === key) return
   mode.value = key
-  messages.value = []
+  messages.value = loadModeMessages(key)
   engine.value = null
 }
 
@@ -158,10 +200,22 @@ async function send(forceText) {
   await scrollThread()
   try {
     const reply = await saathiChat(mode.value, grade.value, injectedFor(), text, history)
-    messages.value.push({ role: 'saathi', text: reply || '…' })
-    engine.value = getLastEngine()
+    const eng = getLastEngine()
+    const modelName = eng === 'gemini' ? ollamaConfig.GEMINI_MODEL : ollamaConfig.MODEL
+    messages.value.push({ role: 'saathi', text: reply || '…', engine: eng, model: modelName })
+    engine.value = eng
+    saveModeMessages()
   } catch (e) {
-    messages.value.push({ role: 'error', text: e?.message || 'Saathi is unavailable right now. Please try again.' })
+    const msg = e?.message || ''
+    const friendly = msg.includes('no-gemini-key')
+      ? 'Gemini API key is missing. Add VITE_GEMINI_API_KEY to your .env file.'
+      : msg.includes('Both engines failed')
+        ? 'Both Ollama and Gemini are unavailable right now. Check your internet connection and try again.'
+        : msg.includes('Gemini HTTP 4')
+          ? 'Gemini API key is invalid or expired. Please check VITE_GEMINI_API_KEY in your .env file.'
+          : 'Saathi is unavailable right now. Please try again in a moment.'
+    messages.value.push({ role: 'error', text: friendly })
+    console.error('[Saathi]', msg)
   }
   loading.value = false
   scrollThread()
@@ -208,6 +262,12 @@ function kickoff() {
 
 .sa-msg { display: flex; gap: 0.6rem; align-items: flex-start; }
 .sa-msg-student { flex-direction: row-reverse; }
+.sa-msg-wrap { display: flex; flex-direction: column; gap: 0.25rem; max-width: 80%; }
+.sa-msg-badge { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.6rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 99px; width: fit-content; letter-spacing: 0.01em; }
+.sa-badge-gemini { background: color-mix(in srgb, #8b5cf6 12%, transparent); color: #7c3aed; border: 1px solid color-mix(in srgb, #8b5cf6 25%, transparent); }
+.sa-badge-ollama  { background: color-mix(in srgb, #0ea5e9 12%, transparent); color: #0284c7; border: 1px solid color-mix(in srgb, #0ea5e9 25%, transparent); }
+html.dark .sa-badge-gemini { color: #a78bfa; border-color: color-mix(in srgb, #8b5cf6 35%, transparent); }
+html.dark .sa-badge-ollama  { color: #38bdf8; border-color: color-mix(in srgb, #0ea5e9 35%, transparent); }
 .sa-msg-ava { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; color: #fff; }
 .sa-ava-student { background: var(--t-hover2); color: var(--t-text2); }
 .sa-msg-body { max-width: 80%; padding: 0.65rem 0.9rem; border-radius: 14px; font-size: 0.86rem; line-height: 1.6; background: var(--t-hover); color: var(--t-text1); white-space: pre-wrap; word-break: break-word; }
@@ -227,8 +287,17 @@ function kickoff() {
 .sa-send { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: none; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); color: #fff; cursor: pointer; }
 .sa-send:disabled { opacity: 0.4; cursor: not-allowed; }
 .sa-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; padding: 0 0.85rem 0.7rem; }
+.sa-foot-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .sa-engine { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.66rem; font-weight: 600; color: var(--t-accent); }
 .sa-foot-note { font-size: 0.64rem; color: var(--t-text3); }
+.sa-clear-btn { font-size: 0.64rem; font-weight: 600; color: var(--t-text3); background: none; border: none; cursor: pointer; padding: 0; text-decoration: underline; }
+.sa-clear-btn:hover { color: var(--t-danger, #ef4444); }
+
+.sa-msg-body :deep(.sa-md-h) { display: block; margin-top: 0.5rem; margin-bottom: 0.2rem; font-size: 0.9rem; }
+.sa-msg-body :deep(.sa-md-ul) { margin: 0.2rem 0; padding-left: 0; list-style: none; }
+.sa-msg-body :deep(.sa-md-li) { position: relative; padding-left: 1rem; margin: 0.15rem 0; }
+.sa-msg-body :deep(.sa-md-li)::before { content: '•'; position: absolute; left: 0.2rem; color: var(--t-accent); }
+.sa-msg-body :deep(.sa-md-p) { display: block; margin-top: 0.4rem; }
 
 @media (prefers-reduced-motion: reduce) { .sa-typing span { animation: none; } }
 </style>

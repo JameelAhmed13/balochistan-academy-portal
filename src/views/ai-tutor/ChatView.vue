@@ -93,6 +93,20 @@
             </div>
             <div v-else v-html="msg.role === 'assistant' ? formatResponse(msg.content) : msg.content" />
 
+            <!-- Error detail toggle -->
+            <div v-if="msg.errorDetail" class="mt-2">
+              <button @click="msg.showError = !msg.showError" class="cv-err-toggle">
+                {{ msg.showError ? '▲ Hide details' : '▼ Show error details' }}
+              </button>
+              <pre v-if="msg.showError" class="cv-err-detail">{{ msg.errorDetail }}</pre>
+            </div>
+
+            <!-- Engine badge (assistant only) -->
+            <span v-if="msg.role === 'assistant' && !msg.thinking && msg.engine"
+              class="cv-engine-badge" :class="msg.engine === 'gemini' ? 'cv-badge-gemini' : 'cv-badge-ollama'">
+              {{ msg.engine === 'gemini' ? '✦ Gemini' : '⚙ Ollama' }} · {{ msg.model }}
+            </span>
+
             <!-- Action chips (assistant only) -->
             <div v-if="msg.role === 'assistant' && !msg.thinking" class="mt-3 flex flex-wrap gap-2" :class="isUrduMode ? 'flex-row-reverse' : ''">
               <button @click="followUp('DeepDive', msg.content)" class="chip-action">
@@ -165,6 +179,7 @@ import { ArrowLeft, Send, History, EyeOff, Layers, Link, Pencil } from '@lucide/
 import { AI_TUTORS } from '@/stores/content'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'
+import { chatWithFallback, getLastEngine, ollamaConfig } from '@/services/ollamaService'
 
 const props = defineProps({ subject: String })
 const auth = useAuthStore()
@@ -173,7 +188,12 @@ const catalog = useCatalogStore()
 // prefer the admin-managed tutor (carries subject_name + system_prompt); fall back to the static persona
 const tutor = computed(() => {
   const c = catalog.tutors.find(t => t.slug === props.subject)
-  if (c) return { ...c, subject: c.subject_name || c.subject, desc: c.description || c.desc }
+  if (c) {
+    const subjectStr = c.subject_name
+      || (typeof c.subject === 'object' ? c.subject?.name : c.subject)
+      || 'General'
+    return { ...c, subject: subjectStr, desc: c.description || c.desc }
+  }
   return AI_TUTORS.find(t => t.slug === props.subject)
 })
 onMounted(() => { if (!catalog.tutors.length) catalog.fetchTutors().catch(() => {}) })
@@ -182,8 +202,6 @@ const initials = computed(() => auth.user?.name?.split(' ').map(w => w[0]).slice
 // Slugs whose AI should respond in Urdu
 const URDU_SLUGS = new Set(['ghalib', 'ghazali'])
 const isUrduMode = computed(() => URDU_SLUGS.has(props.subject))
-
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || ''
 
 const messages = ref([])
 const input = ref('')
@@ -214,23 +232,12 @@ function buildSystemInstruction() {
   return `You are ${tutor.value?.persona}, an AI tutor for ${tutor.value?.subject}. Respond in character, in first person, with enthusiasm. Keep answers educational, clear, and suitable for Grade 9 Pakistani students (Balochistan board). Format with bullet points and examples where helpful.`
 }
 
-async function callGemini(prompt) {
-  if (!GEMINI_KEY) {
-    if (isUrduMode.value) {
-      return `[ڈیمو موڈ] ${tutor.value?.persona} کی طرف سے: یہ ایک اہم سوال ہے! "${prompt}" کے بارے میں ${tutor.value?.subject} میں گہری معلومات موجود ہیں۔ اصل Gemini API key کے ساتھ آپ کو مکمل اردو جواب ملے گا۔`
-    }
-    return `[Demo Mode] As ${tutor.value?.persona}, I would say: This is a fascinating question! ${prompt} relates to core concepts in ${tutor.value?.subject}. In a real deployment with a Gemini API key, I would provide a detailed, persona-styled answer here.`
-  }
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      systemInstruction: { parts: [{ text: buildSystemInstruction() }] },
-    }),
+async function callAI(prompt, history = []) {
+  // history is [{role:'user'|'assistant', content}] — same shape as Saathi / chatWithFallback
+  return chatWithFallback({
+    system: buildSystemInstruction(),
+    messages: [...history, { role: 'user', content: prompt }],
   })
-  const data = await res.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || (isUrduMode.value ? 'معذرت، جواب نہیں مل سکا۔' : 'Sorry, I could not generate a response.')
 }
 
 async function sendMessage(text) {
@@ -248,9 +255,24 @@ async function send() {
   loading.value = true
   await nextTick(); scrollDown()
 
-  const reply = await callGemini(text)
-  const idx = messages.value.indexOf(thinkMsg)
-  messages.value[idx] = { id: thinkMsg.id, role: 'assistant', thinking: false, content: reply, urdu: false, urduText: '', engText: '', showEng: false }
+  try {
+    const history = messages.value
+      .slice(0, -2) // exclude the just-pushed user msg + thinkMsg
+      .filter(m => !m.thinking && m.content)
+      .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
+
+    const reply = await callAI(text, history)
+    const eng = getLastEngine()
+    const modelName = eng === 'gemini' ? ollamaConfig.GEMINI_MODEL : ollamaConfig.MODEL
+    const idx = messages.value.indexOf(thinkMsg)
+    messages.value[idx] = { id: thinkMsg.id, role: 'assistant', thinking: false, content: reply, engine: eng, model: modelName, urdu: false, urduText: '', engText: '', showEng: false }
+  } catch (e) {
+    console.error('[AITutor send]', e)
+    const idx = messages.value.indexOf(thinkMsg)
+    const errDetail = e?.message || 'Unknown error'
+    const friendly = isUrduMode.value ? 'معذرت، ابھی جواب نہیں آ سکا۔ دوبارہ کوشش کریں۔' : 'Both AI engines are unavailable right now. Please try again.'
+    messages.value[idx] = { id: thinkMsg.id, role: 'assistant', thinking: false, content: friendly, errorDetail: errDetail, showError: false, urdu: false, urduText: '', engText: '', showEng: false }
+  }
   loading.value = false
   await nextTick(); scrollDown()
   saveSessions()
@@ -272,8 +294,7 @@ async function followUp(type, context) {
 async function translateMsg(msg) {
   if (msg.urduText) { msg.urdu = true; return }
   loading.value = true
-  const text = await callGemini(`Translate this to Urdu (keep technical terms in Urdu script): ${msg.content}`)
-  msg.urduText = text
+  msg.urduText = await callAI(`Translate this to Urdu (keep technical terms in Urdu script): ${msg.content}`)
   msg.urdu = true
   loading.value = false
 }
@@ -281,7 +302,7 @@ async function translateMsg(msg) {
 async function translateToEng(msg) {
   if (msg.engText) { msg.showEng = true; return }
   loading.value = true
-  msg.engText = await callGemini(`Translate this Urdu text to English (plain translation): ${msg.content}`)
+  msg.engText = await callAI(`Translate this Urdu text to English (plain translation): ${msg.content}`)
   msg.showEng = true
   loading.value = false
 }
@@ -410,4 +431,28 @@ html.dark .cv-eng-label { color: #60a5fa; }
 
 .sidebar-enter-active, .sidebar-leave-active { transition: all 0.3s ease; }
 .sidebar-enter-from, .sidebar-leave-to { opacity: 0; width: 0; }
+
+.cv-err-toggle {
+  font-size: 0.65rem; font-weight: 600; color: var(--t-text3);
+  background: none; border: none; cursor: pointer; padding: 0; text-decoration: underline;
+}
+.cv-err-toggle:hover { color: var(--t-danger, #ef4444); }
+.cv-err-detail {
+  margin-top: 0.35rem; padding: 0.5rem 0.75rem; border-radius: 8px;
+  font-size: 0.65rem; line-height: 1.5; white-space: pre-wrap; word-break: break-all;
+  background: color-mix(in srgb, #ef4444 8%, transparent);
+  border: 1px solid color-mix(in srgb, #ef4444 20%, transparent);
+  color: var(--t-danger, #ef4444);
+}
+
+.cv-engine-badge {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.01em;
+  padding: 0.15rem 0.5rem; border-radius: 99px; margin-top: 0.35rem;
+  width: fit-content;
+}
+.cv-badge-gemini { background: color-mix(in srgb, #8b5cf6 12%, transparent); color: #7c3aed; border: 1px solid color-mix(in srgb, #8b5cf6 25%, transparent); }
+.cv-badge-ollama  { background: color-mix(in srgb, #0ea5e9 12%, transparent); color: #0284c7; border: 1px solid color-mix(in srgb, #0ea5e9 25%, transparent); }
+html.dark .cv-badge-gemini { color: #a78bfa; border-color: color-mix(in srgb, #8b5cf6 35%, transparent); }
+html.dark .cv-badge-ollama  { color: #38bdf8; border-color: color-mix(in srgb, #0ea5e9 35%, transparent); }
 </style>
