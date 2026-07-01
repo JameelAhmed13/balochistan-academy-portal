@@ -19,7 +19,15 @@ public class CoinsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
     {
         var user = await uow.Repository<User>().FindAsync([cu.UserId!.Value], ct);
         if (user == null) return NotFound();
-        return Ok(new { coins = user.Coins, pkr = user.Coins * 0.50m });
+
+        var todayStart = DateTime.UtcNow.Date;
+        var todayEnd   = todayStart.AddDays(1);
+        var earnedToday = await uow.Repository<CoinLedger>().Query()
+            .Where(c => c.UserId == cu.UserId && c.Amount > 0
+                     && c.Timestamp >= todayStart && c.Timestamp < todayEnd)
+            .SumAsync(c => c.Amount, ct);
+
+        return Ok(new { coins = user.Coins, pkr = user.Coins * 0.50m, earnedToday });
     }
 
     /// <summary>GET /api/coins/transactions</summary>

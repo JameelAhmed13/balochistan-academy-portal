@@ -151,6 +151,16 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider>(sp =>
 });
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
+// ── AI Service (Ollama → Gemini fallback) ────────────────────────────────────
+// Named "ollama" client — base URL comes from appsettings Ai:OllamaUrl
+builder.Services.AddHttpClient("ollama", (sp, client) =>
+{
+    var url = sp.GetRequiredService<IConfiguration>()["Ai:OllamaUrl"] ?? "http://localhost:11434";
+    client.BaseAddress = new Uri(url);
+});
+builder.Services.AddHttpClient(); // default factory for Gemini (absolute URLs)
+builder.Services.AddScoped<AiService>();
+
 // ── Controllers + SignalR ────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddSignalR();

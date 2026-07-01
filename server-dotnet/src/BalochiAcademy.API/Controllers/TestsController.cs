@@ -13,16 +13,19 @@ namespace BalochiAcademy.API.Controllers;
 [Authorize]
 public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper mapper) : ControllerBase
 {
-    /// <summary>GET /api/tests?gradeCode=&amp;kind=&amp;published=true</summary>
+    /// <summary>GET /api/tests?gradeCode=&amp;kind=&amp;unitId=&amp;subjectId=&amp;published=true</summary>
     [HttpGet]
     public async Task<IActionResult> GetTests(
         [FromQuery] string? gradeCode, [FromQuery] string? kind,
+        [FromQuery] int? unitId, [FromQuery] int? subjectId,
         [FromQuery] bool published = true, [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20, CancellationToken ct = default)
     {
         IQueryable<Test> q = uow.Repository<Test>().Query().Include(t => t.TestQuestions);
         if (!string.IsNullOrEmpty(gradeCode)) q = q.Where(t => t.GradeCode == gradeCode);
         if (!string.IsNullOrEmpty(kind))      q = q.Where(t => t.Kind == kind);
+        if (unitId.HasValue)                  q = q.Where(t => t.UnitId == unitId);
+        if (subjectId.HasValue)               q = q.Where(t => t.SubjectId == subjectId);
         if (published)                        q = q.Where(t => t.IsPublished);
 
         var total = await q.CountAsync(ct);
@@ -221,7 +224,7 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         var userId = cu.UserId!.Value;
         var attempts = await uow.Repository<TestAttempt>().Query()
             .Where(a => a.UserId == userId)
-            .Select(a => new { a.Percent, a.Score, a.Total, a.CoinsEarned })
+            .Select(a => new { a.Percent, a.Score, a.Total, a.CoinsEarned, a.SubmittedAt })
             .ToListAsync(ct);
 
         var coins = await uow.Repository<User>().Query()
@@ -229,12 +232,15 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
             .Select(u => u.Coins)
             .FirstOrDefaultAsync(ct);
 
-        var total  = attempts.Count;
-        var passed = attempts.Count(a => a.Percent >= 40);
-        var avg    = total > 0 ? Math.Round(attempts.Average(a => (double)(a.Percent ?? 0)), 1) : 0;
-        var earned = attempts.Sum(a => a.CoinsEarned);
+        var now        = DateTime.UtcNow;
+        var total      = attempts.Count;
+        var passed     = attempts.Count(a => a.Percent >= 40);
+        var avg        = total > 0 ? Math.Round(attempts.Average(a => (double)(a.Percent ?? 0)), 1) : 0;
+        var earned     = attempts.Sum(a => a.CoinsEarned);
+        var passRate   = total > 0 ? Math.Round((double)passed / total * 100, 1) : 0;
+        var thisMonth  = attempts.Count(a => a.SubmittedAt.Month == now.Month && a.SubmittedAt.Year == now.Year);
 
-        return Ok(new { attempts = total, avgPercent = avg, passed, coinsEarned = earned, coins });
+        return Ok(new { attempts = total, avgPercent = avg, passed, passRate, thisMonth, coinsEarned = earned, coins });
     }
 
     /// <summary>GET /api/tests/leaderboard</summary>
