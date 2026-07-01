@@ -43,3 +43,4 @@ server-dotnet/**/.vs/
 *.ntvs*
 *.njsproj
 *.sw?
+/.vs/slnx.sqlite
