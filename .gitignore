@@ -29,6 +29,11 @@ server/node_modules/
 server/data/
 server/.env
 
+# .NET build artifacts
+server-dotnet/**/bin/
+server-dotnet/**/obj/
+server-dotnet/**/.vs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
