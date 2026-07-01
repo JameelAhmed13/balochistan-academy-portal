@@ -115,6 +115,9 @@
               >
                 <component :is="u.isActive ? UserX : UserCheck" class="w-3.5 h-3.5" />
               </button>
+              <button @click="openDevices(u)" class="btn-ghost" style="padding:0.35rem 0.6rem;cursor:pointer;" title="Active sessions">
+                <Monitor class="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>
@@ -171,6 +174,9 @@
                   >
                     <component :is="u.isActive ? UserX : UserCheck" class="w-3.5 h-3.5" />
                   </button>
+                  <button @click="openDevices(u)" class="btn-ghost" style="padding:0.3rem 0.5rem;cursor:pointer;" title="Active sessions">
+                    <Monitor class="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </td>
             </tr>
@@ -183,6 +189,60 @@
         <button class="btn-ghost" :disabled="page <= 1" @click="goPage(page - 1)" style="cursor:pointer;">← Prev</button>
         <span style="font-size:0.82rem;color:var(--t-text2);">Page {{ page }} of {{ totalPages }}</span>
         <button class="btn-ghost" :disabled="page >= totalPages" @click="goPage(page + 1)" style="cursor:pointer;">Next →</button>
+      </div>
+    </div>
+
+    <!-- Devices / Sessions Panel -->
+    <div v-if="devicesPanel" class="qb-overlay" @click.self="devicesPanel = false">
+      <div class="qb-modal">
+        <div class="qb-modal-header">
+          <div>
+            <h3 class="qb-modal-title">Active Sessions</h3>
+            <div style="font-size:0.78rem;color:var(--t-text3);margin-top:0.2rem;">
+              {{ devicesUser?.name || devicesUser?.username }}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <button v-if="sessions.length" @click="revokeAllSessions"
+                    class="btn-secondary"
+                    style="font-size:0.78rem;padding:0.35rem 0.75rem;color:#ef4444;border-color:#fca5a5;cursor:pointer;">
+              Revoke All
+            </button>
+            <button @click="devicesPanel = false" class="btn-ghost" style="padding:0.4rem;cursor:pointer;">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <div class="qb-modal-body">
+          <div v-if="sessionsLoading" class="ag-empty">
+            <div class="ag-empty-icon">⏳</div><p>Loading sessions…</p>
+          </div>
+          <div v-else-if="sessionsErr" class="qb-err">{{ sessionsErr }}</div>
+          <div v-else-if="!sessions.length" class="ag-empty">
+            <div class="ag-empty-icon">✅</div><p>No active sessions found.</p>
+          </div>
+          <div v-else style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div v-for="s in sessions" :key="s.id"
+                 style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem;border-radius:12px;background:var(--t-bg);border:1px solid var(--t-border);">
+              <div style="font-size:1.5rem;line-height:1;margin-top:0.1rem;">{{ deviceEmoji(s) }}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:0.88rem;color:var(--t-text1);">
+                  {{ s.deviceName || 'Unknown device' }}
+                </div>
+                <div style="font-size:0.75rem;color:var(--t-text3);margin-top:0.2rem;">
+                  {{ s.ipAddress || 'IP unknown' }} · signed in {{ relativeDate(s.createdAt) }}
+                </div>
+                <div style="font-size:0.72rem;color:var(--t-text3);">
+                  Expires {{ new Date(s.expiresAt).toLocaleDateString() }}
+                </div>
+              </div>
+              <button @click="revokeSession(s.id)" class="btn-ghost"
+                      style="padding:0.3rem 0.65rem;font-size:0.75rem;color:#ef4444;flex-shrink:0;cursor:pointer;">
+                Revoke
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -242,12 +302,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Plus, UserX, UserCheck, LayoutGrid, List, Search, Shield } from '@lucide/vue'
+import { Plus, UserX, UserCheck, LayoutGrid, List, Search, Shield, Monitor, X } from '@lucide/vue'
 import Dialog from 'primevue/dialog'
 import KpiCard from '@/components/ui/KpiCard.vue'
 import { api } from '@/services/api'
 
 /* ── State ── */
+const devicesPanel    = ref(false)
+const devicesUser     = ref(null)
+const sessions        = ref([])
+const sessionsLoading = ref(false)
+const sessionsErr     = ref('')
+
 const view          = ref('grid')
 const activeTab     = ref('All')
 const search        = ref('')
@@ -361,6 +427,48 @@ async function submitAddUser() {
   }
 }
 
+/* ── Session Management ── */
+async function openDevices(u) {
+  devicesUser.value     = u
+  devicesPanel.value    = true
+  sessionsErr.value     = ''
+  sessions.value        = []
+  sessionsLoading.value = true
+  try {
+    const res = await api.get(`/admin/users/${u.id}/sessions`)
+    sessions.value = res.data
+  } catch { sessionsErr.value = 'Failed to load sessions.' }
+  finally  { sessionsLoading.value = false }
+}
+
+async function revokeSession(tokenId) {
+  try {
+    await api.delete(`/admin/users/${devicesUser.value.id}/sessions/${tokenId}`)
+    sessions.value = sessions.value.filter(s => s.id !== tokenId)
+  } catch { sessionsErr.value = 'Failed to revoke session.' }
+}
+
+async function revokeAllSessions() {
+  try {
+    await api.delete(`/admin/users/${devicesUser.value.id}/sessions`)
+    sessions.value = []
+  } catch { sessionsErr.value = 'Failed to revoke all sessions.' }
+}
+
+function deviceEmoji(s) {
+  const txt = ((s.deviceName || '') + (s.userAgent || '')).toLowerCase()
+  return (txt.includes('android') || txt.includes('iphone') || txt.includes('ipad')) ? '📱' : '💻'
+}
+
+function relativeDate(iso) {
+  const mins = Math.floor((Date.now() - new Date(iso)) / 60000)
+  if (mins < 1)  return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24)  return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
+
 /* ── Helpers ── */
 function initials(name) {
   if (!name) return '?'
@@ -400,4 +508,11 @@ function roleClass(r) {
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 1rem; color: #fff;
 }
+
+.qb-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.45); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:1.25rem; }
+.qb-modal { background:var(--t-bg2); border:1px solid var(--t-border); border-radius:16px; width:100%; max-width:520px; max-height:calc(100vh - 2.5rem); overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.qb-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem 0; gap:0.5rem; }
+.qb-modal-title { font-size:1rem; font-weight:700; color:var(--t-text1); margin:0; }
+.qb-modal-body { padding:1.25rem 1.5rem 1.5rem; display:flex; flex-direction:column; gap:1rem; }
+.qb-err { padding:10px 14px; border-radius:9px; font-size:0.83rem; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; margin:0; }
 </style>

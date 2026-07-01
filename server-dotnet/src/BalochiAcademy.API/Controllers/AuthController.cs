@@ -23,7 +23,7 @@ public class AuthController(
     {
         var user = await uow.Repository<User>().Query()
             .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Username == req.Username.Trim() && u.IsActive, ct);
+            .FirstOrDefaultAsync(u => u.Username == req.Username.Trim(), ct);
 
         if (user == null || !passwords.Verify(req.Password, user.PasswordHash))
         {
@@ -37,8 +37,23 @@ public class AuthController(
             return Unauthorized(new { error = "Invalid username or password" });
         }
 
+        if (!user.IsActive)
+        {
+            uow.Repository<LoginHistory>().Add(new LoginHistory
+            {
+                UserId    = user.Id,
+                Status    = "failed",
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            });
+            await uow.SaveChangesAsync(ct);
+            return StatusCode(403, new { error = "Your account has been deactivated. Please contact the administration to restore access." });
+        }
+
         user.LastLoginAt = DateTime.UtcNow;
-        var rt = tokens.GenerateRefreshToken(user.Id);
+        var rt = tokens.GenerateRefreshToken(user.Id,
+            deviceName: req.DeviceName,
+            ipAddress:  HttpContext.Connection.RemoteIpAddress?.ToString(),
+            userAgent:  Request.Headers.UserAgent.ToString());
         uow.Repository<RefreshToken>().Add(rt);
         uow.Repository<LoginHistory>().Add(new LoginHistory
         {
@@ -138,17 +153,22 @@ public class AuthController(
     }
 
     /// <summary>POST /api/auth/logout</summary>
-    [HttpPost("logout"), Authorize]
+    [HttpPost("logout"), AllowAnonymous]
     public async Task<IActionResult> Logout(CancellationToken ct)
     {
+        // If the JWT is missing or already expired (e.g. force-logout via SignalR),
+        // just return 200 — the session is already gone on the server side.
+        if (currentUser.UserId is not int userId)
+            return Ok(new { ok = true });
+
         var active = await uow.Repository<RefreshToken>().Query()
-            .Where(rt => rt.UserId == currentUser.UserId && rt.RevokedAt == null)
+            .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
             .ToListAsync(ct);
         foreach (var rt in active) rt.RevokedAt = DateTime.UtcNow;
 
         uow.Repository<LoginHistory>().Add(new LoginHistory
         {
-            UserId    = currentUser.UserId,
+            UserId    = userId,
             Status    = "logout",
             IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
         });

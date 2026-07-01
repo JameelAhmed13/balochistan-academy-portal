@@ -84,6 +84,9 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         b.HasKey(e => e.Id);
         b.HasIndex(e => e.Token).IsUnique();
         b.Property(e => e.Token).HasMaxLength(500).IsRequired();
+        b.Property(e => e.DeviceName).HasMaxLength(200);
+        b.Property(e => e.IpAddress).HasMaxLength(50);
+        b.Property(e => e.UserAgent).HasMaxLength(500);
         b.HasOne(e => e.User).WithMany(u => u.RefreshTokens).HasForeignKey(e => e.UserId);
     }
 }

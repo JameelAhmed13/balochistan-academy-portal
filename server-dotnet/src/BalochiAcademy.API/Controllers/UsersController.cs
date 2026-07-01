@@ -1,7 +1,10 @@
+using BalochiAcademy.API.Hubs;
+using BalochiAcademy.Application.Auth;
 using BalochiAcademy.Application.Common.Interfaces;
 using BalochiAcademy.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BalochiAcademy.API.Controllers;
@@ -9,7 +12,8 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/admin/users")]
 [Authorize(Policy = "AdminOnly")]
-public class UsersController(IUnitOfWork uow, ICurrentUserService cu, IPasswordService passwords) : ControllerBase
+public class UsersController(IUnitOfWork uow, ICurrentUserService cu, IPasswordService passwords,
+    IHubContext<NotificationHub> hub) : ControllerBase
 {
     /// <summary>GET /api/admin/users?role=&amp;gradeCode=&amp;page=</summary>
     [HttpGet]
@@ -66,7 +70,20 @@ public class UsersController(IUnitOfWork uow, ICurrentUserService cu, IPasswordS
         var user = await uow.Repository<User>().FindAsync([id], ct);
         if (user == null) return NotFound();
         user.IsActive = !user.IsActive;
+
+        if (!user.IsActive)
+        {
+            var active = await uow.Repository<RefreshToken>().Query()
+                .Where(rt => rt.UserId == id && rt.RevokedAt == null)
+                .ToListAsync(ct);
+            foreach (var rt in active) rt.RevokedAt = DateTime.UtcNow;
+        }
+
         await uow.SaveChangesAsync(ct);
+
+        if (!user.IsActive)
+            await NotificationHub.SendToUser(hub, id, new { type = "forceLogout" });
+
         return Ok(new { user.Id, user.IsActive });
     }
 
@@ -146,6 +163,44 @@ public class UsersController(IUnitOfWork uow, ICurrentUserService cu, IPasswordS
             Role = role.Name, user.Coins, user.IsActive, user.CreatedAt,
             InstituteId = user.InstituteId, InstituteName = (string?)null,
         });
+    }
+
+    /// <summary>GET /api/admin/users/{id}/sessions — list active sessions</summary>
+    [HttpGet("{id:int}/sessions")]
+    public async Task<ActionResult<List<SessionDto>>> GetSessions(int id, CancellationToken ct)
+    {
+        var sessions = await uow.Repository<RefreshToken>().Query()
+            .Where(rt => rt.UserId == id && rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
+            .OrderByDescending(rt => rt.CreatedAt)
+            .Select(rt => new SessionDto(rt.Id, rt.DeviceName, rt.IpAddress, rt.UserAgent, rt.CreatedAt, rt.ExpiresAt))
+            .ToListAsync(ct);
+        return Ok(sessions);
+    }
+
+    /// <summary>DELETE /api/admin/users/{id}/sessions — revoke all sessions</summary>
+    [HttpDelete("{id:int}/sessions")]
+    public async Task<IActionResult> RevokeAllSessions(int id, CancellationToken ct)
+    {
+        var active = await uow.Repository<RefreshToken>().Query()
+            .Where(rt => rt.UserId == id && rt.RevokedAt == null)
+            .ToListAsync(ct);
+        foreach (var rt in active) rt.RevokedAt = DateTime.UtcNow;
+        await uow.SaveChangesAsync(ct);
+        await NotificationHub.SendToUser(hub, id, new { type = "forceLogout" });
+        return Ok(new { count = active.Count });
+    }
+
+    /// <summary>DELETE /api/admin/users/{id}/sessions/{tokenId} — revoke a specific session</summary>
+    [HttpDelete("{id:int}/sessions/{tokenId:int}")]
+    public async Task<IActionResult> RevokeSession(int id, int tokenId, CancellationToken ct)
+    {
+        var rt = await uow.Repository<RefreshToken>().Query()
+            .FirstOrDefaultAsync(rt => rt.Id == tokenId && rt.UserId == id, ct);
+        if (rt == null) return NotFound();
+        rt.RevokedAt = DateTime.UtcNow;
+        await uow.SaveChangesAsync(ct);
+        await NotificationHub.SendToUser(hub, id, new { type = "forceLogout" });
+        return Ok(new { ok = true });
     }
 }
 

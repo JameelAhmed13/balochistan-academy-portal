@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api, { setUnauthorizedHandler } from '@/services/api'
 import { useNotificationsStore } from '@/stores/notifications'
+import router from '@/router'
 
 export const useAuthStore = defineStore('auth', () => {
   const user         = ref(JSON.parse(localStorage.getItem('bap_user')         || 'null'))
@@ -30,8 +31,24 @@ export const useAuthStore = defineStore('auth', () => {
     logLocalHistory()
   }
 
+  function getDeviceName() {
+    const ua = navigator.userAgent
+    const browser = ua.includes('Edg')     ? 'Edge'
+                  : ua.includes('Chrome')  ? 'Chrome'
+                  : ua.includes('Firefox') ? 'Firefox'
+                  : ua.includes('Safari')  ? 'Safari'
+                  : 'Browser'
+    const os = ua.includes('Windows') ? 'Windows'
+             : ua.includes('Mac')     ? 'macOS'
+             : ua.includes('Android') ? 'Android'
+             : (ua.includes('iPhone') || ua.includes('iPad')) ? 'iOS'
+             : ua.includes('Linux')   ? 'Linux'
+             : 'Unknown'
+    return `${browser} · ${os}`
+  }
+
   async function login(username, password) {
-    const { data } = await api.post('/auth/login', { username, password })
+    const { data } = await api.post('/auth/login', { username, password, deviceName: getDeviceName() })
     setSession(data)
     useNotificationsStore().connect().catch(() => {})
     return data.user
@@ -80,6 +97,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null
     user.value         = null
     persist()
+    router.push({ name: 'Login' })
   }
 
   function logLocalHistory() {

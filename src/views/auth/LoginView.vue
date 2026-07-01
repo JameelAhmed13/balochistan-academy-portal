@@ -160,9 +160,24 @@
             </div>
           </div>
 
+          <!-- Account deactivated warning -->
+          <Transition name="err">
+            <div v-if="isDeactivated" class="deactivated-box">
+              <div class="deactivated-icon">🔒</div>
+              <div class="deactivated-body">
+                <div class="deactivated-title">Account Deactivated</div>
+                <div class="deactivated-msg">Your account has been deactivated. Please contact the administration to restore access.</div>
+                <a href="https://wa.me/923703153540" target="_blank" class="deactivated-wa">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                  WhatsApp us for help
+                </a>
+              </div>
+            </div>
+          </Transition>
+
           <!-- Error -->
           <Transition name="err">
-            <div v-if="errorMsg" class="error-box">
+            <div v-if="errorMsg && !isDeactivated" class="error-box">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="#f87171"/></svg>
               {{ errorMsg }}
             </div>
@@ -311,6 +326,7 @@ const toast = useToast()
 const form = ref({ username: '', password: '' })
 const loading = ref(false)
 const errorMsg = ref('')
+const isDeactivated = ref(false)
 const shaking = ref(false)
 const focusedField = ref('')
 const netCanvas = ref(null)
@@ -352,14 +368,19 @@ function routeAfterAuth(user) {
 async function handleLogin() {
   loading.value = true
   errorMsg.value = ''
+  isDeactivated.value = false
   try {
     const user = await auth.login(form.value.username, form.value.password)
     toast.add({ severity: 'success', summary: 'Welcome back!', detail: `Signed in as ${user.name || user.username}`, life: 3000 })
     routeAfterAuth(user)
   } catch (e) {
-    errorMsg.value = e.message || 'Login failed'
-    shaking.value = true
-    setTimeout(() => { shaking.value = false }, 500)
+    if (e.status === 403) {
+      isDeactivated.value = true
+    } else {
+      errorMsg.value = e.message || 'Login failed'
+      shaking.value = true
+      setTimeout(() => { shaking.value = false }, 500)
+    }
   } finally {
     loading.value = false
   }
@@ -838,4 +859,24 @@ html:not(.dark) .demo-hint { background: rgba(217,119,6,0.07); border-color: rgb
 html:not(.dark) .hint-label { background: rgba(217,119,6,0.16); color: #b45309; }
 html:not(.dark) .wa-link { color: #6b7280; }
 html:not(.dark) .wa-link:hover { color: #0f1424; }
+
+/* ─── Deactivated account warning ─── */
+.deactivated-box {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.9rem 1rem; border-radius: 14px;
+  background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3);
+}
+.deactivated-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; margin-top: 0.05rem; }
+.deactivated-body { display: flex; flex-direction: column; gap: 0.25rem; }
+.deactivated-title { font-weight: 700; font-size: 0.85rem; color: #fbbf24; }
+.deactivated-msg { font-size: 0.80rem; color: rgba(251,191,36,0.75); line-height: 1.45; }
+.deactivated-wa {
+  display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.35rem;
+  font-size: 0.78rem; font-weight: 600; color: #4ade80;
+  text-decoration: none; transition: opacity 0.2s;
+}
+.deactivated-wa:hover { opacity: 0.8; }
+html:not(.dark) .deactivated-box { background: rgba(217,119,6,0.07); border-color: rgba(217,119,6,0.3); }
+html:not(.dark) .deactivated-title { color: #b45309; }
+html:not(.dark) .deactivated-msg { color: rgba(180,83,9,0.75); }
 </style>

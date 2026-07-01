@@ -1,69 +1,129 @@
 <template>
-  <div class="adm">
-    <header class="adm-head">
-      <div>
-        <h1>Teaching Mediums</h1>
-        <p>Define the languages of instruction (e.g. English Medium, اردو میڈیم) used to classify subjects.</p>
+  <div class="animate-fade-in space-y-5">
+
+    <!-- Banner -->
+    <div class="ag-banner">
+      <div class="ag-banner-icon">🌐</div>
+      <div class="ag-banner-text">
+        <div class="ag-banner-title">Teaching Mediums</div>
+        <div class="ag-banner-sub">Define languages of instruction (e.g. English Medium, اردو میڈیم) used to classify subjects</div>
       </div>
-      <button class="adm-btn" @click="openCreate">+ Add medium</button>
-    </header>
+      <div class="ag-banner-actions">
+        <span class="ag-banner-stat"><span>📋</span> {{ catalog.mediums.length }} Mediums</span>
+      </div>
+      <button class="btn-primary text-sm" @click="openCreate">
+        <Plus class="w-4 h-4" /> Add Medium
+      </button>
+    </div>
 
-    <div v-if="loading" class="adm-muted">Loading…</div>
-
-    <table v-else class="adm-table">
-      <thead>
-        <tr><th>Name (value)</th><th>Label (display)</th><th>Sort order</th><th></th></tr>
-      </thead>
-      <tbody>
-        <tr v-for="m in catalog.mediums" :key="m.id">
-          <td><code>{{ m.name }}</code></td>
-          <td>{{ m.label }}</td>
-          <td class="adm-sort">{{ m.sortOrder }}</td>
-          <td class="adm-actions">
-            <button class="adm-link" @click="openEdit(m)">Edit</button>
-            <button class="adm-link danger" @click="remove(m)">Delete</button>
-          </td>
-        </tr>
-        <tr v-if="!catalog.mediums.length">
-          <td colspan="4" class="adm-muted">No mediums yet — add one above.</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- create / edit modal -->
-    <div v-if="form" class="adm-modal" @click.self="form = null">
-      <div class="adm-dialog">
-        <h2>{{ editing ? 'Edit medium' : 'Add medium' }}</h2>
-
-        <label>
-          Name (stored value)
-          <input v-model="form.name" :disabled="editing" placeholder="e.g. english" />
-          <span class="adm-hint">Lowercase key stored on subjects — cannot be changed after creation.</span>
-        </label>
-
-        <label>
-          Label (display text)
-          <input v-model="form.label" placeholder="e.g. English Medium" />
-        </label>
-
-        <label>
-          Sort order
-          <input v-model.number="form.sortOrder" type="number" min="0" />
-        </label>
-
-        <p v-if="err" class="adm-err">{{ err }}</p>
-
-        <div class="adm-dialog-foot">
-          <button class="adm-btn ghost" @click="form = null">Cancel</button>
-          <button class="adm-btn" :disabled="saving" @click="save">{{ saving ? 'Saving…' : 'Save' }}</button>
+    <!-- Main card -->
+    <div class="ag-card">
+      <!-- Filter bar -->
+      <div class="ag-filter-bar">
+        <div class="ag-filter-group" style="flex:1; min-width:200px;">
+          <label class="ag-filter-label">Search</label>
+          <div style="position:relative;">
+            <Search class="w-3.5 h-3.5" style="position:absolute; left:0.6rem; top:50%; transform:translateY(-50%); color:var(--t-text3); pointer-events:none;" />
+            <input v-model="search" type="text" class="input" style="padding-left:2rem;" placeholder="Search mediums…" />
+          </div>
         </div>
       </div>
+
+      <!-- Count row -->
+      <div style="padding:0.5rem 1.5rem; border-bottom:1px solid var(--t-border); display:flex; align-items:center; gap:0.5rem;">
+        <Filter class="w-3 h-3" style="color:var(--t-text3);" />
+        <span style="font-size:0.75rem; color:var(--t-text3);">
+          Showing <strong style="color:var(--t-text1);">{{ filtered.length }}</strong>
+          of <strong style="color:var(--t-text1);">{{ catalog.mediums.length }}</strong> mediums
+        </span>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="ag-table">
+          <thead>
+            <tr>
+              <th style="width:48px;">#</th>
+              <th>Key (value)</th>
+              <th>Label (display)</th>
+              <th style="width:120px; text-align:center;">Sort Order</th>
+              <th style="width:80px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="5">
+                <div class="ag-empty"><div class="ag-empty-icon">⏳</div><p>Loading mediums…</p></div>
+              </td>
+            </tr>
+            <tr v-for="(m, i) in filtered" :key="m.id">
+              <td class="ag-table-muted" style="text-align:center;">{{ i + 1 }}</td>
+              <td><code style="font-size:0.8rem; background:var(--t-hover2); padding:0.2rem 0.5rem; border-radius:6px;">{{ m.name }}</code></td>
+              <td style="font-weight:600;">{{ m.label }}</td>
+              <td class="ag-table-muted" style="text-align:center;">{{ m.sortOrder }}</td>
+              <td>
+                <div class="flex gap-1">
+                  <button @click="openEdit(m)" class="btn-ghost" style="padding:0.3rem;" title="Edit">
+                    <Pencil class="w-3.5 h-3.5" />
+                  </button>
+                  <button @click="remove(m)" class="btn-ghost" style="padding:0.3rem; color:#ef4444;" title="Delete">
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!loading && !filtered.length">
+              <td colspan="5">
+                <div class="ag-empty"><div class="ag-empty-icon">🔍</div><p>No mediums match your search.</p></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+
+    <!-- Modal -->
+    <div v-if="form" class="qb-overlay" @click.self="form = null">
+      <div class="qb-modal">
+        <div class="qb-modal-header">
+          <h3 class="qb-modal-title">{{ editing ? 'Edit Medium' : 'Add Medium' }}</h3>
+          <button @click="form = null" class="btn-ghost" style="padding:0.4rem;"><X class="w-4 h-4" /></button>
+        </div>
+        <form class="qb-modal-body" @submit.prevent="save">
+          <div>
+            <label class="label">Key / stored value <span style="color:#ef4444;">*</span></label>
+            <input v-model="form.name" :disabled="editing" class="input" placeholder="e.g. english" />
+            <p style="font-size:0.75rem; color:var(--t-text3); margin:0.25rem 0 0;">
+              Lowercase key stored on subjects — cannot be changed after creation.
+            </p>
+          </div>
+          <div>
+            <label class="label">Label / display text <span style="color:#ef4444;">*</span></label>
+            <input v-model="form.label" class="input" placeholder="e.g. English Medium" />
+          </div>
+          <div>
+            <label class="label">Sort Order</label>
+            <input v-model.number="form.sortOrder" type="number" min="0" class="input" />
+          </div>
+          <p v-if="err" class="qb-err">{{ err }}</p>
+          <div class="flex gap-2" style="padding-top:0.5rem; border-top:1px solid var(--t-border);">
+            <button type="submit" class="btn-primary" style="flex:1;" :disabled="saving">
+              <span v-if="saving" class="qb-spinner"></span>
+              <Plus v-else class="w-4 h-4" />
+              {{ saving ? 'Saving…' : (editing ? 'Save Changes' : 'Add Medium') }}
+            </button>
+            <button type="button" @click="form = null" class="btn-secondary" :disabled="saving">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { Plus, Search, Filter, Pencil, Trash2, X } from '@lucide/vue'
 import { useCatalogStore } from '@/stores/catalog'
 import { useConfirm } from '@/composables/useConfirm'
 
@@ -74,6 +134,15 @@ const form    = ref(null)
 const editing = ref(false)
 const saving  = ref(false)
 const err     = ref('')
+const search  = ref('')
+
+const filtered = computed(() => {
+  const q = search.value.toLowerCase()
+  if (!q) return catalog.mediums
+  return catalog.mediums.filter(m =>
+    m.name.toLowerCase().includes(q) || m.label.toLowerCase().includes(q)
+  )
+})
 
 onMounted(async () => {
   loading.value = true
@@ -91,7 +160,7 @@ function openEdit(m) {
 }
 
 async function save() {
-  if (!form.value.name.trim())  { err.value = 'Name is required';  return }
+  if (!form.value.name.trim())  { err.value = 'Key is required';   return }
   if (!form.value.label.trim()) { err.value = 'Label is required'; return }
   saving.value = true; err.value = ''
   try {
@@ -117,29 +186,12 @@ async function remove(m) {
 </script>
 
 <style scoped>
-.adm { max-width: 720px; margin: 0 auto; padding: 24px; color: var(--t-text1); }
-.adm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
-.adm-head h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.9rem; margin: 0 0 4px; }
-.adm-head p { margin: 0; color: var(--t-text2); font-size: .9rem; max-width: 480px; }
-.adm-muted { color: var(--t-text2); padding: 12px 0; }
-.adm-btn { padding: 10px 18px; border: 0; border-radius: 11px; cursor: pointer; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); }
-.adm-btn.ghost { background: var(--t-hover); color: var(--t-text1); border: 1px solid var(--t-border); }
-.adm-btn:disabled { opacity: .6; }
-.adm-table { width: 100%; border-collapse: collapse; }
-.adm-table th { text-align: left; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--t-text3); padding: 10px 12px; border-bottom: 1px solid var(--t-border); }
-.adm-table td { padding: 12px; border-bottom: 1px solid var(--t-border); font-size: .92rem; }
-.adm-sort { color: var(--t-text3); font-size: .82rem; text-align: center; }
-.adm-actions { display: flex; gap: 12px; }
-.adm-link { background: none; border: 0; cursor: pointer; color: var(--t-accent); font-weight: 600; font-size: .88rem; padding: 0; }
-.adm-link.danger { color: #f87171; }
-.adm-modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: rgba(0,0,0,.5); padding: 20px; backdrop-filter: blur(4px); }
-.adm-dialog { width: min(440px, 100%); padding: 28px; border-radius: 18px; background: var(--t-bg2); border: 1px solid var(--t-border); display: flex; flex-direction: column; gap: 14px; box-shadow: var(--t-shadow-md); }
-.adm-dialog h2 { font-family: 'Syne', sans-serif; margin: 0; font-size: 1.3rem; }
-.adm-dialog label { display: flex; flex-direction: column; gap: 5px; font-size: .82rem; font-weight: 600; color: var(--t-text2); }
-.adm-dialog input { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--t-border); background: var(--t-bg); color: var(--t-text1); font-size: .9rem; }
-.adm-dialog input:focus { outline: none; border-color: var(--t-accent); box-shadow: 0 0 0 3px var(--t-acc-alpha-sm); }
-.adm-dialog input:disabled { opacity: .5; cursor: not-allowed; }
-.adm-hint { font-size: .74rem; font-weight: 400; color: var(--t-text3); margin-top: 1px; }
-.adm-dialog-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
-.adm-err { color: #f87171; font-size: .85rem; margin: 0; }
+.qb-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.45); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:1.25rem; }
+.qb-modal { background:var(--t-bg2); border:1px solid var(--t-border); border-radius:16px; width:100%; max-width:460px; max-height:calc(100vh - 2.5rem); overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.qb-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem 0; }
+.qb-modal-title { font-size:1rem; font-weight:700; color:var(--t-text1); margin:0; }
+.qb-modal-body { padding:1.25rem 1.5rem 1.5rem; display:flex; flex-direction:column; gap:1rem; }
+.qb-spinner { display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,0.4); border-top-color:white; border-radius:50%; animation:qbspin 0.7s linear infinite; }
+@keyframes qbspin { to { transform:rotate(360deg); } }
+.qb-err { margin:0; padding:10px 14px; border-radius:9px; font-size:0.83rem; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; }
 </style>

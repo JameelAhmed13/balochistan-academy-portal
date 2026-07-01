@@ -35,6 +35,14 @@ export const useNotificationsStore = defineStore('notifications', () => {
       notifications.value.unshift({ ...notification, read: false, receivedAt: new Date().toISOString() })
     })
 
+    _hub.on('notification', (payload) => {
+      if (payload?.type === 'forceLogout') {
+        import('@/stores/auth').then(({ useAuthStore }) => useAuthStore().logout())
+        return
+      }
+      notifications.value.unshift({ ...payload, read: false, receivedAt: new Date().toISOString() })
+    })
+
     _hub.onclose(() => { connected.value = false })
     _hub.onreconnected(() => { connected.value = true })
 
