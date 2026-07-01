@@ -74,7 +74,6 @@ public class AuthController(
             Email        = req.Email,
             GradeCode    = req.GradeCode,
             Medium       = req.Medium ?? "English",
-            Institute    = req.Institute,
         };
         uow.Repository<User>().Add(user);
         await uow.SaveChangesAsync(ct);

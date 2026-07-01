@@ -26,7 +26,7 @@ public class MappingProfile : Profile
                 src.Email,
                 src.GradeCode,
                 src.Medium ?? "English",
-                src.Institute,
+                src.Institute != null ? src.Institute.Name : null,
                 src.Board ?? "Balochistan",
                 src.Coins))
             .ForAllMembers(opt => opt.Ignore());

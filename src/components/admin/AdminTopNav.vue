@@ -105,6 +105,7 @@ import {
   LayoutDashboard, BookOpen, ClipboardList, Users, BarChart2, Settings, Bell,
   Menu, X, ChevronDown, ExternalLink, LogOut, Sun, Moon,
   FileText, FolderTree, GraduationCap, Coins, MessageSquareWarning, BellRing, Layers, Globe,
+  Shield, Building2,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -139,16 +140,18 @@ const menus = [
     { label: 'Tests & Papers', path: '/app/admin/tests',     icon: ClipboardList, desc: 'Create, assign & track tests' },
   ] },
   { key: 'people', label: 'People', icon: Users, items: [
-    { label: 'Users & Roles',   path: '/app/admin/users', icon: GraduationCap, desc: 'Students, teachers & admins' },
-    { label: 'Coins & Rewards', path: '/app/admin/coins', icon: Coins,         desc: 'Gamification & coin economy' },
+    { label: 'Users',           path: '/app/admin/users',  icon: GraduationCap, desc: 'Students, teachers & admins' },
+    { label: 'Role Management', path: '/app/admin/roles',  icon: Shield,        desc: 'Roles and permission assignment' },
+    { label: 'Coins & Rewards', path: '/app/admin/coins',  icon: Coins,         desc: 'Gamification & coin economy' },
   ] },
   { key: 'insights', label: 'Insights', icon: BarChart2, items: [
     { label: 'Analytics',  path: '/app/admin/analytics',  icon: BarChart2,            desc: 'Platform performance & trends' },
     { label: 'Complaints', path: '/app/admin/complaints', icon: MessageSquareWarning, desc: 'Tickets & resolutions' },
   ] },
   { key: 'system', label: 'System', icon: Settings, items: [
-    { label: 'Settings',      path: '/app/admin/settings',      icon: Settings, desc: 'Platform configuration' },
-    { label: 'Notifications', path: '/app/admin/notifications', icon: BellRing, desc: 'Broadcasts & alerts' },
+    { label: 'Settings',      path: '/app/admin/settings',      icon: Settings,  desc: 'Platform configuration' },
+    { label: 'Notifications', path: '/app/admin/notifications', icon: BellRing,  desc: 'Broadcasts & alerts' },
+    { label: 'Institutes',    path: '/app/admin/institutes',    icon: Building2, desc: 'Manage institutes and organisations' },
   ] },
 ]
 

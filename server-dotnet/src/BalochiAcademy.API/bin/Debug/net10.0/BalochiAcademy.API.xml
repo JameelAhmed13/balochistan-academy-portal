@@ -239,6 +239,18 @@
         <member name="M:BalochiAcademy.API.Controllers.ContentController.DeleteNote(System.Int32,System.Threading.CancellationToken)">
             <summary>DELETE /api/content/notes/{id}</summary>
         </member>
+        <member name="M:BalochiAcademy.API.Controllers.InstitutesController.List(System.Threading.CancellationToken)">
+            <summary>GET /api/admin/institutes — list all institutes</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.InstitutesController.Create(BalochiAcademy.API.Controllers.InstituteRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/institutes — create institute</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.InstitutesController.Update(System.Int32,BalochiAcademy.API.Controllers.InstituteRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/institutes/{id} — update institute</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.InstitutesController.Delete(System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/admin/institutes/{id} — delete institute (409 if users assigned)</summary>
+        </member>
         <member name="M:BalochiAcademy.API.Controllers.NotificationsController.GetMine(System.Threading.CancellationToken)">
             <summary>GET /api/notifications — current user's notifications</summary>
         </member>
@@ -268,6 +280,24 @@
         </member>
         <member name="M:BalochiAcademy.API.Controllers.QuestionsController.Random(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.Int32,System.Threading.CancellationToken)">
             <summary>GET /api/questions/random?gradeCode=&amp;subjectId=&amp;count=30</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.RolesController.List(System.Threading.CancellationToken)">
+            <summary>GET /api/admin/roles — all roles with their assigned permission IDs and user count</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.RolesController.Create(BalochiAcademy.API.Controllers.RoleRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/roles — create a new role</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.RolesController.Update(System.Int32,BalochiAcademy.API.Controllers.RoleRequest,System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/roles/{id} — update role name/description</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.RolesController.Delete(System.Int32,System.Threading.CancellationToken)">
+            <summary>DELETE /api/admin/roles/{id} — delete role (409 if users are assigned)</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.RolesController.UpdatePermissions(System.Int32,System.Int32[],System.Threading.CancellationToken)">
+            <summary>PUT /api/admin/roles/{id}/permissions — replace the permission set for a role</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.RolesController.ListPermissions(System.Threading.CancellationToken)">
+            <summary>GET /api/admin/permissions — seed-managed list of all permissions (read-only)</summary>
         </member>
         <member name="M:BalochiAcademy.API.Controllers.TestsController.GetTests(System.String,System.String,System.Boolean,System.Int32,System.Int32,System.Threading.CancellationToken)">
             <summary>GET /api/tests?gradeCode=&amp;kind=&amp;published=true</summary>
@@ -327,6 +357,9 @@
         </member>
         <member name="M:BalochiAcademy.API.Controllers.UsersController.UpdateSetting(System.String,System.String,System.Threading.CancellationToken)">
             <summary>PUT /api/admin/settings/{key}</summary>
+        </member>
+        <member name="M:BalochiAcademy.API.Controllers.UsersController.Create(BalochiAcademy.API.Controllers.CreateUserRequest,System.Threading.CancellationToken)">
+            <summary>POST /api/admin/users — create a new user</summary>
         </member>
         <member name="T:Program">
             <summary>
