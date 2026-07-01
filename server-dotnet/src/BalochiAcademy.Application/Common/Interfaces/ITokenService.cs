@@ -5,7 +5,10 @@ namespace BalochiAcademy.Application.Common.Interfaces;
 public interface ITokenService
 {
     string       GenerateAccessToken(User user);
-    RefreshToken GenerateRefreshToken(int userId);
+    RefreshToken GenerateRefreshToken(int userId,
+        string? deviceName = null,
+        string? ipAddress  = null,
+        string? userAgent  = null);
     int?         ValidateAccessToken(string token);   // returns userId or null
 }
 

@@ -6,6 +6,7 @@ namespace BalochiAcademy.Application.Common.Interfaces;
 public interface IApplicationDbContext
 {
     DbSet<User>               Users               { get; }
+    DbSet<Institute>          Institutes          { get; }
     DbSet<Role>               Roles               { get; }
     DbSet<Permission>         Permissions         { get; }
     DbSet<RolePermission>     RolePermissions     { get; }

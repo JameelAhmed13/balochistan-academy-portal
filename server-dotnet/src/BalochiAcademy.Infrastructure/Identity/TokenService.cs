@@ -41,12 +41,18 @@ public class TokenService(IConfiguration config) : ITokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public RefreshToken GenerateRefreshToken(int userId) => new()
+    public RefreshToken GenerateRefreshToken(int userId,
+        string? deviceName = null,
+        string? ipAddress  = null,
+        string? userAgent  = null) => new()
     {
-        UserId    = userId,
-        Token     = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-        ExpiresAt = DateTime.UtcNow.AddMinutes(_refreshMinutes),
-        CreatedAt = DateTime.UtcNow,
+        UserId     = userId,
+        Token      = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+        ExpiresAt  = DateTime.UtcNow.AddMinutes(_refreshMinutes),
+        CreatedAt  = DateTime.UtcNow,
+        DeviceName = deviceName,
+        IpAddress  = ipAddress,
+        UserAgent  = userAgent,
     };
 
     public int? ValidateAccessToken(string token)

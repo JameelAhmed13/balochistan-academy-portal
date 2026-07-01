@@ -18,15 +18,30 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(e => e.Phone).HasMaxLength(20);
         b.Property(e => e.Email).HasMaxLength(150);
         b.Property(e => e.Name).HasMaxLength(150);
-        b.Property(e => e.Institute).HasMaxLength(200);
 
         b.HasOne(e => e.Role).WithMany(r => r.Users).HasForeignKey(e => e.RoleId);
         b.HasOne(e => e.Grade).WithMany(g => g.Users).HasForeignKey(e => e.GradeCode);
+        b.HasOne(e => e.Institute).WithMany(i => i.Users).HasForeignKey(e => e.InstituteId)
+         .OnDelete(DeleteBehavior.SetNull);
         b.HasOne(e => e.PayoutAccount).WithOne(p => p.User)
          .HasForeignKey<PayoutAccount>(p => p.UserId);
 
         b.HasIndex(e => e.GradeCode);
         b.HasIndex(e => e.RoleId);
+        b.HasIndex(e => e.InstituteId);
+    }
+}
+
+public class InstituteConfiguration : IEntityTypeConfiguration<Institute>
+{
+    public void Configure(EntityTypeBuilder<Institute> b)
+    {
+        b.HasKey(e => e.Id);
+        b.HasIndex(e => e.Name).IsUnique();
+        b.Property(e => e.Name).HasMaxLength(200).IsRequired();
+        b.Property(e => e.Code).HasMaxLength(20);
+        b.Property(e => e.Address).HasMaxLength(500);
+        b.Property(e => e.IsActive).HasDefaultValue(true);
     }
 }
 
@@ -69,6 +84,9 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         b.HasKey(e => e.Id);
         b.HasIndex(e => e.Token).IsUnique();
         b.Property(e => e.Token).HasMaxLength(500).IsRequired();
+        b.Property(e => e.DeviceName).HasMaxLength(200);
+        b.Property(e => e.IpAddress).HasMaxLength(50);
+        b.Property(e => e.UserAgent).HasMaxLength(500);
         b.HasOne(e => e.User).WithMany(u => u.RefreshTokens).HasForeignKey(e => e.UserId);
     }
 }

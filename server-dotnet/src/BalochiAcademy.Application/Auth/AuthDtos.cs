@@ -4,7 +4,17 @@ namespace BalochiAcademy.Application.Auth;
 
 public record LoginRequest(
     [Required] string Username,
-    [Required] string Password
+    [Required] string Password,
+    string? DeviceName = null
+);
+
+public record SessionDto(
+    int       Id,
+    string?   DeviceName,
+    string?   IpAddress,
+    string?   UserAgent,
+    DateTime  CreatedAt,
+    DateTime  ExpiresAt
 );
 
 public record RegisterRequest(

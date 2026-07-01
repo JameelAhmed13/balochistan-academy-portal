@@ -8,6 +8,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     : DbContext(options), IApplicationDbContext
 {
     public DbSet<User>              Users              => Set<User>();
+    public DbSet<Institute>         Institutes         => Set<Institute>();
     public DbSet<Role>              Roles              => Set<Role>();
     public DbSet<Permission>        Permissions        => Set<Permission>();
     public DbSet<RolePermission>    RolePermissions    => Set<RolePermission>();

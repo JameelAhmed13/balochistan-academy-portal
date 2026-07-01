@@ -11,6 +11,9 @@ public class RefreshToken : BaseEntity
     public DateTime CreatedAt       { get; set; } = DateTime.UtcNow;
     public DateTime? RevokedAt      { get; set; }
     public string?  ReplacedByToken { get; set; }
+    public string?  DeviceName      { get; set; }
+    public string?  IpAddress       { get; set; }
+    public string?  UserAgent       { get; set; }
 
     public bool IsActive  => RevokedAt == null && DateTime.UtcNow < ExpiresAt;
     public bool IsExpired => DateTime.UtcNow >= ExpiresAt;

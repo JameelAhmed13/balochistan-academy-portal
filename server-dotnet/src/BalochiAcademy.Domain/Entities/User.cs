@@ -12,7 +12,7 @@ public class User : AuditableEntity
     public string? Email       { get; set; }
     public string? GradeCode   { get; set; }
     public string  Medium      { get; set; } = "English";
-    public string? Institute   { get; set; }
+    public int?    InstituteId { get; set; }
     public string  Board       { get; set; } = "Balochistan";
     public int     Coins       { get; set; }
     public bool    IsActive    { get; set; } = true;
@@ -20,6 +20,7 @@ public class User : AuditableEntity
 
     public Role            Role             { get; set; } = null!;
     public Grade?          Grade            { get; set; }
+    public Institute?      Institute        { get; set; }
     public ICollection<RefreshToken>       RefreshTokens    { get; set; } = [];
     public ICollection<LoginHistory>       LoginHistories   { get; set; } = [];
     public ICollection<TestAttempt>        TestAttempts     { get; set; } = [];
