@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as signalR from '@microsoft/signalr'
+import api from '@/services/api'
 
 const HUB_URL = '/hubs/notifications'
 
@@ -11,17 +12,26 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
   const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
 
-  function markRead(id) {
-    const n = notifications.value.find(n => n.id === id)
-    if (n) n.read = true
+  async function fetchNotifications() {
+    try {
+      const { data } = await api.get('/notifications')
+      notifications.value = data.map(n => ({ ...n, read: n.isRead }))
+    } catch { /* silent — hub will push new ones anyway */ }
   }
 
-  function markAllRead() {
+  async function markRead(id) {
+    const n = notifications.value.find(n => n.id === id)
+    if (n) n.read = true
+    await api.patch(`/notifications/${id}/read`).catch(() => {})
+  }
+
+  async function markAllRead() {
     notifications.value.forEach(n => { n.read = true })
+    await api.patch('/notifications/read-all').catch(() => {})
   }
 
   async function connect() {
-    if (_hub) return  // already connected or connecting
+    if (_hub) return
 
     _hub = new signalR.HubConnectionBuilder()
       .withUrl(HUB_URL, {
@@ -49,6 +59,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     try {
       await _hub.start()
       connected.value = true
+      await fetchNotifications()
     } catch {
       _hub = null
     }
@@ -60,7 +71,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
       _hub = null
     }
     connected.value = false
+    notifications.value = []
   }
 
-  return { notifications, connected, unreadCount, connect, disconnect, markRead, markAllRead }
+  return { notifications, connected, unreadCount, connect, disconnect, markRead, markAllRead, fetchNotifications }
 })

@@ -224,6 +224,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { ArrowLeft, Play, Pause, Square, Mic, Network, BookOpen, Clock, Send, Sparkles, User, Volume2, RefreshCw } from '@lucide/vue'
 import Dialog from 'primevue/dialog'
 import { AI_TUTORS, useContentStore, SUBJECTS } from '@/stores/content'
+import api from '@/services/api'
 
 const props = defineProps({ subject: String })
 const content = useContentStore()
@@ -261,9 +262,6 @@ const mindMapError = ref('')
 let audio = null
 let recognition = null
 
-const GEMINI_KEY = (import.meta.env.VITE_GEMINI_API_KEY || '').trim()
-const TTS_KEY = (import.meta.env.VITE_TTS_API_KEY || '').trim()
-
 const lastTeacherMsg = computed(() => [...qaThread.value].reverse().find(m => m.role === 'teacher')?.text || lessonText.value)
 
 const suggestedQuestions = computed(() => {
@@ -277,19 +275,12 @@ function branchColor(i) {
   return ['#6d54e8', '#0891b2', '#059669', '#d97706', '#db2777', '#2563eb'][i % 6]
 }
 
-// ── Gemini helper ──────────────────────────────────────────────
+// ── Gemini helper (proxied through backend — key stays server-side) ─────────
 async function callGemini(prompt, { json = false } = {}) {
-  if (!GEMINI_KEY) throw new Error('no-key')
   const body = { contents: [{ parts: [{ text: prompt }] }] }
   if (json) body.generationConfig = { responseMimeType: 'application/json' }
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error('http-' + res.status)
-  const d = await res.json()
-  return d.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const { data } = await api.post('/ai/gemini', body)
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
 async function scrollThread() {
@@ -350,8 +341,8 @@ async function askTutor(qRaw) {
 
   if (!answer) {
     answer = isUrdu
-      ? 'معذرت، ابھی AI سے رابطہ نہیں ہو سکا۔ براہِ کرم دوبارہ کوشش کریں۔ (VITE_GEMINI_API_KEY چیک کریں)'
-      : "Sorry, I couldn't reach the AI just now — please try again. (Check VITE_GEMINI_API_KEY in .env)"
+      ? 'معذرت، ابھی AI سے رابطہ نہیں ہو سکا۔ براہِ کرم دوبارہ کوشش کریں۔'
+      : "Sorry, I couldn't reach the AI just now — please try again."
   }
   qaThread.value.push({ role: 'teacher', text: answer })
   isAsking.value = false
@@ -377,9 +368,7 @@ async function generateMindMap() {
     const txt = await callGemini(prompt, { json: true })
     mindMap.value = parseMindMap(txt, selectedTopic.value.name)
   } catch (e) {
-    mindMapError.value = e?.message === 'no-key'
-      ? 'Add a valid VITE_GEMINI_API_KEY to .env (then restart the dev server) to generate mind maps.'
-      : 'Could not generate the mind map just now. Please try again.'
+    mindMapError.value = 'Could not generate the mind map just now. Please try again.'
   }
   mindMapLoading.value = false
 }
@@ -407,7 +396,8 @@ function parseMindMap(txt, fallbackCentral) {
 async function speak(text) {
   stopAudio()
   if (!text) return
-  if (TTS_KEY) { await playTTS(text); return }
+  // Always try backend TTS first; fall back to browser SpeechSynthesis if it fails
+  try { await playTTS(text); return } catch { /* fall through to browser TTS */ }
   const isUrdu = speakLang.value === 'ur'
   const utt = new SpeechSynthesisUtterance(String(text).slice(0, 600))
   utt.lang = isUrdu ? 'ur-PK' : 'en-US'
@@ -424,23 +414,19 @@ async function playTTS(text) {
   const voice = speakLang.value === 'ur'
     ? { languageCode: 'ur-PK', ssmlGender: 'MALE' }
     : { languageCode: 'en-US', name: 'en-US-Neural2-D', ssmlGender: 'MALE' }
-  try {
-    const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${TTS_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        input: { text: String(text).slice(0, 800) },
-        voice,
-        audioConfig: { audioEncoding: 'MP3', speakingRate: parseFloat(speed.value) },
-      }),
-    })
-    const d = await res.json()
-    if (d.audioContent) {
-      audio = new Audio('data:audio/mp3;base64,' + d.audioContent)
-      audio.onended = () => { isPlaying.value = false }
-      audio.play()
-    } else { isPlaying.value = false }
-  } catch { isPlaying.value = false }
+  const { data: d } = await api.post('/ai/tts', {
+    input: { text: String(text).slice(0, 800) },
+    voice,
+    audioConfig: { audioEncoding: 'MP3', speakingRate: parseFloat(speed.value) },
+  })
+  if (d.audioContent) {
+    audio = new Audio('data:audio/mp3;base64,' + d.audioContent)
+    audio.onended = () => { isPlaying.value = false }
+    audio.play()
+  } else {
+    isPlaying.value = false
+    throw new Error('no-audio-content')
+  }
 }
 
 function pauseAudio() { audio?.pause(); speechSynthesis.pause(); isPlaying.value = false }

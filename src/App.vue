@@ -18,6 +18,7 @@ import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'
+import { useSettingsStore } from '@/stores/settings'
 import { initAutoDirection, stopAutoDirection } from '@/utils/autoDirection'
 
 // Initialize theme (applies dark/light class to <html>)
@@ -29,11 +30,13 @@ useThemeStore()
 // hardcoded-fallback id collision (e.g. catalog English id 1 vs legacy Urdu id 1).
 const auth = useAuthStore()
 const catalog = useCatalogStore()
+const settingsStore = useSettingsStore()
 async function boot() {
   if (auth.token) await auth.fetchMe()
   catalog.bootstrap().catch(() => {})
   const code = auth.user?.gradeCode
   if (code) catalog.fetchSubjectsForGrade(code).catch(() => {})
+  settingsStore.load().catch(() => {})
 }
 boot()
 

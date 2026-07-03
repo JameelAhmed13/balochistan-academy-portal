@@ -34,12 +34,58 @@
     </button>
 
     <!-- Notification bell -->
-    <button class="hdr-btn hdr-notif-btn" title="Notifications">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
-      <span class="hdr-notif-dot" />
-    </button>
+    <div class="relative" ref="notifWrap">
+      <button @click="notifOpen = !notifOpen" class="hdr-btn hdr-notif-btn" title="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span v-show="notif.unreadCount > 0" class="hdr-notif-dot" />
+        <span v-if="notif.unreadCount > 0" class="hdr-notif-count">
+          {{ notif.unreadCount > 99 ? '99+' : notif.unreadCount }}
+        </span>
+      </button>
+
+      <Transition name="drop">
+        <div v-if="notifOpen" class="hdr-notif-panel">
+          <div class="hdr-notif-head">
+            <span class="font-semibold text-sm" style="color:var(--t-text1)">Notifications</span>
+            <button v-if="notif.unreadCount > 0" @click="notif.markAllRead()" class="hdr-notif-all-read">
+              Mark all read
+            </button>
+          </div>
+          <div class="hdr-notif-list">
+            <div v-if="!notif.notifications.length" class="hdr-notif-empty">
+              No notifications yet
+            </div>
+            <div
+              v-for="n in notif.notifications.slice(0, 6)"
+              :key="n.id"
+              @click="notif.markRead(n.id)"
+              :class="['hdr-notif-item', { 'hdr-notif-unread': !n.read }]"
+            >
+              <div class="flex items-start gap-2">
+                <span v-if="n.icon" class="text-base leading-none mt-0.5 shrink-0">{{ n.icon }}</span>
+                <div class="min-w-0">
+                  <div class="hdr-notif-item-title">{{ n.title }}</div>
+                  <div v-if="n.body" class="hdr-notif-item-body">{{ n.body }}</div>
+                  <div class="hdr-notif-item-time">{{ formatDate(n.createdAt || n.receivedAt) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hdr-notif-footer">
+            <router-link
+              to="/app/notifications"
+              @click="notifOpen = false"
+              class="hdr-notif-view-all"
+            >
+              View All Notifications
+              <span v-if="notif.unreadCount > 0" class="hdr-notif-footer-badge">{{ notif.unreadCount }} unread</span>
+            </router-link>
+          </div>
+        </div>
+      </Transition>
+    </div>
 
     <!-- User dropdown -->
     <div class="relative" ref="userMenu">
@@ -135,20 +181,25 @@ import { Menu, ChevronDown, LogOut, BarChart2, History, Sparkles, CheckCircle, M
 import Dialog from 'primevue/dialog'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
+import { useNotificationsStore } from '@/stores/notifications'
 
 defineProps({ sidebarCollapsed: Boolean })
 defineEmits(['toggle-sidebar'])
 
 const auth = useAuthStore()
 const theme = useThemeStore()
+const notif = useNotificationsStore()
 const router = useRouter()
 const route = useRoute()
 const dropOpen = ref(false)
 const historyModal = ref(false)
 const subModal = ref(false)
 const userMenu = ref(null)
+const notifOpen = ref(false)
+const notifWrap = ref(null)
 
-onClickOutside(userMenu, () => { dropOpen.value = false })
+onClickOutside(userMenu,  () => { dropOpen.value  = false })
+onClickOutside(notifWrap, () => { notifOpen.value = false })
 
 const initials = computed(() => {
   const n = auth.user?.name || ''
@@ -204,6 +255,7 @@ const PAGE_TITLES = {
   '/app/past-papers':          ['Past Papers', 'Solve board exam papers'],
   '/app/progress-tracking':    ['Progress Tracking', 'Your academic journey'],
   '/app/chatgpt':              ['AI Chat Assistant', 'Ask anything about studies'],
+  '/app/notifications':        ['My Notifications', 'All your alerts and announcements'],
   '/app/coins':                ['Coins & Rewards', 'Your earnings wallet'],
   '/app/reports':              ['Reports', 'Performance analytics'],
   '/app/complaints':           ['Complaints & Suggestions', 'Send us your feedback'],
@@ -284,6 +336,72 @@ function formatDate(iso) {
   animation: notifPulse 2s ease-in-out infinite;
 }
 @keyframes notifPulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.3)} }
+
+.hdr-notif-count {
+  position: absolute; top: 4px; right: 4px;
+  min-width: 16px; height: 16px; border-radius: 99px; padding: 0 4px;
+  background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; pointer-events: none;
+}
+
+/* Notification panel */
+.hdr-notif-panel {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  width: 320px; border-radius: 18px;
+  background: var(--t-dropdown-bg);
+  border: 1px solid var(--t-border);
+  box-shadow: var(--t-shadow-md);
+  backdrop-filter: var(--t-blur);
+  overflow: hidden; z-index: 50;
+}
+.hdr-notif-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.85rem 1rem; border-bottom: 1px solid var(--t-border);
+  background: var(--t-acc-alpha-sm);
+}
+.hdr-notif-all-read {
+  font-size: 0.7rem; font-weight: 600; color: var(--t-accent);
+  background: none; border: none; cursor: pointer; padding: 0;
+}
+.hdr-notif-all-read:hover { text-decoration: underline; }
+.hdr-notif-list { max-height: 320px; overflow-y: auto; }
+.hdr-notif-empty {
+  padding: 2rem 1rem; text-align: center; font-size: 0.82rem; color: var(--t-text3);
+}
+.hdr-notif-item {
+  padding: 0.7rem 1rem; border-bottom: 1px solid var(--t-border);
+  cursor: pointer; transition: background 0.12s;
+}
+.hdr-notif-item:last-child { border-bottom: none; }
+.hdr-notif-item:hover { background: var(--t-hover); }
+.hdr-notif-unread { background: var(--t-acc-alpha-sm); }
+.hdr-notif-unread:hover { background: var(--t-acc-alpha-md); }
+.hdr-notif-item-title {
+  font-size: 0.8rem; font-weight: 600; color: var(--t-text1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hdr-notif-item-body {
+  font-size: 0.72rem; color: var(--t-text2); margin-top: 2px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.hdr-notif-item-time { font-size: 0.66rem; color: var(--t-text3); margin-top: 4px; }
+
+.hdr-notif-footer {
+  border-top: 1px solid var(--t-border);
+  padding: 0.6rem 1rem;
+  background: var(--t-acc-alpha-sm);
+}
+.hdr-notif-view-all {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--t-accent); text-decoration: none; transition: opacity 0.15s;
+}
+.hdr-notif-view-all:hover { opacity: 0.8; }
+.hdr-notif-footer-badge {
+  font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 99px;
+  background: var(--t-accent); color: white;
+}
 
 .hdr-title-wrap { min-width: 0; }
 .hdr-breadcrumb { display: flex; align-items: center; gap: 0.4rem; }

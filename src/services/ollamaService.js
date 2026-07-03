@@ -16,6 +16,7 @@
 
 import { buildPrompt } from './studentAssistantPrompts'
 import { buildRolePrompt } from './saathiRoles'
+import api from '@/services/api'
 
 // ----------------------------------------------------------------------
 // CONFIG (browser / Vite)
@@ -28,8 +29,6 @@ const TIMEOUT_MS = Number(import.meta.env.VITE_OLLAMA_TIMEOUT_MS || 30000)
 const OLLAMA_API_KEY = (import.meta.env.VITE_OLLAMA_API_KEY || '').trim()
 const DEFAULT_OPTIONS = { temperature: 0.3, top_p: 0.9, num_predict: 1500 }
 
-// Gemini is used as the cloud fallback when local Ollama is unreachable/too slow.
-const GEMINI_KEY = (import.meta.env.VITE_GEMINI_API_KEY || '').trim()
 const GEMINI_MODEL = 'gemini-2.5-flash-lite'
 
 let lastError = null
@@ -241,9 +240,8 @@ export async function chat({ system, messages = [], model = DEFAULT_MODEL, optio
   return json.message?.content || ''
 }
 
-// Cloud fallback: same chat shape, via Google Gemini (system prompt + multi-turn).
+// Cloud fallback: same chat shape, via backend Gemini proxy (key stays server-side).
 async function geminiChat({ system, messages = [], options = {} }) {
-  if (!GEMINI_KEY) throw new Error('no-gemini-key')
   const contents = messages.map((m) => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }],
@@ -251,17 +249,8 @@ async function geminiChat({ system, messages = [], options = {} }) {
   const body = { contents }
   if (system) body.systemInstruction = { parts: [{ text: system }] }
   if (options.temperature != null) body.generationConfig = { temperature: options.temperature }
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '')
-    throw new Error(`Gemini HTTP ${res.status}: ${errBody.slice(0, 300)}`)
-  }
-  const d = await res.json()
-  return d.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const { data } = await api.post('/ai/gemini', body)
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
 /**
@@ -440,22 +429,12 @@ function normalizeSubjective(q, ctx) {
 // ----------------------------------------------------------------------
 // PUBLIC: high-level generators (return [] on failure → caller falls back)
 // ----------------------------------------------------------------------
-// One-shot JSON generation via Gemini (used as a fast fallback to local Ollama).
+// One-shot JSON generation via backend Gemini proxy (key stays server-side).
 async function geminiGenerate(prompt, json = true) {
-  if (!GEMINI_KEY) throw new Error('no-gemini-key')
   const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }] }
   if (json) body.generationConfig = { responseMimeType: 'application/json' }
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '')
-    throw new Error(`Gemini HTTP ${res.status}: ${errBody.slice(0, 300)}`)
-  }
-  const d = await res.json()
-  return d.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const { data } = await api.post('/ai/gemini', body)
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
 // Generate JSON: try local Ollama, fall back to Gemini so generation completes

@@ -1,8 +1,10 @@
+using BalochiAcademy.API.Hubs;
 using BalochiAcademy.Application.Common.Interfaces;
 using BalochiAcademy.Application.Notifications;
 using BalochiAcademy.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BalochiAcademy.API.Controllers;
@@ -10,7 +12,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/notifications")]
 [Authorize]
-public class NotificationsController(IUnitOfWork uow, ICurrentUserService cu) : ControllerBase
+public class NotificationsController(IUnitOfWork uow, ICurrentUserService cu, IHubContext<NotificationHub> hub) : ControllerBase
 {
     /// <summary>GET /api/notifications — current user's notifications</summary>
     [HttpGet]
@@ -82,7 +84,80 @@ public class NotificationsController(IUnitOfWork uow, ICurrentUserService cu) : 
             UserId = uid, NotificationId = notif.Id, CreatedAt = DateTime.UtcNow,
         }));
         await uow.SaveChangesAsync(ct);
+
+        // Real-time push via SignalR
+        var payload = new NotificationDto(
+            notif.Id, notif.Title, notif.Body, notif.Type, notif.Icon,
+            false, notif.CreatedAt, notif.ExpiresAt);
+
+        if (string.IsNullOrEmpty(req.TargetRole) && string.IsNullOrEmpty(req.TargetGrade))
+            await NotificationHub.Broadcast(hub, payload);
+        else
+            await Task.WhenAll(userIds.Select(uid => NotificationHub.SendToUser(hub, uid, payload)));
+
         return Created($"/api/admin/notifications/{notif.Id}",
             new { notif.Id, notif.Title, SentTo = userIds.Count });
+    }
+
+    // ── Templates ──────────────────────────────────────────────────────────────
+
+    /// <summary>GET /api/admin/notification-templates</summary>
+    [HttpGet("/api/admin/notification-templates"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> GetTemplates(CancellationToken ct)
+    {
+        var items = await uow.Repository<NotificationTemplate>().Query()
+            .OrderBy(t => t.IsDefault ? 0 : 1).ThenBy(t => t.Id)
+            .Select(t => new { t.Id, t.Title, t.Body, t.Type, t.Icon, t.IsDefault, t.CreatedAt })
+            .ToListAsync(ct);
+        return Ok(items);
+    }
+
+    /// <summary>POST /api/admin/notification-templates</summary>
+    [HttpPost("/api/admin/notification-templates"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> CreateTemplate([FromBody] NotificationTemplateRequest req, CancellationToken ct)
+    {
+        var t = new NotificationTemplate
+        {
+            Title = req.Title, Body = req.Body,
+            Type  = req.Type ?? "info", Icon = req.Icon,
+        };
+        uow.Repository<NotificationTemplate>().Add(t);
+        await uow.SaveChangesAsync(ct);
+        return Created($"/api/admin/notification-templates/{t.Id}",
+            new { t.Id, t.Title, t.Body, t.Type, t.Icon, t.IsDefault, t.CreatedAt });
+    }
+
+    /// <summary>DELETE /api/admin/notification-templates/{id}</summary>
+    [HttpDelete("/api/admin/notification-templates/{id:int}"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> DeleteTemplate(int id, CancellationToken ct)
+    {
+        var t = await uow.Repository<NotificationTemplate>().Query()
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (t == null) return NotFound();
+        if (t.IsDefault) return BadRequest(new { error = "Default templates cannot be deleted." });
+        uow.Repository<NotificationTemplate>().Remove(t);
+        await uow.SaveChangesAsync(ct);
+        return Ok(new { ok = true });
+    }
+
+    /// <summary>GET /api/admin/notifications — paginated sent notification history</summary>
+    [HttpGet("/api/admin/notifications"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+    {
+        var query = uow.Repository<Notification>().Query()
+            .Include(n => n.UserNotifications)
+            .OrderByDescending(n => n.CreatedAt);
+        var total = await query.CountAsync(ct);
+        var items = await query
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(n => new {
+                n.Id, n.Title, n.Body, n.Type, n.Icon,
+                n.TargetRole, n.TargetGrade, n.CreatedAt, n.ExpiresAt,
+                SentTo    = n.UserNotifications.Count,
+                ReadCount = n.UserNotifications.Count(un => un.IsRead),
+            })
+            .ToListAsync(ct);
+        return Ok(new { total, items });
     }
 }

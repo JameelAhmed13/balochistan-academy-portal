@@ -36,6 +36,7 @@
 
 <script setup>
 import { ref, nextTick, watch } from 'vue'
+import api from '@/services/api'
 
 const props = defineProps({
   context: { type: String, default: '' },
@@ -61,18 +62,13 @@ async function ask(prompt) {
   await nextTick(); scrollBottom()
   try {
     const systemPrompt = `You are an AI study helper for Pakistani board exam students (Grade 9-12). ${props.context ? 'Current context: ' + props.context : ''} Keep answers concise (3-5 sentences), use simple language, and relate to the Pakistan curriculum where possible. Use Urdu words occasionally for warmth.`
-    const key = import.meta.env.VITE_GEMINI_API_KEY
-    if (!key) throw new Error('no key')
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\nStudent: ' + text }] }] })
+    const { data } = await api.post('/ai/gemini', {
+      contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\nStudent: ' + text }] }]
     })
-    const data = await res.json()
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I couldn\'t get a response. Try again.'
     messages.value.push({ role: 'ai', text: reply })
   } catch {
-    messages.value.push({ role: 'ai', text: 'AI is unavailable right now. Please check your API key in settings or try again later.' })
+    messages.value.push({ role: 'ai', text: 'AI is unavailable right now. Please try again later.' })
   }
   loading.value = false
   await nextTick(); scrollBottom()

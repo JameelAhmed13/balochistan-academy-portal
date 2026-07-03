@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
 
 const routes = [
   // Public landing page
@@ -31,12 +32,12 @@ const routes = [
       { path: 'hub',           name: 'Hub',          component: () => import('@/views/hub/HubView.vue') },
 
       // AI Tutor
-      { path: 'ai-tutor',     name: 'AITutor',      component: () => import('@/views/ai-tutor/AITutorView.vue') },
-      { path: 'ai-tutor/:subject/chat',  name: 'AITutorChat',  component: () => import('@/views/ai-tutor/ChatView.vue'), props: true },
-      { path: 'ai-tutor/:subject/video', name: 'AITutorVideo', component: () => import('@/views/ai-tutor/VideoView.vue'), props: true },
+      { path: 'ai-tutor',     name: 'AITutor',      meta: { requiresAiEnabled: true },   component: () => import('@/views/ai-tutor/AITutorView.vue') },
+      { path: 'ai-tutor/:subject/chat',  name: 'AITutorChat',  meta: { requiresAiEnabled: true },   component: () => import('@/views/ai-tutor/ChatView.vue'), props: true },
+      { path: 'ai-tutor/:subject/video', name: 'AITutorVideo', meta: { requiresVideoEnabled: true }, component: () => import('@/views/ai-tutor/VideoView.vue'), props: true },
 
       // Saathi AI companion
-      { path: 'saathi',              name: 'Saathi',            component: () => import('@/views/saathi/SaathiView.vue') },
+      { path: 'saathi',              name: 'Saathi',            meta: { requiresAiEnabled: true },   component: () => import('@/views/saathi/SaathiView.vue') },
       { path: 'report',              name: 'PreparationReport', component: () => import('@/views/reports/PreparationReportView.vue') },
 
       // Profile (any logged-in user) + subscription checkout
@@ -131,6 +132,7 @@ const routes = [
       { path: 'chatgpt',           redirect: '/app/saathi' },
 
       // Core app routes
+      { path: 'notifications', name: 'MyNotifications', component: () => import('@/views/notifications/MyNotificationsView.vue') },
       { path: 'coins',        name: 'Coins',        component: () => import('@/views/coins/CoinsView.vue') },
       { path: 'reports',      name: 'Reports',      component: () => import('@/views/reports/ReportsView.vue') },
       { path: 'complaints',   name: 'Complaints',   component: () => import('@/views/complaints/ComplaintsView.vue') },
@@ -164,6 +166,7 @@ const routes = [
       { path: 'coins',         name: 'AdminCoins',         component: () => import('@/views/admin/CoinsAdminView.vue') },
       { path: 'analytics',     name: 'AdminAnalytics',     component: () => import('@/views/admin/AnalyticsView.vue') },
       { path: 'notifications', name: 'AdminNotifications', component: () => import('@/views/admin/NotificationsView.vue') },
+      { path: 'notifications/inbox', name: 'AdminNotificationsInbox', component: () => import('@/views/notifications/MyNotificationsView.vue') },
       { path: 'settings',      name: 'AdminSettings',      component: () => import('@/views/admin/SettingsView.vue') },
       { path: 'complaints',    name: 'AdminComplaints',    component: () => import('@/views/admin/ComplaintsAdminView.vue') },
     ],
@@ -196,6 +199,12 @@ router.beforeEach((to) => {
     to.name !== 'SelectGrade'
   ) {
     return { name: 'SelectGrade' }
+  }
+  // Feature flag guards — admins bypass so they can always test
+  if (auth.user?.role !== 'admin') {
+    const settings = useSettingsStore()
+    if (to.meta.requiresAiEnabled    && settings.get('ai_tutor_enabled',    'true') === 'false') return { name: 'Home' }
+    if (to.meta.requiresVideoEnabled && settings.get('video_lessons_enabled', 'true') === 'false') return { name: 'Home' }
   }
 })
 

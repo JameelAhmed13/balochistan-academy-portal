@@ -30,3 +30,14 @@ public class UserNotification
     public User         User         { get; set; } = null!;
     public Notification Notification { get; set; } = null!;
 }
+
+public class NotificationTemplate
+{
+    public int      Id        { get; set; }
+    public string   Title     { get; set; } = string.Empty;
+    public string?  Body      { get; set; }
+    public string   Type      { get; set; } = "info";
+    public string?  Icon      { get; set; }
+    public bool     IsDefault { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}

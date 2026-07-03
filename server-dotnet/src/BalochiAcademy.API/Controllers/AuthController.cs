@@ -11,11 +11,12 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/auth")]
 public class AuthController(
-    IUnitOfWork           uow,
-    ITokenService         tokens,
-    IPasswordService      passwords,
-    ICurrentUserService   currentUser,
-    IMapper               mapper) : ControllerBase
+    IUnitOfWork               uow,
+    ITokenService             tokens,
+    IPasswordService          passwords,
+    ICurrentUserService       currentUser,
+    IMapper                   mapper,
+    ISystemSettingsService    settings) : ControllerBase
 {
     /// <summary>POST /api/auth/login</summary>
     [HttpPost("login")]
@@ -71,6 +72,10 @@ public class AuthController(
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest req, CancellationToken ct)
     {
+        var regOpen = await settings.GetAsync("registration_open", "true", ct);
+        if (regOpen?.ToLower() == "false")
+            return StatusCode(403, new { error = "Registration is currently closed. Please contact the administration." });
+
         var grade = await uow.Repository<Grade>().FindAsync([req.GradeCode], ct);
         if (grade == null || !grade.IsEnabled)
             return BadRequest(new { error = "Unknown or disabled grade" });

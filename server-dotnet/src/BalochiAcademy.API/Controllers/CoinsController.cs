@@ -11,7 +11,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/coins")]
 [Authorize]
-public class CoinsController(IUnitOfWork uow, ICurrentUserService cu, IMapper mapper) : ControllerBase
+public class CoinsController(IUnitOfWork uow, ICurrentUserService cu, IMapper mapper, ISystemSettingsService settings) : ControllerBase
 {
     /// <summary>GET /api/coins/balance</summary>
     [HttpGet("balance")]
@@ -27,7 +27,8 @@ public class CoinsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
                      && c.Timestamp >= todayStart && c.Timestamp < todayEnd)
             .SumAsync(c => c.Amount, ct);
 
-        return Ok(new { coins = user.Coins, pkr = user.Coins * 0.50m, earnedToday });
+        var rate = decimal.Parse(await settings.GetAsync("coin_rate_pkr", "0.50", ct) ?? "0.50");
+        return Ok(new { coins = user.Coins, pkr = user.Coins * rate, earnedToday });
     }
 
     /// <summary>GET /api/coins/transactions</summary>
@@ -77,7 +78,8 @@ public class CoinsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
     {
         var user = await uow.Repository<User>().FindAsync([cu.UserId!.Value], ct);
         if (user == null) return NotFound();
-        if (user.Coins < 300)          return BadRequest(new { error = "Minimum 300 coins required" });
+        var minCoins = int.Parse(await settings.GetAsync("min_withdrawal", "300", ct) ?? "300");
+        if (user.Coins < minCoins) return BadRequest(new { error = $"Minimum {minCoins} coins required" });
         if (user.Coins < req.AmountCoins) return BadRequest(new { error = "Insufficient coins" });
 
         var acct = await uow.Repository<PayoutAccount>().Query()
@@ -92,7 +94,7 @@ public class CoinsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         {
             UserId      = cu.UserId!.Value,
             AmountCoins = req.AmountCoins,
-            AmountPkr   = req.AmountCoins * 0.50m,
+            AmountPkr   = req.AmountCoins * decimal.Parse(await settings.GetAsync("coin_rate_pkr", "0.50", ct) ?? "0.50"),
             AccountId   = acct.Id,
         };
         uow.Repository<WithdrawalRequest>().Add(wr);

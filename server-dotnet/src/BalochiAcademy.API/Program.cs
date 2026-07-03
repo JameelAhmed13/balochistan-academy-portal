@@ -151,6 +151,9 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider>(sp =>
 });
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
+// ── System Settings (DB-backed, singleton cache) ─────────────────────────────
+builder.Services.AddSingleton<ISystemSettingsService, SystemSettingsService>();
+
 // ── AI Service (Ollama → Gemini fallback) ────────────────────────────────────
 // Named "ollama" client — base URL comes from appsettings Ai:OllamaUrl
 builder.Services.AddHttpClient("ollama", (sp, client) =>

@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using BalochiAcademy.Application.Common.Interfaces;
 
 namespace BalochiAcademy.API.Services;
 
@@ -9,15 +10,11 @@ namespace BalochiAcademy.API.Services;
 /// and a second Ollama retry at 3× timeout if Gemini is quota-limited.
 ///
 /// Chain: Ollama (normal timeout) → Gemini → Ollama (extended timeout, only on 429/quota)
+/// AI config is read from SystemSettings DB first, appsettings.json as fallback.
 /// </summary>
-public class AiService(IHttpClientFactory httpFactory, IConfiguration config, ILogger<AiService> log)
+public class AiService(IHttpClientFactory httpFactory, IConfiguration config, ILogger<AiService> log,
+    ISystemSettingsService settingsService)
 {
-    private string OllamaUrl    => config["Ai:OllamaUrl"]    ?? "http://localhost:11434";
-    private string OllamaModel  => config["Ai:OllamaModel"]  ?? "llama3";
-    private int    OllamaTimeout => int.TryParse(config["Ai:OllamaTimeoutSec"], out var v) ? v : 30;
-    private string GeminiKey    => config["Ai:GeminiApiKey"] ?? "";
-    private string GeminiModel  => config["Ai:GeminiModel"]  ?? "gemini-2.5-flash-lite";
-
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -29,12 +26,19 @@ public class AiService(IHttpClientFactory httpFactory, IConfiguration config, IL
         IReadOnlyList<AiChatMessage> messages,
         CancellationToken           ct = default)
     {
+        // Load all AI config from DB (5-min cache), fall back to appsettings.json
+        var ollamaUrl     = await settingsService.GetAsync("ollama_url",         config["Ai:OllamaUrl"]         ?? "http://localhost:11434", ct) ?? "http://localhost:11434";
+        var ollamaModel   = await settingsService.GetAsync("ollama_model",       config["Ai:OllamaModel"]        ?? "llama3", ct) ?? "llama3";
+        var ollamaTimeout = int.TryParse(await settingsService.GetAsync("ollama_timeout_sec", config["Ai:OllamaTimeoutSec"] ?? "30", ct), out var v) ? v : 30;
+        var geminiKey     = await settingsService.GetAsync("gemini_api_key",     config["Ai:GeminiApiKey"]       ?? "", ct) ?? "";
+        var geminiModel   = await settingsService.GetAsync("gemini_model",       config["Ai:GeminiModel"]        ?? "gemini-2.5-flash-lite", ct) ?? "gemini-2.5-flash-lite";
+
         string ollamaErr = string.Empty;
 
         // ── 1. Ollama (normal timeout) ─────────────────────────────────────────
         try
         {
-            var reply = await OllamaChatAsync(system, messages, OllamaTimeout, ct);
+            var reply = await OllamaChatAsync(system, messages, ollamaUrl, ollamaModel, ollamaTimeout, ct);
             return (reply, "ollama");
         }
         catch (Exception ex)
@@ -48,7 +52,7 @@ public class AiService(IHttpClientFactory httpFactory, IConfiguration config, IL
         bool   quotaHit  = false;
         try
         {
-            var reply = await GeminiChatAsync(system, messages, ct);
+            var reply = await GeminiChatAsync(system, messages, geminiKey, geminiModel, ct);
             return (reply, "gemini");
         }
         catch (Exception ex)
@@ -66,10 +70,10 @@ public class AiService(IHttpClientFactory httpFactory, IConfiguration config, IL
         {
             log.LogInformation(
                 "Gemini quota exceeded — retrying Ollama with {Sec}s extended timeout",
-                OllamaTimeout * 3);
+                ollamaTimeout * 3);
             try
             {
-                var reply = await OllamaChatAsync(system, messages, OllamaTimeout * 3, ct);
+                var reply = await OllamaChatAsync(system, messages, ollamaUrl, ollamaModel, ollamaTimeout * 3, ct);
                 return (reply, "ollama");
             }
             catch (Exception ex)
@@ -87,6 +91,8 @@ public class AiService(IHttpClientFactory httpFactory, IConfiguration config, IL
     private async Task<string> OllamaChatAsync(
         string?                     system,
         IReadOnlyList<AiChatMessage> messages,
+        string                      baseUrl,
+        string                      model,
         int                         timeoutSec,
         CancellationToken           ct)
     {
@@ -100,13 +106,17 @@ public class AiService(IHttpClientFactory httpFactory, IConfiguration config, IL
 
         var body = new
         {
-            model    = OllamaModel,
+            model    = model,
             messages = msgs,
             stream   = false,
             options  = new { temperature = 0.3 },
         };
 
         var http = httpFactory.CreateClient("ollama");
+        // Override base address if it differs from what the named client was configured with
+        if (http.BaseAddress?.ToString().TrimEnd('/') != baseUrl.TrimEnd('/'))
+            http.BaseAddress = new Uri(baseUrl);
+
         var resp = await http.PostAsJsonAsync("/api/chat", body, JsonOpts, cts.Token);
         resp.EnsureSuccessStatusCode();
 
@@ -125,10 +135,12 @@ public class AiService(IHttpClientFactory httpFactory, IConfiguration config, IL
     private async Task<string> GeminiChatAsync(
         string?                     system,
         IReadOnlyList<AiChatMessage> messages,
+        string                      apiKey,
+        string                      model,
         CancellationToken           ct)
     {
-        if (string.IsNullOrWhiteSpace(GeminiKey))
-            throw new InvalidOperationException("Ai:GeminiApiKey is not configured");
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException("Gemini API key is not configured");
 
         var contents = messages
             .Select(m => new
@@ -138,7 +150,6 @@ public class AiService(IHttpClientFactory httpFactory, IConfiguration config, IL
             })
             .ToArray();
 
-        // Build body — system prompt goes in systemInstruction (not in contents)
         object body = string.IsNullOrWhiteSpace(system)
             ? new { contents }
             : new
@@ -147,7 +158,7 @@ public class AiService(IHttpClientFactory httpFactory, IConfiguration config, IL
                 contents,
             };
 
-        var url  = $"https://generativelanguage.googleapis.com/v1beta/models/{GeminiModel}:generateContent?key={GeminiKey}";
+        var url  = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
         var http = httpFactory.CreateClient();
         var resp = await http.PostAsJsonAsync(url, body, JsonOpts, ct);
 

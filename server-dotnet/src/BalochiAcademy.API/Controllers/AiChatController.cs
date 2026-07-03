@@ -1,4 +1,5 @@
 using BalochiAcademy.API.Services;
+using BalochiAcademy.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +12,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/ai")]
 [Authorize]
-public class AiChatController(AiService ai) : ControllerBase
+public class AiChatController(AiService ai, ISystemSettingsService settings) : ControllerBase
 {
     /// <summary>
     /// POST /api/ai/chat
@@ -23,6 +24,9 @@ public class AiChatController(AiService ai) : ControllerBase
         [FromBody] AiChatRequest req,
         CancellationToken ct)
     {
+        if (await settings.GetAsync("ai_tutor_enabled", "true", ct) == "false")
+            return StatusCode(503, new { error = "AI Tutor is currently disabled by the administrator." });
+
         if (req.Messages is not { Count: > 0 })
             return BadRequest(new { error = "messages array must not be empty" });
 

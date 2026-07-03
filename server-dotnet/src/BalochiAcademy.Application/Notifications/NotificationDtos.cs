@@ -22,3 +22,10 @@ public record SendNotificationRequest(
     string? TargetGrade = null,
     DateTime? ExpiresAt = null
 );
+
+public record NotificationTemplateRequest(
+    [Required] string Title,
+    string? Body = null,
+    string? Type = "info",
+    string? Icon = null
+);

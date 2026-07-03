@@ -9,7 +9,7 @@ namespace BalochiAcademy.API.Controllers;
 
 [ApiController]
 [Route("api")]
-public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUserService cu) : ControllerBase
+public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUserService cu, ISystemSettingsService settings) : ControllerBase
 {
     // ── PUBLIC ────────────────────────────────────────────────────────────────
 
@@ -48,6 +48,14 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
                    SubjectCount = g.GradeSubjects.Count,
                })
                .ToListAsync(ct);
+
+            var allowedRaw = await settings.GetAsync("allowed_grades", "", ct);
+            if (!string.IsNullOrWhiteSpace(allowedRaw))
+            {
+                var allowed = allowedRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet();
+                grades = grades.Where(g => allowed.Contains(g.Code)).ToList();
+            }
+
             return Ok(grades);
         }
         catch (Exception ex)

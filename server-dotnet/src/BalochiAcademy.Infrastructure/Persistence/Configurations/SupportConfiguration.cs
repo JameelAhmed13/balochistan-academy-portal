@@ -121,6 +121,17 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
     }
 }
 
+public class NotificationTemplateConfiguration : IEntityTypeConfiguration<NotificationTemplate>
+{
+    public void Configure(EntityTypeBuilder<NotificationTemplate> b)
+    {
+        b.HasKey(e => e.Id);
+        b.Property(e => e.Title).HasMaxLength(200).IsRequired();
+        b.Property(e => e.Type).HasMaxLength(30).HasDefaultValue("info");
+        b.Property(e => e.Icon).HasMaxLength(20);
+    }
+}
+
 public class ContentItemConfiguration : IEntityTypeConfiguration<ContentItem>
 {
     public void Configure(EntityTypeBuilder<ContentItem> b)

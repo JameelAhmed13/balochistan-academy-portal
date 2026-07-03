@@ -29,8 +29,9 @@ public interface IApplicationDbContext
     DbSet<CoinLedger>         CoinLedgers         { get; }
     DbSet<PayoutAccount>      PayoutAccounts      { get; }
     DbSet<WithdrawalRequest>  WithdrawalRequests  { get; }
-    DbSet<Notification>       Notifications       { get; }
-    DbSet<UserNotification>   UserNotifications   { get; }
+    DbSet<Notification>          Notifications         { get; }
+    DbSet<UserNotification>      UserNotifications     { get; }
+    DbSet<NotificationTemplate>  NotificationTemplates { get; }
     DbSet<Complaint>          Complaints          { get; }
     DbSet<ContentItem>        ContentItems        { get; }
     DbSet<VideoCourse>        VideoCourses        { get; }
@@ -39,6 +40,8 @@ public interface IApplicationDbContext
     DbSet<StudentProgress>    StudentProgress     { get; }
     DbSet<AuditLog>           AuditLogs           { get; }
     DbSet<SystemSetting>      SystemSettings      { get; }
+    DbSet<SubscriptionPlan>   SubscriptionPlans   { get; }
+    DbSet<UserSubscription>   UserSubscriptions   { get; }
 
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

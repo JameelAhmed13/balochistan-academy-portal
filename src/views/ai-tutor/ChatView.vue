@@ -179,7 +179,7 @@ import { ArrowLeft, Send, History, EyeOff, Layers, Link, Pencil } from '@lucide/
 import { AI_TUTORS } from '@/stores/content'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'
-import { chatWithFallback, getLastEngine, ollamaConfig } from '@/services/ollamaService'
+import api from '@/services/api'
 
 const props = defineProps({ subject: String })
 const auth = useAuthStore()
@@ -233,11 +233,11 @@ function buildSystemInstruction() {
 }
 
 async function callAI(prompt, history = []) {
-  // history is [{role:'user'|'assistant', content}] — same shape as Saathi / chatWithFallback
-  return chatWithFallback({
+  const { data } = await api.post('/ai/chat', {
     system: buildSystemInstruction(),
     messages: [...history, { role: 'user', content: prompt }],
   })
+  return data  // { reply, engine }
 }
 
 async function sendMessage(text) {
@@ -261,9 +261,8 @@ async function send() {
       .filter(m => !m.thinking && m.content)
       .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
 
-    const reply = await callAI(text, history)
-    const eng = getLastEngine()
-    const modelName = eng === 'gemini' ? ollamaConfig.GEMINI_MODEL : ollamaConfig.MODEL
+    const { reply, engine: eng } = await callAI(text, history)
+    const modelName = eng === 'gemini' ? 'gemini-2.5-flash-lite' : 'llama3'
     const idx = messages.value.indexOf(thinkMsg)
     messages.value[idx] = { id: thinkMsg.id, role: 'assistant', thinking: false, content: reply, engine: eng, model: modelName, urdu: false, urduText: '', engText: '', showEng: false }
   } catch (e) {
@@ -294,7 +293,8 @@ async function followUp(type, context) {
 async function translateMsg(msg) {
   if (msg.urduText) { msg.urdu = true; return }
   loading.value = true
-  msg.urduText = await callAI(`Translate this to Urdu (keep technical terms in Urdu script): ${msg.content}`)
+  const { reply: urduReply } = await callAI(`Translate this to Urdu (keep technical terms in Urdu script): ${msg.content}`)
+  msg.urduText = urduReply
   msg.urdu = true
   loading.value = false
 }
@@ -302,7 +302,8 @@ async function translateMsg(msg) {
 async function translateToEng(msg) {
   if (msg.engText) { msg.showEng = true; return }
   loading.value = true
-  msg.engText = await callAI(`Translate this Urdu text to English (plain translation): ${msg.content}`)
+  const { reply: engReply } = await callAI(`Translate this Urdu text to English (plain translation): ${msg.content}`)
+  msg.engText = engReply
   msg.showEng = true
   loading.value = false
 }

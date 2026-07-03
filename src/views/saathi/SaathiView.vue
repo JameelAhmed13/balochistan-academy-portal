@@ -98,7 +98,8 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { GraduationCap, CalendarDays, ListChecks, Gauge, Users, Sparkles, Send, User, AlertTriangle, Cpu } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
-import { saathiChat, getLastEngine, ollamaConfig } from '@/services/ollamaService'
+import api from '@/services/api'
+import { buildPrompt } from '@/services/studentAssistantPrompts'
 
 const auth = useAuthStore()
 const grade = computed(() => auth.user?.gradeCode ?? 9)
@@ -110,7 +111,7 @@ const draft = ref('')
 const messages = ref([])
 const loading = ref(false)
 const engine = ref(null)
-const ollamaModel = ollamaConfig.MODEL
+const ollamaModel = 'llama3'
 const threadEl = ref(null)
 
 const modes = [
@@ -199,21 +200,23 @@ async function send(forceText) {
   loading.value = true
   await scrollThread()
   try {
-    const reply = await saathiChat(mode.value, grade.value, injectedFor(), text, history)
-    const eng = getLastEngine()
-    const modelName = eng === 'gemini' ? ollamaConfig.GEMINI_MODEL : ollamaConfig.MODEL
-    messages.value.push({ role: 'saathi', text: reply || '…', engine: eng, model: modelName })
+    const system = buildPrompt(mode.value, grade.value, injectedFor())
+    const { data } = await api.post('/ai/chat', {
+      messages: [...history, { role: 'user', content: text }],
+      system,
+    })
+    const eng = data.engine
+    const modelName = eng === 'gemini' ? 'gemini-2.5-flash-lite' : ollamaModel
+    messages.value.push({ role: 'saathi', text: data.reply || '…', engine: eng, model: modelName })
     engine.value = eng
     saveModeMessages()
   } catch (e) {
     const msg = e?.message || ''
-    const friendly = msg.includes('no-gemini-key')
-      ? 'Gemini API key is missing. Add VITE_GEMINI_API_KEY to your .env file.'
-      : msg.includes('Both engines failed')
-        ? 'Both Ollama and Gemini are unavailable right now. Check your internet connection and try again.'
-        : msg.includes('Gemini HTTP 4')
-          ? 'Gemini API key is invalid or expired. Please check VITE_GEMINI_API_KEY in your .env file.'
-          : 'Saathi is unavailable right now. Please try again in a moment.'
+    const friendly = msg.includes('Both engines failed') || msg.includes('All AI engines failed')
+      ? 'Both Ollama and Gemini are unavailable right now. Check your connection and try again.'
+      : msg.includes('503')
+        ? 'AI Tutor is currently disabled by the administrator.'
+        : 'Saathi is unavailable right now. Please try again in a moment.'
     messages.value.push({ role: 'error', text: friendly })
     console.error('[Saathi]', msg)
   }

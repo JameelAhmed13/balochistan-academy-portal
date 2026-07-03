@@ -13,7 +13,7 @@ namespace BalochiAcademy.API.Controllers;
 [Route("api/admin/users")]
 [Authorize(Policy = "AdminOnly")]
 public class UsersController(IUnitOfWork uow, ICurrentUserService cu, IPasswordService passwords,
-    IHubContext<NotificationHub> hub) : ControllerBase
+    IHubContext<NotificationHub> hub, ISystemSettingsService settingsService) : ControllerBase
 {
     /// <summary>GET /api/admin/users?role=&amp;gradeCode=&amp;page=</summary>
     [HttpGet]
@@ -117,11 +117,21 @@ public class UsersController(IUnitOfWork uow, ICurrentUserService cu, IPasswordS
     public async Task<IActionResult> UpdateSetting(string key, [FromBody] string value, CancellationToken ct)
     {
         var setting = await uow.Repository<SystemSetting>().FindAsync([key], ct);
-        if (setting == null) return NotFound();
-        setting.Value       = value;
-        setting.UpdatedAt   = DateTime.UtcNow;
-        setting.UpdatedById = cu.UserId;
+        if (setting == null)
+        {
+            uow.Repository<SystemSetting>().Add(new SystemSetting
+            {
+                Key = key, Value = value, UpdatedAt = DateTime.UtcNow, UpdatedById = cu.UserId,
+            });
+        }
+        else
+        {
+            setting.Value       = value;
+            setting.UpdatedAt   = DateTime.UtcNow;
+            setting.UpdatedById = cu.UserId;
+        }
         await uow.SaveChangesAsync(ct);
+        settingsService.Invalidate();
         return Ok(new { key, value });
     }
 

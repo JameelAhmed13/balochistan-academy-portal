@@ -10,7 +10,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/ai")]
 [Authorize]
-public class AiController(IUnitOfWork uow) : ControllerBase
+public class AiController(IUnitOfWork uow, ISystemSettingsService settings) : ControllerBase
 {
     private const int MaxSample     = 20;
     private const int MaxObjectives = 12;
@@ -27,6 +27,9 @@ public class AiController(IUnitOfWork uow) : ControllerBase
         [FromQuery] int     sample    = 6,
         CancellationToken   ct        = default)
     {
+        if (await settings.GetAsync("ai_tutor_enabled", "true", ct) == "false")
+            return StatusCode(503, new { error = "AI Tutor is currently disabled." });
+
         sample = Math.Min(sample, MaxSample);
 
         // ── syllabus: units + objectives ─────────────────────────────────────

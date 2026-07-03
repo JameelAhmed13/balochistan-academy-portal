@@ -31,8 +31,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<CoinLedger>        CoinLedgers        => Set<CoinLedger>();
     public DbSet<PayoutAccount>     PayoutAccounts     => Set<PayoutAccount>();
     public DbSet<WithdrawalRequest> WithdrawalRequests => Set<WithdrawalRequest>();
-    public DbSet<Notification>      Notifications      => Set<Notification>();
-    public DbSet<UserNotification>  UserNotifications  => Set<UserNotification>();
+    public DbSet<Notification>         Notifications         => Set<Notification>();
+    public DbSet<UserNotification>     UserNotifications     => Set<UserNotification>();
+    public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
     public DbSet<Complaint>         Complaints         => Set<Complaint>();
     public DbSet<ContentItem>       ContentItems       => Set<ContentItem>();
     public DbSet<VideoCourse>       VideoCourses       => Set<VideoCourse>();
@@ -41,6 +42,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<StudentProgress>   StudentProgress    => Set<StudentProgress>();
     public DbSet<AuditLog>          AuditLogs          => Set<AuditLog>();
     public DbSet<SystemSetting>     SystemSettings     => Set<SystemSetting>();
+    public DbSet<SubscriptionPlan>  SubscriptionPlans  => Set<SubscriptionPlan>();
+    public DbSet<UserSubscription>  UserSubscriptions  => Set<UserSubscription>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -143,7 +143,8 @@ const adminModules = [
   { title: 'Users',         desc: 'Students, teachers, parents and admins',          icon: '👥', count: '48 users',       path: '/app/admin/users',         iconBg: 'rgba(236,72,153,0.12)'  },
   { title: 'Coins',         desc: 'Withdrawal requests and coin settings',           icon: '🪙', count: '3 pending',      path: '/app/admin/coins',         iconBg: 'rgba(245,158,11,0.12)'  },
   { title: 'Analytics',      desc: 'Platform-wide performance dashboards',            icon: '📊', count: 'Live data',      path: '/app/admin/analytics',      iconBg: 'rgba(20,184,166,0.12)'  },
-  { title: 'Notifications', desc: 'Send announcements and alerts to students',        icon: '🔔', count: '24 sent',        path: '/app/admin/notifications',  iconBg: 'rgba(251,191,36,0.12)'  },
+  { title: 'Notifications', desc: 'Send announcements and alerts to students',        icon: '🔔', count: '24 sent',        path: '/app/admin/notifications',       iconBg: 'rgba(251,191,36,0.12)'  },
+  { title: 'My Inbox',     desc: 'View notifications received by your account',     icon: '📥', count: 'Inbox',          path: '/app/admin/notifications/inbox', iconBg: 'rgba(99,102,241,0.12)'  },
   { title: 'Settings',      desc: 'Platform configuration and AI API keys',           icon: '⚙️', count: '8 settings',     path: '/app/admin/settings',       iconBg: 'rgba(100,116,139,0.12)' },
   { title: 'Complaints',    desc: 'Student feedback and complaint management',         icon: '💬', count: '12 open',        path: '/app/admin/complaints',     iconBg: 'rgba(239,68,68,0.12)'   },
 ]

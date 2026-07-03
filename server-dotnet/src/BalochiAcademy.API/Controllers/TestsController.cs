@@ -11,7 +11,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/tests")]
 [Authorize]
-public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper mapper) : ControllerBase
+public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper mapper, ISystemSettingsService settings) : ControllerBase
 {
     /// <summary>GET /api/tests?gradeCode=&amp;kind=&amp;unitId=&amp;subjectId=&amp;published=true</summary>
     [HttpGet]
@@ -163,8 +163,12 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
                 a => a.UserId == cu.UserId && a.TestId == req.TestId && a.CoinsEarned > 0, ct);
             if (!alreadyEarned)
             {
-                var pct = req.Total > 0 ? (double)req.Score / req.Total : 0;
-                coins = pct >= 0.9 ? 50 : pct >= 0.7 ? 30 : pct >= 0.5 ? 15 : 5;
+                var pct  = req.Total > 0 ? (double)req.Score / req.Total : 0;
+                var c90  = int.Parse(await settings.GetAsync("coins_per_90pct", "50",  ct) ?? "50");
+                var c70  = int.Parse(await settings.GetAsync("coins_per_70pct", "30",  ct) ?? "30");
+                var c50  = int.Parse(await settings.GetAsync("coins_per_50pct", "15",  ct) ?? "15");
+                var pass = int.Parse(await settings.GetAsync("coins_per_pass",  "5",   ct) ?? "5");
+                coins = pct >= 0.9 ? c90 : pct >= 0.7 ? c70 : pct >= 0.5 ? c50 : pass;
             }
         }
 
