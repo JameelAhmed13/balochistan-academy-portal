@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
+import { useStudentStore } from '@/stores/student'
+
+// Reachable even after the trial has expired — the paywall itself, plus the ways to clear it.
+const TRIAL_GATE_EXEMPT = ['Checkout', 'Coins', 'RedeemCoins', 'Subscribe', 'SelectGrade']
 
 const routes = [
   // Public landing page
@@ -43,6 +47,7 @@ const routes = [
       // Profile (any logged-in user) + subscription checkout
       { path: 'profile',             name: 'Profile',           component: () => import('@/views/profile/ProfileView.vue') },
       { path: 'checkout',            name: 'Checkout',          component: () => import('@/views/subscription/CheckoutView.vue') },
+      { path: 'subscribe',           name: 'Subscribe',         component: () => import('@/views/subscription/TrialExpiredView.vue') },
 
       // Preparation — layout wraps all sub-routes so sidebar stays persistent
       {
@@ -134,6 +139,7 @@ const routes = [
       // Core app routes
       { path: 'notifications', name: 'MyNotifications', component: () => import('@/views/notifications/MyNotificationsView.vue') },
       { path: 'coins',        name: 'Coins',        component: () => import('@/views/coins/CoinsView.vue') },
+      { path: 'coins/redeem', name: 'RedeemCoins',  component: () => import('@/views/coins/RedeemView.vue') },
       { path: 'reports',      name: 'Reports',      component: () => import('@/views/reports/ReportsView.vue') },
       { path: 'complaints',   name: 'Complaints',   component: () => import('@/views/complaints/ComplaintsView.vue') },
 
@@ -169,6 +175,7 @@ const routes = [
       { path: 'notifications/inbox', name: 'AdminNotificationsInbox', component: () => import('@/views/notifications/MyNotificationsView.vue') },
       { path: 'settings',      name: 'AdminSettings',      component: () => import('@/views/admin/SettingsView.vue') },
       { path: 'complaints',    name: 'AdminComplaints',    component: () => import('@/views/admin/ComplaintsAdminView.vue') },
+      { path: 'audit-log',     name: 'AdminAuditLog',      component: () => import('@/views/admin/AuditLogView.vue') },
     ],
   },
   { path: '/app/select-grade', name: 'SelectGrade', component: () => import('@/views/auth/SelectGradeView.vue'), meta: { requiresAuth: true } },
@@ -185,7 +192,7 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
   if (to.meta.requiresAuth && !auth.isLoggedIn) return { name: 'Login' }
   if (to.meta.guest && auth.isLoggedIn) return { name: 'Home' }
@@ -199,6 +206,18 @@ router.beforeEach((to) => {
     to.name !== 'SelectGrade'
   ) {
     return { name: 'SelectGrade' }
+  }
+  // 7-day trial gate — once it's over with no active subscription, only the paywall
+  // and ways to clear it (redeem coins, cash checkout) stay reachable.
+  if (
+    auth.isLoggedIn &&
+    auth.user?.role === 'student' &&
+    to.path.startsWith('/app') &&
+    !TRIAL_GATE_EXEMPT.includes(to.name)
+  ) {
+    const student = useStudentStore()
+    if (student.accessStatus === null) await student.fetchSubscription()
+    if (student.accessStatus === 'expired') return { name: 'Subscribe' }
   }
   // Feature flag guards — admins bypass so they can always test
   if (auth.user?.role !== 'admin') {

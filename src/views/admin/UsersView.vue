@@ -233,7 +233,7 @@
                   {{ s.ipAddress || 'IP unknown' }} · signed in {{ relativeDate(s.createdAt) }}
                 </div>
                 <div style="font-size:0.72rem;color:var(--t-text3);">
-                  Expires {{ new Date(s.expiresAt).toLocaleDateString() }}
+                  Expires {{ new Date(s.expiresAt).toLocaleDateString(undefined, { timeZone: 'Asia/Karachi' }) }}
                 </div>
               </div>
               <button @click="revokeSession(s.id)" class="btn-ghost"

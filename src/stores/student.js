@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import api from '@/services/api'
+import api, { setSubscriptionRequiredHandler } from '@/services/api'
+import router from '@/router'
 
 export const useStudentStore = defineStore('student', () => {
   // ── Local test records (preserved for per-test views that need subject/type/bookId) ──
@@ -11,8 +12,20 @@ export const useStudentStore = defineStore('student', () => {
 
   // ── API-backed coin data ──
   const coinTransactions = ref([])  // normalized to { id, label, amount, date, type }
-  const withdrawals      = ref([])  // normalized to { id, amount, amountPkr, status, date, processedAt }
-  const payoutAccount    = ref(null) // normalized to { id, name, number, service }
+  const balance          = ref(null) // { coins, pkr, earnedToday } from /coins/balance
+
+  // ── API-backed subscription / AI token data ──
+  const subscription      = ref(null) // { id, planId, planName, startDate, endDate, status, aiTokenQuota, aiTokensUsedThisPeriod, tokensRemainingThisPeriod } | null
+  const pendingCashPurchase = ref(null) // { id, planId, planName, paymentMethod, referenceNumber } | null — awaiting admin verification
+  const bonusAiTokens     = ref(0)
+  const coinsPerAiToken   = ref(20) // coin cost of one extra AI token — refreshed from /subscriptions/me
+  const totalAiTokens     = computed(() => (subscription.value?.tokensRemainingThisPeriod ?? 0) + bonusAiTokens.value)
+  const hasActiveSubscription = computed(() => subscription.value?.status === 'active')
+
+  // ── Trial / access status: 'trial' | 'subscribed' | 'expired' | null (not yet loaded) ──
+  const accessStatus  = ref(null)
+  const trialDaysLeft = ref(0)
+  const trialEndsAt   = ref(null)
 
   // ── Computed stats (prefer API, fallback to local) ──
   const totalTests  = computed(() => _apiStats.value?.attempts  ?? testRecords.value.length)
@@ -31,7 +44,7 @@ export const useStudentStore = defineStore('student', () => {
   const chartData = computed(() => {
     const sorted = [...testRecords.value].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-20)
     return {
-      labels: sorted.map(t => new Date(t.date).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' })),
+      labels: sorted.map(t => new Date(t.date).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi', day: 'numeric', month: 'short' })),
       series: [{ name: 'Score %', data: sorted.map(t => Math.round((t.score / t.total) * 100)) }],
     }
   })
@@ -58,33 +71,40 @@ export const useStudentStore = defineStore('student', () => {
     } catch { /* keep empty */ }
   }
 
-  // ── Fetch withdrawals ────────────────────────────────────────────────────────
-  async function fetchWithdrawals() {
+  // ── Fetch coin balance (real PKR-equivalent rate, not hardcoded client-side) ──
+  async function fetchBalance() {
     try {
-      const { data } = await api.get('/coins/withdrawals')
-      withdrawals.value = data.map(w => ({
-        id:          w.id,
-        amount:      w.amountCoins,
-        amountPkr:   w.amountPkr,
-        status:      w.status,
-        adminNote:   w.adminNote,
-        date:        w.createdAt,
-        processedAt: w.processedAt,
-      }))
-    } catch { /* keep empty */ }
+      const { data } = await api.get('/coins/balance')
+      balance.value = data
+    } catch { /* keep null */ }
   }
 
-  // ── Fetch payout account ─────────────────────────────────────────────────────
-  async function fetchPayoutAccount() {
+  // ── Fetch current subscription + AI token balance ────────────────────────────
+  async function fetchSubscription() {
     try {
-      const { data } = await api.get('/coins/payout-account')
-      payoutAccount.value = data ? { id: data.id, name: data.accountName, number: data.accountNo, service: data.service } : null
-    } catch { /* keep null */ }
+      const { data } = await api.get('/subscriptions/me')
+      subscription.value = data.subscription
+      pendingCashPurchase.value = data.pendingCashPurchase
+      bonusAiTokens.value = data.bonusAiTokens
+      coinsPerAiToken.value = data.coinsPerAiToken
+      accessStatus.value = data.accessStatus
+      trialDaysLeft.value = data.trialDaysLeft
+      trialEndsAt.value = data.trialEndsAt
+    } catch { /* keep defaults */ }
+  }
+
+  // ── Fetch redeemable subscription plans (with coin cost) ──────────────────────
+  const plans = ref([])
+  async function fetchPlans() {
+    try {
+      const { data } = await api.get('/subscriptions/plans')
+      plans.value = data
+    } catch { /* keep empty */ }
   }
 
   // ── Bootstrap coin data on demand ───────────────────────────────────────────
   async function fetchCoinData() {
-    await Promise.allSettled([fetchCoinTransactions(), fetchWithdrawals(), fetchPayoutAccount()])
+    await Promise.allSettled([fetchCoinTransactions(), fetchBalance(), fetchSubscription()])
   }
 
   // ── Save test record locally + fire attempt to backend ──────────────────────
@@ -125,30 +145,43 @@ export const useStudentStore = defineStore('student', () => {
     return data
   }
 
-  // ── Withdrawal request ───────────────────────────────────────────────────────
-  async function requestWithdrawal(amountCoins) {
-    const { data } = await api.post('/coins/withdraw', { amountCoins })
-    // Prepend to local list immediately
-    withdrawals.value.unshift({
-      id:        data.id,
-      amount:    data.amountCoins,
-      amountPkr: data.amountPkr,
-      status:    data.status,
-      date:      data.createdAt,
-    })
-    // Refresh stats to reflect deducted coins
-    fetchStats().catch(() => {})
+  // ── Redeem coins for a new (or switched) subscription ─────────────────────────
+  async function purchaseSubscription(planId) {
+    const { data } = await api.post('/subscriptions/me/purchase', { planId })
+    await Promise.allSettled([fetchSubscription(), fetchBalance(), fetchStats()])
     return data
   }
 
-  // ── Update payout account ────────────────────────────────────────────────────
-  async function updatePayoutAccount(info) {
-    const { data } = await api.put('/coins/payout-account', {
-      accountName: info.name,
-      accountNo:   info.number,
-      service:     info.service,
-    })
-    payoutAccount.value = { id: data.id, name: data.accountName, number: data.accountNo, service: data.service }
+  // ── Redeem coins to renew the current subscription ────────────────────────────
+  async function renewSubscription() {
+    const { data } = await api.post('/subscriptions/me/renew')
+    await Promise.allSettled([fetchSubscription(), fetchBalance(), fetchStats()])
+    return data
+  }
+
+  // ── Redeem coins for extra AI tokens ──────────────────────────────────────────
+  async function buyTokens(tokenAmount) {
+    const { data } = await api.post('/subscriptions/me/buy-tokens', { tokenAmount })
+    bonusAiTokens.value = data.bonusAiTokens
+    await Promise.allSettled([fetchBalance(), fetchStats()])
+    return data
+  }
+
+  // ── Submit a real-money payment for a plan, pending admin verification ────────
+  async function purchaseCash(planId, paymentMethod, referenceNumber) {
+    const { data } = await api.post('/subscriptions/me/purchase-cash', { planId, paymentMethod, referenceNumber })
+    await fetchSubscription()
+    return data
+  }
+
+  // ── Single-shot AI prompt (Dictionary, Join Forces, Learn Coding, Simulations) ─
+  // Spends one AI token via the shared backend gate — throws on 402 when out of tokens
+  // (caller should catch and check err.response?.data?.outOfTokens).
+  async function generateAi(prompt, system) {
+    const { data } = await api.post('/ai/generate', { prompt, system })
+    if (subscription.value) subscription.value.tokensRemainingThisPeriod = data.tokensRemainingThisPeriod
+    bonusAiTokens.value = data.bonusAiTokens
+    return data.reply
   }
 
   // ── Map UI type strings to backend attemptType values ───────────────────────
@@ -166,10 +199,18 @@ export const useStudentStore = defineStore('student', () => {
     return 'self-test'
   }
 
+  // Backend blocks any gated call once the trial has ended with no active subscription —
+  // bounce straight to the paywall regardless of which screen triggered the call.
+  setSubscriptionRequiredHandler(() => {
+    accessStatus.value = 'expired'
+    if (router.currentRoute.value.name !== 'Subscribe') router.push({ name: 'Subscribe' })
+  })
+
   return {
-    testRecords, coinTransactions, withdrawals, payoutAccount,
+    testRecords, coinTransactions, balance, subscription, pendingCashPurchase, hasActiveSubscription,
+    bonusAiTokens, coinsPerAiToken, totalAiTokens, plans, accessStatus, trialDaysLeft, trialEndsAt,
     totalTests, passedTests, avgPercent, totalCoins, monthlyTests, chartData,
-    fetchStats, fetchCoinData, fetchCoinTransactions, fetchWithdrawals, fetchPayoutAccount,
-    saveTest, submitAttempt, requestWithdrawal, updatePayoutAccount,
+    fetchStats, fetchCoinData, fetchCoinTransactions, fetchBalance, fetchSubscription, fetchPlans,
+    saveTest, submitAttempt, purchaseSubscription, renewSubscription, buyTokens, purchaseCash, generateAi,
   }
 })

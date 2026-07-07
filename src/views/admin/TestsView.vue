@@ -723,7 +723,7 @@ function gradeLabel(code) {
 
 function fmtDate(dt) {
   if (!dt) return '—'
-  return new Date(dt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(dt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' })
 }
 
 // ── Load ──────────────────────────────────────────────────────────

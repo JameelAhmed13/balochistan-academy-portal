@@ -42,3 +42,22 @@ public class WithdrawalRequest : AuditableEntity
     public PayoutAccount? Account    { get; set; }
     public User?          ProcessedBy { get; set; }
 }
+
+/// <summary>
+/// A coin spend that bought a subscription, a renewal, or extra AI tokens — replaces cash
+/// withdrawal as the only thing coins can be redeemed for. Always instant/"completed": no
+/// real money moves, so there is no admin approval step (unlike the legacy WithdrawalRequest).
+/// </summary>
+public class CoinRedemption : AuditableEntity
+{
+    public int     UserId        { get; set; }
+    public string  Type          { get; set; } = string.Empty;  // subscription_purchase | subscription_renewal | token_topup
+    public int?    PlanId        { get; set; }
+    public int?    SubscriptionId { get; set; }
+    public int     CoinsSpent    { get; set; }
+    public int?    TokensGranted { get; set; }
+
+    public User              User         { get; set; } = null!;
+    public SubscriptionPlan? Plan         { get; set; }
+    public UserSubscription? Subscription { get; set; }
+}

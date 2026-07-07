@@ -12,7 +12,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/notifications")]
 [Authorize]
-public class NotificationsController(IUnitOfWork uow, ICurrentUserService cu, IHubContext<NotificationHub> hub) : ControllerBase
+public class NotificationsController(IUnitOfWork uow, ICurrentUserService cu, IHubContext<NotificationHub> hub, IAuditService audit) : ControllerBase
 {
     /// <summary>GET /api/notifications — current user's notifications</summary>
     [HttpGet]
@@ -95,6 +95,9 @@ public class NotificationsController(IUnitOfWork uow, ICurrentUserService cu, IH
         else
             await Task.WhenAll(userIds.Select(uid => NotificationHub.SendToUser(hub, uid, payload)));
 
+        await audit.LogAsync(cu.UserId, "Send", "Notification", notif.Id,
+            newValues: new { notif.Title, req.TargetRole, req.TargetGrade, SentTo = userIds.Count }, ip: cu.IpAddress, ct: ct);
+
         return Created($"/api/admin/notifications/{notif.Id}",
             new { notif.Id, notif.Title, SentTo = userIds.Count });
     }
@@ -123,6 +126,7 @@ public class NotificationsController(IUnitOfWork uow, ICurrentUserService cu, IH
         };
         uow.Repository<NotificationTemplate>().Add(t);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Create", "NotificationTemplate", t.Id, newValues: new { t.Title }, ip: cu.IpAddress, ct: ct);
         return Created($"/api/admin/notification-templates/{t.Id}",
             new { t.Id, t.Title, t.Body, t.Type, t.Icon, t.IsDefault, t.CreatedAt });
     }
@@ -137,6 +141,7 @@ public class NotificationsController(IUnitOfWork uow, ICurrentUserService cu, IH
         if (t.IsDefault) return BadRequest(new { error = "Default templates cannot be deleted." });
         uow.Repository<NotificationTemplate>().Remove(t);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Delete", "NotificationTemplate", id, oldValues: new { t.Title }, ip: cu.IpAddress, ct: ct);
         return Ok(new { ok = true });
     }
 

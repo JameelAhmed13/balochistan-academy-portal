@@ -177,7 +177,7 @@ public static class DatabaseSeeder
             new Permission { Name = "tests.manage",       Module = "Tests",         Description = "Create, publish, delete tests" },
             new Permission { Name = "users.manage",       Module = "Users",         Description = "View and toggle user accounts" },
             new Permission { Name = "content.manage",     Module = "Content",       Description = "Upload and manage content items" },
-            new Permission { Name = "coins.manage",       Module = "Coins",         Description = "Process withdrawal requests" },
+            new Permission { Name = "coins.manage",       Module = "Coins",         Description = "Manage coin economy settings and approve pending cash subscriptions" },
             new Permission { Name = "notifications.send", Module = "Notifications", Description = "Broadcast notifications to users" },
             new Permission { Name = "complaints.manage",  Module = "Complaints",    Description = "Reply to and resolve complaints" },
             new Permission { Name = "catalog.manage",     Module = "Catalog",       Description = "Manage grades, subjects, syllabus" },
@@ -261,8 +261,8 @@ public static class DatabaseSeeder
             var settings = new[]
             {
             new SystemSetting { Key = "site_name",         Value = "Balochistan Academy Portal", Description = "Application display name" },
-            new SystemSetting { Key = "coin_rate_pkr",     Value = "0.50",  Description = "PKR value per coin (1 coin = 0.50 PKR)" },
-            new SystemSetting { Key = "min_withdrawal",    Value = "300",   Description = "Minimum coins required to request withdrawal" },
+            new SystemSetting { Key = "coin_rate_pkr",     Value = "0.005", Description = "PKR value per coin (200 coins = 1 PKR) — prices subscriptions/tokens, not cash" },
+            new SystemSetting { Key = "coins_per_ai_token",Value = "20",    Description = "Coin cost of one extra AI token bought outside a plan's quota" },
             new SystemSetting { Key = "ai_model",          Value = "gemini-2.5-flash-lite", Description = "Default AI model for tutoring" },
             new SystemSetting { Key = "registration_open", Value = "true",  Description = "Allow new student registrations" },
             new SystemSetting { Key = "coins_per_90pct",   Value = "50",    Description = "Coins awarded for 90%+ test score" },
@@ -433,8 +433,8 @@ public static class DatabaseSeeder
         var defaults = new Dictionary<string, (string Value, string Description)>
         {
             ["site_name"]                        = ("Balochistan Academy Portal",  "Application display name"),
-            ["coin_rate_pkr"]                    = ("0.50",                        "PKR value per coin"),
-            ["min_withdrawal"]                   = ("300",                         "Minimum coins required to request withdrawal"),
+            ["coin_rate_pkr"]                    = ("0.005",                       "PKR value per coin (200 coins = 1 PKR)"),
+            ["coins_per_ai_token"]               = ("20",                          "Coin cost of one extra AI token bought outside a plan's quota"),
             ["ai_model"]                         = ("gemini-2.5-flash-lite",       "Default AI model for tutoring"),
             ["registration_open"]                = ("true",                        "Allow new student registrations"),
             ["coins_per_90pct"]                  = ("50",                          "Coins awarded for 90%+ test score"),

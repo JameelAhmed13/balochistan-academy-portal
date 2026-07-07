@@ -9,7 +9,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/admin/institutes")]
 [Authorize(Policy = "AdminOnly")]
-public class InstitutesController(IUnitOfWork uow) : ControllerBase
+public class InstitutesController(IUnitOfWork uow, ICurrentUserService cu, IAuditService audit) : ControllerBase
 {
     /// <summary>GET /api/admin/institutes — list all institutes</summary>
     [HttpGet]
@@ -47,6 +47,7 @@ public class InstitutesController(IUnitOfWork uow) : ControllerBase
         };
         uow.Repository<Institute>().Add(institute);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Create", "Institute", institute.Id, newValues: new { institute.Name }, ip: cu.IpAddress, ct: ct);
 
         return CreatedAtAction(nameof(List), new { id = institute.Id }, new
         {
@@ -69,6 +70,7 @@ public class InstitutesController(IUnitOfWork uow) : ControllerBase
         if (req.IsActive.HasValue)                 institute.IsActive = req.IsActive.Value;
 
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Update", "Institute", id, newValues: new { institute.Name }, ip: cu.IpAddress, ct: ct);
         return Ok(new { institute.Id, institute.Name, institute.Code, institute.Address, institute.IsActive });
     }
 
@@ -86,6 +88,7 @@ public class InstitutesController(IUnitOfWork uow) : ControllerBase
 
         uow.Repository<Institute>().Remove(institute);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Delete", "Institute", id, oldValues: new { institute.Name }, ip: cu.IpAddress, ct: ct);
         return NoContent();
     }
 }

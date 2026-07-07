@@ -27,7 +27,7 @@ public class CoinsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
                      && c.Timestamp >= todayStart && c.Timestamp < todayEnd)
             .SumAsync(c => c.Amount, ct);
 
-        var rate = decimal.Parse(await settings.GetAsync("coin_rate_pkr", "0.50", ct) ?? "0.50");
+        var rate = decimal.Parse(await settings.GetAsync("coin_rate_pkr", "0.005", ct) ?? "0.005");
         return Ok(new { coins = user.Coins, pkr = user.Coins * rate, earnedToday });
     }
 
@@ -44,132 +44,49 @@ public class CoinsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         return Ok(new { items = mapper.Map<List<CoinLedgerEntryDto>>(items), total, page, pageSize });
     }
 
-    /// <summary>GET /api/coins/payout-account</summary>
-    [HttpGet("payout-account")]
-    public async Task<IActionResult> GetPayoutAccount(CancellationToken ct)
-    {
-        var acct = await uow.Repository<PayoutAccount>().Query()
-            .FirstOrDefaultAsync(p => p.UserId == cu.UserId, ct);
-        if (acct == null) return Ok((object?)null);
-        return Ok(mapper.Map<PayoutAccountDto>(acct));
-    }
-
-    /// <summary>PUT /api/coins/payout-account — create or replace</summary>
-    [HttpPut("payout-account")]
-    public async Task<IActionResult> UpsertPayoutAccount([FromBody] UpsertPayoutAccountRequest req, CancellationToken ct)
-    {
-        var acct = await uow.Repository<PayoutAccount>().Query()
-            .FirstOrDefaultAsync(p => p.UserId == cu.UserId, ct);
-        if (acct == null)
-        {
-            acct = new PayoutAccount { UserId = cu.UserId!.Value };
-            uow.Repository<PayoutAccount>().Add(acct);
-        }
-        acct.AccountName = req.AccountName;
-        acct.AccountNo   = req.AccountNo;
-        acct.Service     = req.Service;
-        await uow.SaveChangesAsync(ct);
-        return Ok(mapper.Map<PayoutAccountDto>(acct));
-    }
-
-    /// <summary>POST /api/coins/withdraw — student requests withdrawal</summary>
-    [HttpPost("withdraw")]
-    public async Task<IActionResult> RequestWithdrawal([FromBody] CreateWithdrawalRequest req, CancellationToken ct)
-    {
-        var user = await uow.Repository<User>().FindAsync([cu.UserId!.Value], ct);
-        if (user == null) return NotFound();
-        var minCoins = int.Parse(await settings.GetAsync("min_withdrawal", "300", ct) ?? "300");
-        if (user.Coins < minCoins) return BadRequest(new { error = $"Minimum {minCoins} coins required" });
-        if (user.Coins < req.AmountCoins) return BadRequest(new { error = "Insufficient coins" });
-
-        var acct = await uow.Repository<PayoutAccount>().Query()
-            .FirstOrDefaultAsync(p => p.UserId == cu.UserId, ct);
-        if (acct == null) return BadRequest(new { error = "No payout account configured" });
-
-        var pending = await uow.Repository<WithdrawalRequest>().Query()
-            .AnyAsync(w => w.UserId == cu.UserId && w.Status == "pending", ct);
-        if (pending) return BadRequest(new { error = "A withdrawal request is already pending" });
-
-        var wr = new WithdrawalRequest
-        {
-            UserId      = cu.UserId!.Value,
-            AmountCoins = req.AmountCoins,
-            AmountPkr   = req.AmountCoins * decimal.Parse(await settings.GetAsync("coin_rate_pkr", "0.50", ct) ?? "0.50"),
-            AccountId   = acct.Id,
-        };
-        uow.Repository<WithdrawalRequest>().Add(wr);
-
-        user.Coins -= req.AmountCoins;
-        uow.Repository<CoinLedger>().Add(new CoinLedger
-        {
-            UserId = cu.UserId.Value, Amount = -req.AmountCoins,
-            Reason = "Withdrawal Request",
-        });
-        await uow.SaveChangesAsync(ct);
-        return Created($"/api/coins/withdrawals/{wr.Id}", mapper.Map<WithdrawalRequestDto>(wr));
-    }
-
-    /// <summary>GET /api/coins/withdrawals</summary>
-    [HttpGet("withdrawals")]
-    public async Task<IActionResult> MyWithdrawals(CancellationToken ct)
-    {
-        var items = await uow.Repository<WithdrawalRequest>().Query()
-            .Where(w => w.UserId == cu.UserId)
-            .OrderByDescending(w => w.CreatedAt)
-            .ToListAsync(ct);
-        return Ok(mapper.Map<List<WithdrawalRequestDto>>(items));
-    }
-
     // ── Admin ──────────────────────────────────────────────────────────────────
 
-    /// <summary>GET /api/admin/coins/withdrawals — all withdrawal requests</summary>
-    [HttpGet("/api/admin/coins/withdrawals"), Authorize(Policy = "AdminOnly")]
-    public async Task<IActionResult> AdminWithdrawals(
-        [FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+    /// <summary>GET /api/admin/coins/redemptions — recent subscription/token redemptions</summary>
+    [HttpGet("/api/admin/coins/redemptions"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> AdminRedemptions(
+        [FromQuery] string? type, [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
-        IQueryable<WithdrawalRequest> q = uow.Repository<WithdrawalRequest>().Query().Include(w => w.User);
-        if (!string.IsNullOrEmpty(status)) q = q.Where(w => w.Status == status);
+        IQueryable<CoinRedemption> q = uow.Repository<CoinRedemption>().Query()
+            .Include(r => r.User).Include(r => r.Plan);
+        if (!string.IsNullOrEmpty(type)) q = q.Where(r => r.Type == type);
 
         var total = await q.CountAsync(ct);
-        var items = await q.OrderByDescending(w => w.CreatedAt)
+        var items = await q.OrderByDescending(r => r.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(w => new
+            .Select(r => new
             {
-                w.Id, w.AmountCoins, w.AmountPkr, w.Status, w.AdminNote,
-                w.CreatedAt, w.ProcessedAt,
-                UserName = w.User != null ? w.User.Name : null,
-                w.UserId,
+                r.Id, r.Type, r.CoinsSpent, r.TokensGranted, r.CreatedAt,
+                UserName = r.User != null ? r.User.Name : null,
+                PlanName = r.Plan != null ? r.Plan.Name : null,
             })
             .ToListAsync(ct);
         return Ok(new { items, total, page, pageSize });
     }
 
-    /// <summary>PUT /api/admin/coins/withdrawals/{id} — process withdrawal</summary>
-    [HttpPut("/api/admin/coins/withdrawals/{id:int}"), Authorize(Policy = "AdminOnly")]
-    public async Task<IActionResult> ProcessWithdrawal(int id, [FromBody] ProcessWithdrawalRequest req, CancellationToken ct)
+    /// <summary>GET /api/admin/coins/top-earners — top N students by total coins earned (lifetime)</summary>
+    [HttpGet("/api/admin/coins/top-earners"), Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> TopEarners([FromQuery] int limit = 5, CancellationToken ct = default)
     {
-        var wr = await uow.Repository<WithdrawalRequest>().Query()
-            .Include(w => w.User)
-            .FirstOrDefaultAsync(w => w.Id == id, ct);
-        if (wr == null) return NotFound();
-        if (wr.Status != "pending") return BadRequest(new { error = "Only pending requests can be processed" });
+        var top = await uow.Repository<CoinLedger>().Query()
+            .Where(c => c.Amount > 0)
+            .GroupBy(c => c.UserId)
+            .Select(g => new { UserId = g.Key, TotalCoins = g.Sum(c => c.Amount) })
+            .OrderByDescending(g => g.TotalCoins)
+            .Take(limit)
+            .ToListAsync(ct);
 
-        wr.Status        = req.Status;
-        wr.AdminNote     = req.AdminNote;
-        wr.ProcessedById = cu.UserId;
-        wr.ProcessedAt   = DateTime.UtcNow;
+        var userIds = top.Select(t => t.UserId).ToList();
+        var names = await uow.Repository<User>().Query()
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.Name ?? u.Username, ct);
 
-        if (req.Status == "rejected" && wr.User != null)
-        {
-            wr.User.Coins += wr.AmountCoins;
-            uow.Repository<CoinLedger>().Add(new CoinLedger
-            {
-                UserId = wr.UserId, Amount = wr.AmountCoins,
-                Reason = "Withdrawal Refund (rejected)",
-            });
-        }
-        await uow.SaveChangesAsync(ct);
-        return Ok(new { wr.Id, wr.Status, wr.AdminNote, wr.ProcessedAt });
+        var result = top.Select(t => new { UserName = names.GetValueOrDefault(t.UserId, "Unknown"), t.TotalCoins });
+        return Ok(result);
     }
 }

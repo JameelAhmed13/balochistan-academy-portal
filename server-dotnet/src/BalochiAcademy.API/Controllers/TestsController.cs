@@ -11,7 +11,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/tests")]
 [Authorize]
-public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper mapper, ISystemSettingsService settings) : ControllerBase
+public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper mapper, ISystemSettingsService settings, IAuditService audit) : ControllerBase
 {
     /// <summary>GET /api/tests?gradeCode=&amp;kind=&amp;unitId=&amp;subjectId=&amp;published=true</summary>
     [HttpGet]
@@ -84,6 +84,7 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         }
         uow.Repository<Test>().Add(test);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Create", "Test", test.Id, newValues: new { test.Title }, ip: cu.IpAddress, ct: ct);
         return Created($"/api/tests/{test.Id}", mapper.Map<TestDto>(test));
     }
 
@@ -108,6 +109,7 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         test.EndsAt      = req.EndsAt;
 
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Update", "Test", id, newValues: new { test.Title }, ip: cu.IpAddress, ct: ct);
         return Ok(mapper.Map<TestDto>(test));
     }
 
@@ -136,6 +138,8 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         if (test == null) return NotFound();
         test.IsPublished = !test.IsPublished;
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, test.IsPublished ? "Publish" : "Unpublish", "Test", id,
+            newValues: new { test.Title }, ip: cu.IpAddress, ct: ct);
         return Ok(new { test.Id, test.IsPublished });
     }
 
@@ -147,6 +151,7 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         if (test == null) return NotFound();
         uow.Repository<Test>().Remove(test);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Delete", "Test", id, oldValues: new { test.Title }, ip: cu.IpAddress, ct: ct);
         return NoContent();
     }
 

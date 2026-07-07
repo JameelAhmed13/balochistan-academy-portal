@@ -33,6 +33,7 @@ public interface IApplicationDbContext
     DbSet<UserNotification>      UserNotifications     { get; }
     DbSet<NotificationTemplate>  NotificationTemplates { get; }
     DbSet<Complaint>          Complaints          { get; }
+    DbSet<ComplaintMessage>   ComplaintMessages   { get; }
     DbSet<ContentItem>        ContentItems        { get; }
     DbSet<VideoCourse>        VideoCourses        { get; }
     DbSet<VideoLesson>        VideoLessons        { get; }

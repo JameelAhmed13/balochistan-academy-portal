@@ -21,12 +21,7 @@
 
     <!-- 6 KPI Cards -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-      <KpiCard label="Total Users"   :value="48"    icon="👥"  color="blue"   />
-      <KpiCard label="Tests Taken"   :value="312"   icon="📝"  color="purple" />
-      <KpiCard label="AI Sessions"   :value="128"   icon="🤖"  color="green"  />
-      <KpiCard label="Coins Issued"  :value="15200" icon="🪙"  color="amber"  />
-      <KpiCard label="Active Today"  :value="18"    icon="⚡"  color="teal"   />
-      <KpiCard label="Avg Score"     value="74%"    icon="🎯"  color="rose"   />
+      <KpiCard v-for="kpi in kpiCards" :key="kpi.label" :label="kpi.label" :value="kpi.value" :icon="kpi.icon" :color="kpi.color" />
     </div>
 
     <!-- Charts Row 1: Subject Popularity (full width) -->
@@ -36,7 +31,8 @@
         Subject Popularity — Tests Attempted
       </div>
       <div class="ag-card-body">
-        <apexchart type="bar" height="260" :options="subjectOptions" :series="subjectSeries" />
+        <div v-if="!loading && !analytics.subjectPopularity.length" class="ag-empty" style="padding:24px;"><p>No test attempts yet.</p></div>
+        <apexchart v-else type="bar" height="260" :options="subjectOptions" :series="subjectSeries" />
       </div>
     </div>
 
@@ -59,7 +55,8 @@
           Test Type Distribution
         </div>
         <div class="ag-card-body">
-          <apexchart type="donut" height="240" :options="donutOptions" :series="donutSeries" />
+          <div v-if="!loading && !analytics.testTypeDistribution.length" class="ag-empty" style="padding:24px;"><p>No test attempts yet.</p></div>
+          <apexchart v-else type="donut" height="240" :options="donutOptions" :series="donutSeries" />
         </div>
       </div>
     </div>
@@ -70,7 +67,9 @@
         <Users class="w-3.5 h-3.5" style="color:var(--t-accent);" />
         Top Students Leaderboard
       </div>
-      <div class="overflow-x-auto">
+      <div v-if="loading" class="ag-empty" style="padding:40px;"><div class="ag-empty-icon">⏳</div><p>Loading…</p></div>
+      <div v-else-if="!topStudents.length" class="ag-empty" style="padding:40px;"><p>No students have earned coins yet.</p></div>
+      <div v-else class="overflow-x-auto">
         <table class="ag-table">
           <thead>
             <tr>
@@ -108,12 +107,48 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ArrowLeft, TrendingUp, Users, BookOpen } from '@lucide/vue'
 import KpiCard from '@/components/ui/KpiCard.vue'
 import { useThemeStore } from '@/stores/theme'
+import api from '@/services/api'
 
 const theme = useThemeStore()
+const loading = ref(false)
+
+const analytics = ref({
+  totalUsers: 0, totalAttempts: 0, aiSessions: 0, coinsIssued: 0, activeToday: 0, avgScore: 0,
+  subjectPopularity: [], monthlyTrend: [], testTypeDistribution: [],
+})
+const topStudents = ref([])
+
+function fmt(n) {
+  const v = n ?? 0
+  return v >= 10000 ? Math.round(v / 1000) + 'K' : v >= 1000 ? (v / 1000).toFixed(1) + 'K' : String(v)
+}
+
+async function loadAnalytics() {
+  loading.value = true
+  try {
+    const [{ data: a }, { data: lb }] = await Promise.all([
+      api.get('/admin/analytics'),
+      api.get('/tests/leaderboard', { params: { top: 5 } }),
+    ])
+    analytics.value = a
+    topStudents.value = lb.map(s => ({ name: s.name, tests: s.totalAttempts, avg: Math.round(s.avgPercent || 0), coins: s.coins }))
+  } catch { /* leave defaults on failure */ }
+  finally { loading.value = false }
+}
+onMounted(loadAnalytics)
+
+const kpiCards = computed(() => [
+  { label: 'Total Users',  value: fmt(analytics.value.totalUsers),    icon: '👥', color: 'blue'   },
+  { label: 'Tests Taken',  value: fmt(analytics.value.totalAttempts), icon: '📝', color: 'purple' },
+  { label: 'AI Sessions',  value: fmt(analytics.value.aiSessions),    icon: '🤖', color: 'green'  },
+  { label: 'Coins Issued', value: fmt(analytics.value.coinsIssued),   icon: '🪙', color: 'amber'  },
+  { label: 'Active Today', value: fmt(analytics.value.activeToday),  icon: '⚡', color: 'teal'   },
+  { label: 'Avg Score',    value: `${analytics.value.avgScore}%`,     icon: '🎯', color: 'rose'   },
+])
 
 /* ── Chart helpers ── */
 const gridBorderColor = computed(() =>
@@ -126,16 +161,16 @@ const PRIMARY    = '#7c6af5'
 /* ── Subject Popularity ── */
 const subjectOptions = computed(() => ({
   chart:       { toolbar: { show: false }, background: chartBg, theme: chartTheme.value },
-  xaxis:       { categories: ['Urdu', 'English', 'Biology', 'Chemistry', 'Physics', 'Math', 'CS'], labels: { style: { colors: theme.isDark ? '#94a3b8' : '#64748b' } } },
+  xaxis:       { categories: analytics.value.subjectPopularity.map(s => s.subject), labels: { style: { colors: theme.isDark ? '#94a3b8' : '#64748b' } } },
   yaxis:       { labels: { style: { colors: theme.isDark ? '#94a3b8' : '#64748b' } } },
-  colors:      [PRIMARY, '#10b981', '#f59e0b', '#06b6d4', '#e11d48', '#a855f7', '#f97316'],
+  colors:      [PRIMARY, '#10b981', '#f59e0b', '#06b6d4', '#e11d48', '#a855f7', '#f97316', '#14b8a6'],
   dataLabels:  { enabled: false },
   grid:        { borderColor: gridBorderColor.value, strokeDashArray: 3 },
   plotOptions: { bar: { borderRadius: 6, columnWidth: '54%', distributed: true } },
   legend:      { show: false },
   tooltip:     { theme: theme.isDark ? 'dark' : 'light' },
 }))
-const subjectSeries = [{ name: 'Tests', data: [45, 38, 62, 55, 71, 48, 33] }]
+const subjectSeries = computed(() => [{ name: 'Tests', data: analytics.value.subjectPopularity.map(s => s.attempts) }])
 
 /* ── Monthly Trend ── */
 const trendOptions = computed(() => ({
@@ -143,36 +178,32 @@ const trendOptions = computed(() => ({
   stroke:     { curve: 'smooth', width: 2.5 },
   fill:       { type: 'gradient', gradient: { opacityFrom: 0.28, opacityTo: 0.03, colorStops: [{ offset: 0, color: PRIMARY, opacity: 0.28 }, { offset: 100, color: PRIMARY, opacity: 0.03 }] } },
   colors:     [PRIMARY],
-  xaxis:      { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], labels: { style: { colors: theme.isDark ? '#94a3b8' : '#64748b' } } },
+  xaxis:      { categories: analytics.value.monthlyTrend.map(m => m.month), labels: { style: { colors: theme.isDark ? '#94a3b8' : '#64748b' } } },
   yaxis:      { labels: { formatter: v => v + ' tests', style: { colors: theme.isDark ? '#94a3b8' : '#64748b' } } },
   grid:       { borderColor: gridBorderColor.value, strokeDashArray: 3 },
   dataLabels: { enabled: false },
   markers:    { size: 4, colors: [PRIMARY], strokeColors: theme.isDark ? '#0d1526' : '#fff', strokeWidth: 2 },
   tooltip:    { theme: theme.isDark ? 'dark' : 'light' },
 }))
-const trendSeries = [{ name: 'Tests Taken', data: [18, 28, 35, 47, 60, 54] }]
+const trendSeries = computed(() => [{ name: 'Tests Taken', data: analytics.value.monthlyTrend.map(m => m.attempts) }])
 
 /* ── Donut ── */
+const TYPE_LABELS = {
+  'self-test': 'Self Test', 'parent-test': 'Parent Test', challenge: 'Challenge',
+  weekly: 'Weekly Quiz', monthly: 'Monthly Exam', daily: 'Daily Test',
+  objective: 'Objective', subjective: 'Subjective',
+}
 const donutOptions = computed(() => ({
   chart:     { background: chartBg, theme: chartTheme.value },
-  labels:    ['Objective', 'Subjective', 'Combined', 'Past Papers'],
-  colors:    [PRIMARY, '#10b981', '#f59e0b', '#ef4444'],
+  labels:    analytics.value.testTypeDistribution.map(t => TYPE_LABELS[t.type] ?? t.type),
+  colors:    [PRIMARY, '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#a855f7', '#f97316', '#14b8a6'],
   legend:    { position: 'bottom', labels: { colors: theme.isDark ? '#94a3b8' : '#64748b' } },
   plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: 'Total', color: theme.isDark ? '#94a3b8' : '#64748b' } } } } },
   dataLabels: { enabled: false },
   stroke:    { width: 0 },
   tooltip:   { theme: theme.isDark ? 'dark' : 'light' },
 }))
-const donutSeries = [145, 87, 56, 24]
-
-/* ── Leaderboard ── */
-const topStudents = [
-  { name: 'Ahmed Khan',    tests: 28, avg: 87, coins: 1250 },
-  { name: 'Fatima Ali',    tests: 24, avg: 82, coins: 980  },
-  { name: 'Zainab Malik',  tests: 21, avg: 79, coins: 850  },
-  { name: 'Bilal Hussain', tests: 18, avg: 74, coins: 720  },
-  { name: 'Sara Qureshi',  tests: 15, avg: 68, coins: 560  },
-]
+const donutSeries = computed(() => analytics.value.testTypeDistribution.map(t => t.count))
 
 const gradients = [
   'linear-gradient(135deg,#7c6af5,#5b43cc)',

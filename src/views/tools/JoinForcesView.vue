@@ -5,6 +5,7 @@
     <div class="jf-header">
       <h1 class="jf-title">⚔️ Join Forces</h1>
       <p class="jf-sub">Study together · Group challenges · Beat the exams as a team</p>
+      <AiTokenPill class="jf-token-pill" />
     </div>
 
     <!-- Tabs -->
@@ -159,6 +160,11 @@
 import { ref, computed, nextTick } from 'vue'
 import { SUBJECTS } from '@/stores/content'
 import AIHelper from '@/components/platform/AIHelper.vue'
+import AiTokenPill from '@/components/platform/AiTokenPill.vue'
+import { useStudentStore } from '@/stores/student'
+import { aiErrorMessage } from '@/composables/useAiTokens'
+
+const student = useStudentStore()
 
 const subjects = SUBJECTS || []
 const activeTab = ref('groups')
@@ -237,17 +243,12 @@ async function askAIForGroup() {
   const msgs = JSON.parse(localStorage.getItem(key) || '[]')
   msgs.push({ id: Date.now()-1, from: 'You', text: `@AI Give a study tip for ${chatGroup.value.subject}`, time: new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}), isMine: true })
   try {
-    const k = import.meta.env.VITE_GEMINI_API_KEY
-    if (!k) throw new Error()
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${k}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ contents:[{ parts:[{ text:`Give one concise study tip for ${chatGroup.value.subject} for Pakistani board exams. Make it practical and actionable. Under 3 sentences.` }] }] })
-    })
-    const data = await res.json()
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'AI unavailable.'
+    const reply = await student.generateAi(
+      `Give one concise study tip for ${chatGroup.value.subject} for Pakistani board exams. Make it practical and actionable. Under 3 sentences.`
+    )
     msgs.push({ id: Date.now(), from: '🤖 AI Tutor', text: reply, time: new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}), isMine: false })
-  } catch {
-    msgs.push({ id: Date.now(), from: '🤖 AI Tutor', text: 'AI unavailable. Check your API key.', time: new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}), isMine: false })
+  } catch (e) {
+    msgs.push({ id: Date.now(), from: '🤖 AI Tutor', text: aiErrorMessage(e), time: new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}), isMine: false })
   }
   localStorage.setItem(key, JSON.stringify(msgs.slice(-50)))
   nextTick(()=>{ if(msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight })
@@ -272,7 +273,8 @@ const onlineMembers = [
 .jf-root { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
 .jf-header { text-align: center; padding: 1.5rem 0; }
 .jf-title { font-size: 1.75rem; font-weight: 800; color: var(--t-text1); }
-.jf-sub { color: var(--t-text3); font-size: 0.875rem; }
+.jf-sub { color: var(--t-text3); font-size: 0.875rem; margin-bottom: 0.6rem; }
+.jf-token-pill { display: inline-flex; }
 .jf-tabs { display: flex; gap: 0.25rem; background: var(--t-hover); border-radius: 14px; padding: 0.25rem; margin-bottom: 1.25rem; overflow-x: auto; }
 .jf-tab { flex: 1; padding: 0.55rem 0.75rem; border-radius: 10px; border: none; background: none; color: var(--t-text2); font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .jf-tab.active { background: var(--t-surface); color: var(--t-text1); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }

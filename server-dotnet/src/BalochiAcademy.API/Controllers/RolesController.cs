@@ -9,7 +9,7 @@ namespace BalochiAcademy.API.Controllers;
 [ApiController]
 [Route("api/admin/roles")]
 [Authorize(Policy = "AdminOnly")]
-public class RolesController(IUnitOfWork uow) : ControllerBase
+public class RolesController(IUnitOfWork uow, ICurrentUserService cu, IAuditService audit) : ControllerBase
 {
     /// <summary>GET /api/admin/roles — all roles with their assigned permission IDs and user count</summary>
     [HttpGet]
@@ -52,6 +52,7 @@ public class RolesController(IUnitOfWork uow) : ControllerBase
         };
         uow.Repository<Role>().Add(role);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Create", "Role", role.Id, newValues: new { role.Name }, ip: cu.IpAddress, ct: ct);
 
         return CreatedAtAction(nameof(List), new { id = role.Id }, new
         {
@@ -72,6 +73,7 @@ public class RolesController(IUnitOfWork uow) : ControllerBase
         role.Description = req.Description?.Trim();
 
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Update", "Role", id, newValues: new { role.Name }, ip: cu.IpAddress, ct: ct);
         return Ok(new { role.Id, role.Name, role.Description });
     }
 
@@ -89,6 +91,7 @@ public class RolesController(IUnitOfWork uow) : ControllerBase
 
         uow.Repository<Role>().Remove(role);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Delete", "Role", id, oldValues: new { role.Name }, ip: cu.IpAddress, ct: ct);
         return NoContent();
     }
 
@@ -110,6 +113,8 @@ public class RolesController(IUnitOfWork uow) : ControllerBase
             uow.Repository<RolePermission>().Add(new RolePermission { RoleId = id, PermissionId = pid });
 
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(cu.UserId, "Update", "RolePermissions", id,
+            newValues: new { permissionIds = permissionIds.Distinct().ToArray() }, ip: cu.IpAddress, ct: ct);
         return Ok(new { roleId = id, permissionIds = permissionIds.Distinct().ToArray() });
     }
 

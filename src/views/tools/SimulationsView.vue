@@ -9,6 +9,7 @@
       <a href="https://phet.colorado.edu" target="_blank" rel="noopener" class="sim-phet-badge">
         Powered by PhET · University of Colorado Boulder
       </a>
+      <div><AiTokenPill class="sim-token-pill" /></div>
     </div>
 
     <div class="sim-filter">
@@ -121,7 +122,12 @@
 import { ref, computed } from 'vue'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
+import AiTokenPill from '@/components/platform/AiTokenPill.vue'
+import { useStudentStore } from '@/stores/student'
+import { aiErrorMessage } from '@/composables/useAiTokens'
 import { simulations } from '@/assets/data/phet'
+
+const student = useStudentStore()
 
 const activeSim = ref(null)
 const activeFilter = ref('All')
@@ -139,15 +145,10 @@ async function getAIExplanation() {
   if (!activeSim.value) return
   aiLoading.value = true; aiText.value = ''
   try {
-    const key = import.meta.env.VITE_GEMINI_API_KEY
-    if (!key) throw new Error()
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ contents:[{ parts:[{ text:`Explain the concept of "${activeSim.value.title}" in depth for a Pakistani board exam student (Grade 9-12). Cover: 1) Core concept in simple language, 2) Key formulas with explanation, 3) Real-world examples from Pakistan, 4) Common mistakes students make, 5) Tips to remember for exams. Make it engaging and educational.` }] }] })
-    })
-    const data = await res.json()
-    aiText.value = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.'
-  } catch { aiText.value = 'AI unavailable. Check your VITE_GEMINI_API_KEY in .env' }
+    aiText.value = await student.generateAi(
+      `Explain the concept of "${activeSim.value.title}" in depth for a Pakistani board exam student (Grade 9-12). Cover: 1) Core concept in simple language, 2) Key formulas with explanation, 3) Real-world examples from Pakistan, 4) Common mistakes students make, 5) Tips to remember for exams. Make it engaging and educational.`
+    )
+  } catch (e) { aiText.value = aiErrorMessage(e) }
   aiLoading.value = false
 }
 </script>
@@ -157,7 +158,8 @@ async function getAIExplanation() {
 .sim-hero { text-align: center; padding: 2rem 1rem 1.5rem; }
 .sim-hero-icon { font-size: 3rem; margin-bottom: 0.5rem; }
 .sim-hero-title { font-size: 1.75rem; font-weight: 800; color: var(--t-text1); }
-.sim-hero-sub { color: var(--t-text3); font-size: 0.875rem; margin-bottom: 0.75rem; }
+.sim-hero-sub { color: var(--t-text3); font-size: 0.875rem; margin-bottom: 0.5rem; }
+.sim-token-pill { display: inline-flex; margin-top: 0.5rem; }
 .sim-phet-badge {
   display: inline-block;
   padding: 0.3rem 0.85rem;

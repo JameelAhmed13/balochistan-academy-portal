@@ -9,12 +9,29 @@ public class Complaint : AuditableEntity
     public string  Subject     { get; set; } = string.Empty;
     public string  Description { get; set; } = string.Empty;
     public string  Status      { get; set; } = "open";
-    public string? AdminReply  { get; set; }
     public int?    HandledById { get; set; }
     public DateTime? ResolvedAt { get; set; }
 
     public User? User      { get; set; }
     public User? HandledBy { get; set; }
+    public ICollection<ComplaintMessage> Messages { get; set; } = [];
+}
+
+/// <summary>
+/// One message in a complaint's conversation thread — replaces the old single AdminReply field
+/// so students and admins can go back and forth like a chat instead of one reply overwriting
+/// the last.
+/// </summary>
+public class ComplaintMessage : BaseEntity
+{
+    public int      ComplaintId { get; set; }
+    public int      SenderId    { get; set; }
+    public bool     IsAdmin     { get; set; }
+    public string   Message     { get; set; } = string.Empty;
+    public DateTime CreatedAt   { get; set; } = DateTime.UtcNow;
+
+    public Complaint Complaint { get; set; } = null!;
+    public User       Sender   { get; set; } = null!;
 }
 
 public class ContentItem : AuditableEntity

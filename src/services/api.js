@@ -17,6 +17,9 @@ api.interceptors.request.use((config) => {
 let onUnauthorized = null
 export function setUnauthorizedHandler(fn) { onUnauthorized = fn }
 
+let onSubscriptionRequired = null
+export function setSubscriptionRequiredHandler(fn) { onSubscriptionRequired = fn }
+
 // Deduplicate concurrent 401 → refresh calls so only one refresh request flies
 let _refreshPromise = null
 
@@ -47,6 +50,9 @@ api.interceptors.response.use(
         }
       }
       if (onUnauthorized) onUnauthorized()
+    }
+    if (err.response?.status === 402 && err.response.data?.subscriptionRequired && onSubscriptionRequired) {
+      onSubscriptionRequired()
     }
     const msg = err.response?.data?.error || err.message || 'Request failed'
     return Promise.reject(Object.assign(new Error(msg), { status: err.response?.status, data: err.response?.data }))

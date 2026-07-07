@@ -91,7 +91,7 @@ const tabs = [
 const selfTests = computed(() => student.testRecords)
 
 function perf(t) { return Math.round((t.score / t.total) * 100) }
-function fmt(iso) { return new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' }) }
+function fmt(iso) { return new Date(iso).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi', day: 'numeric', month: 'short' }) }
 
 // Bar chart: subject-wise avg
 const subjectStats = computed(() => {

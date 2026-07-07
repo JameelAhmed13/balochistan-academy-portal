@@ -68,21 +68,30 @@ public class MappingProfile : Profile
 
         // ── Coins ─────────────────────────────────────────────────────────────
         CreateMap<CoinLedger, CoinLedgerEntryDto>();
-        CreateMap<PayoutAccount, PayoutAccountDto>();
-        CreateMap<WithdrawalRequest, WithdrawalRequestDto>();
 
         // ── Complaints ────────────────────────────────────────────────────────
         CreateMap<Complaint, ComplaintDto>()
             .ConstructUsing(src => new ComplaintDto(
                 src.Id,
+                src.UserId,
                 src.User != null ? src.User.Name : null,
                 src.Category,
                 src.Subject,
                 src.Description,
                 src.Status,
-                src.AdminReply,
+                src.Messages.Count,
                 src.CreatedAt,
                 src.ResolvedAt))
+            .ForAllMembers(opt => opt.Ignore());
+
+        CreateMap<ComplaintMessage, ComplaintMessageDto>()
+            .ConstructUsing(src => new ComplaintMessageDto(
+                src.Id,
+                src.SenderId,
+                src.Sender != null ? src.Sender.Name : null,
+                src.IsAdmin,
+                src.Message,
+                src.CreatedAt))
             .ForAllMembers(opt => opt.Ignore());
     }
 }

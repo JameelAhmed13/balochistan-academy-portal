@@ -20,9 +20,9 @@
     <div class="flex-1" />
 
     <!-- Subscription chip -->
-    <button @click="subModal = true" class="hdr-sub-chip hidden md:flex">
-      <Sparkles class="w-3.5 h-3.5" />
-      <span>Rs.999/yr</span>
+    <button v-if="auth.user?.role === 'student'" @click="subModal = true" class="hdr-sub-chip hidden md:flex" :class="chipClass">
+      <component :is="chipIcon" class="w-3.5 h-3.5" />
+      <span>{{ chipLabel }}</span>
     </button>
 
     <!-- ── Theme Toggle ── -->
@@ -68,7 +68,7 @@
                 <div class="min-w-0">
                   <div class="hdr-notif-item-title">{{ n.title }}</div>
                   <div v-if="n.body" class="hdr-notif-item-body">{{ n.body }}</div>
-                  <div class="hdr-notif-item-time">{{ formatDate(n.createdAt || n.receivedAt) }}</div>
+                  <div class="hdr-notif-item-time">{{ formatDateTime(n.createdAt || n.receivedAt) }}</div>
                 </div>
               </div>
             </div>
@@ -141,7 +141,7 @@
         style="background:var(--t-hover);border:1px solid var(--t-border)">
         <div class="w-2 h-2 rounded-full mt-1.5 shrink-0" :class="h.status === 'success' ? 'bg-emerald-400' : 'bg-red-400'" />
         <div class="min-w-0">
-          <div class="font-medium" style="color:var(--t-text1)">{{ formatDate(h.timestamp) }}</div>
+          <div class="font-medium" style="color:var(--t-text1)">{{ formatDateTime(h.timestamp) }}</div>
           <div class="text-xs truncate" style="color:var(--t-text3)">{{ h.device }}</div>
           <div class="text-xs" style="color:var(--t-text3)">IP: {{ h.ip }}</div>
         </div>
@@ -151,37 +151,69 @@
     </div>
   </Dialog>
 
-  <Dialog v-model:visible="subModal" header="Full Access Subscription" :modal="true" :style="{ width: '460px' }">
-    <div class="space-y-4">
-      <div class="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200">
-        <div class="text-2xl font-bold text-amber-700">Rs. 999 <span class="text-base font-normal text-amber-600">/ year</span></div>
-        <div class="text-sm text-amber-600 mt-1">One-year unlimited access to all features</div>
+  <Dialog v-model:visible="subModal" header="Subscription Plans" :modal="true" :style="{ width: '560px' }" @show="onSubModalOpen">
+    <div class="sub-modal">
+
+      <!-- Status banner -->
+      <div v-if="student.accessStatus === 'trial'" class="sub-status trial">
+        <Clock class="w-4 h-4" />
+        <span>{{ student.trialDaysLeft }} day{{ student.trialDaysLeft !== 1 ? 's' : '' }} left in your free trial</span>
       </div>
-      <ul class="text-sm space-y-2" style="color:var(--t-text2)">
-        <li class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Unlimited AI Tutor sessions</li>
-        <li class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Full question bank access</li>
-        <li class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> AI-graded subjective answers</li>
-        <li class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Coin rewards &amp; withdrawals</li>
-      </ul>
-      <button type="button" class="btn-primary w-full justify-center" @click="goCheckout">
-        <Sparkles class="w-4 h-4" /> Activate Now — Pay Securely
-      </button>
-      <a href="https://wa.me/923703153540" target="_blank" class="btn-secondary w-full justify-center">
-        <MessageCircle class="w-4 h-4" /> Or activate via WhatsApp
-      </a>
+      <div v-else-if="student.accessStatus === 'expired'" class="sub-status expired">
+        <AlertTriangle class="w-4 h-4" />
+        <span>Your free trial has ended — subscribe to keep learning</span>
+      </div>
+      <div v-else-if="student.accessStatus === 'subscribed'" class="sub-status active">
+        <CheckCircle class="w-4 h-4" />
+        <span>On {{ student.subscription?.planName }} · expires {{ formatDateTime(student.subscription?.endDate) }}</span>
+      </div>
+
+      <!-- Plans -->
+      <div v-if="loadingPlans" class="sub-loading">Loading plans…</div>
+      <div v-else-if="!student.plans.length" class="sub-empty">No subscription plans are available right now.</div>
+      <div v-else class="sub-plan-grid">
+        <div
+          v-for="p in student.plans" :key="p.id" class="sub-plan-card"
+          :class="{ current: isCurrentPlan(p.id) }"
+        >
+          <div v-if="isCurrentPlan(p.id)" class="sub-plan-badge">Current Plan</div>
+          <div class="sub-plan-name">{{ p.name }}</div>
+          <div class="sub-plan-price">Rs. {{ p.price.toLocaleString() }} <small>/ {{ p.durationDays }} days</small></div>
+          <ul class="sub-plan-feats">
+            <li><CheckCircle class="w-3.5 h-3.5" /> {{ p.aiTokenQuota.toLocaleString() }} AI tutor tokens</li>
+            <li><CheckCircle class="w-3.5 h-3.5" /> Full question bank access</li>
+            <li><CheckCircle class="w-3.5 h-3.5" /> AI-graded subjective answers</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="sub-actions">
+        <button type="button" class="btn-primary w-full justify-center" @click="goCheckout">
+          <Sparkles class="w-4 h-4" /> Activate Now — Pay Securely
+        </button>
+        <RouterLink to="/app/coins/redeem" class="btn-secondary w-full justify-center" @click="subModal = false">
+          <Coins class="w-4 h-4" /> Or Redeem With Coins
+        </RouterLink>
+        <a href="https://wa.me/923703153540" target="_blank" class="sub-whatsapp">
+          <MessageCircle class="w-3.5 h-3.5" /> Need help? Activate via WhatsApp
+        </a>
+      </div>
     </div>
   </Dialog>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
-import { Menu, ChevronDown, LogOut, BarChart2, History, Sparkles, CheckCircle, MessageCircle, Sun, Moon, UserCog } from '@lucide/vue'
+import { Menu, ChevronDown, LogOut, BarChart2, History, Sparkles, CheckCircle, MessageCircle, Sun, Moon, UserCog, Clock, AlertTriangle, Coins } from '@lucide/vue'
 import Dialog from 'primevue/dialog'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useStudentStore } from '@/stores/student'
+import { formatDateTime } from '@/utils/datetime'
 
 defineProps({ sidebarCollapsed: Boolean })
 defineEmits(['toggle-sidebar'])
@@ -189,14 +221,20 @@ defineEmits(['toggle-sidebar'])
 const auth = useAuthStore()
 const theme = useThemeStore()
 const notif = useNotificationsStore()
+const student = useStudentStore()
 const router = useRouter()
 const route = useRoute()
 const dropOpen = ref(false)
 const historyModal = ref(false)
 const subModal = ref(false)
+const loadingPlans = ref(false)
 const userMenu = ref(null)
 const notifOpen = ref(false)
 const notifWrap = ref(null)
+
+onMounted(() => {
+  if (auth.user?.role === 'student' && student.accessStatus === null) student.fetchSubscription()
+})
 
 onClickOutside(userMenu,  () => { dropOpen.value  = false })
 onClickOutside(notifWrap, () => { notifOpen.value = false })
@@ -277,6 +315,36 @@ const pageSubtitle = computed(() => {
   return ''
 })
 
+const chipLabel = computed(() => {
+  if (student.accessStatus === 'subscribed') return student.subscription?.planName || 'Subscribed'
+  if (student.accessStatus === 'expired') return 'Subscribe Now'
+  if (student.accessStatus === 'trial') return `Trial: ${student.trialDaysLeft}d left`
+  return 'Subscribe'
+})
+const chipIcon = computed(() => {
+  if (student.accessStatus === 'subscribed') return CheckCircle
+  if (student.accessStatus === 'expired') return AlertTriangle
+  return Sparkles
+})
+const chipClass = computed(() => ({
+  'hdr-sub-chip--active': student.accessStatus === 'subscribed',
+  'hdr-sub-chip--expired': student.accessStatus === 'expired',
+}))
+
+function isCurrentPlan(planId) {
+  return student.accessStatus === 'subscribed' && student.subscription?.planId === planId
+}
+
+async function onSubModalOpen() {
+  if (student.plans.length) return
+  loadingPlans.value = true
+  try {
+    await Promise.allSettled([student.fetchPlans(), student.fetchSubscription()])
+  } finally {
+    loadingPlans.value = false
+  }
+}
+
 function showHistory() {
   auth.loadLoginHistory()
   historyModal.value = true
@@ -289,9 +357,6 @@ function goCheckout() {
 function logout() {
   auth.logout()
   router.push('/login')
-}
-function formatDate(iso) {
-  return new Date(iso).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })
 }
 </script>
 
@@ -421,6 +486,59 @@ function formatDate(iso) {
 .hdr-sub-chip:hover {
   background: color-mix(in srgb, var(--t-gold) 22%, transparent);
 }
+.hdr-sub-chip--active {
+  background: color-mix(in srgb, #10b981 15%, transparent);
+  border-color: color-mix(in srgb, #10b981 35%, transparent);
+  color: #10b981;
+}
+.hdr-sub-chip--active:hover { background: color-mix(in srgb, #10b981 22%, transparent); }
+.hdr-sub-chip--expired {
+  background: color-mix(in srgb, #ef4444 15%, transparent);
+  border-color: color-mix(in srgb, #ef4444 35%, transparent);
+  color: #ef4444;
+  animation: chipPulse 2s ease-in-out infinite;
+}
+.hdr-sub-chip--expired:hover { background: color-mix(in srgb, #ef4444 22%, transparent); }
+@keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+/* Subscription modal */
+.sub-modal { display: flex; flex-direction: column; gap: 1rem; }
+.sub-status {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.65rem 0.9rem; border-radius: 12px;
+  font-size: 0.82rem; font-weight: 600;
+}
+.sub-status.trial { background: color-mix(in srgb, var(--t-gold) 12%, transparent); color: var(--t-gold); }
+.sub-status.expired { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.sub-status.active { background: color-mix(in srgb, #10b981 10%, transparent); color: #10b981; }
+
+.sub-loading, .sub-empty { text-align: center; padding: 1.5rem; font-size: 0.85rem; color: var(--t-text3); }
+
+.sub-plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; }
+.sub-plan-card {
+  position: relative; padding: 0.9rem; border-radius: 14px;
+  border: 1.5px solid var(--t-border); background: var(--t-bg);
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.sub-plan-card.current { border-color: var(--t-accent); background: var(--t-acc-alpha-sm); }
+.sub-plan-badge {
+  position: absolute; top: -9px; right: 10px;
+  font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+  background: var(--t-accent); color: #fff; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.sub-plan-name { font-weight: 700; font-size: 0.88rem; color: var(--t-text1); }
+.sub-plan-price { font-size: 1.05rem; font-weight: 800; color: var(--t-text1); }
+.sub-plan-price small { font-size: 0.68rem; font-weight: 600; color: var(--t-text3); }
+.sub-plan-feats { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.sub-plan-feats li { display: flex; align-items: flex-start; gap: 0.35rem; font-size: 0.72rem; color: var(--t-text2); line-height: 1.4; }
+.sub-plan-feats li :deep(svg) { color: #10b981; flex-shrink: 0; margin-top: 0.1rem; }
+
+.sub-actions { display: flex; flex-direction: column; gap: 0.6rem; }
+.sub-whatsapp {
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  font-size: 0.78rem; font-weight: 600; color: var(--t-text3); text-decoration: none; padding: 0.3rem;
+}
+.sub-whatsapp:hover { color: var(--t-accent); }
 
 .hdr-user-btn {
   display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.65rem; border-radius: 14px;

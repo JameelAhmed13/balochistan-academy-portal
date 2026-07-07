@@ -6,6 +6,7 @@
       <div class="dict-hero-icon">📖</div>
       <h1 class="dict-hero-title">Smart Dictionary</h1>
       <p class="dict-hero-sub">300+ academic words · AI explanations · Urdu meanings</p>
+      <AiTokenPill class="dict-token-pill" />
       <div class="dict-search-wrap">
         <input v-model="query" @keyup.enter="lookup" @input="onInput"
           placeholder="Search a word... (e.g., photosynthesis)"
@@ -116,6 +117,11 @@
 import { ref, computed } from 'vue'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
+import AiTokenPill from '@/components/platform/AiTokenPill.vue'
+import { useStudentStore } from '@/stores/student'
+import { aiErrorMessage } from '@/composables/useAiTokens'
+
+const student = useStudentStore()
 
 const query = ref('')
 const result = ref(null)
@@ -215,15 +221,10 @@ async function getAIExplanation() {
   if (!word) return
   aiLoading.value = true; aiExplanation.value = ''
   try {
-    const key = import.meta.env.VITE_GEMINI_API_KEY
-    if (!key) throw new Error()
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ contents:[{ parts:[{ text:`Explain the word/term "${word}" for a Pakistani Grade 9-12 board exam student. Include: 1) Simple definition, 2) Urdu meaning, 3) Board exam context (Physics/Chemistry/Biology/Math/English as relevant), 4) Example sentence, 5) Easy memory tip. Keep it concise and educational.` }] }] })
-    })
-    const data = await res.json()
-    aiExplanation.value = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from AI.'
-  } catch { aiExplanation.value = 'AI unavailable. Please check your VITE_GEMINI_API_KEY in .env file.' }
+    aiExplanation.value = await student.generateAi(
+      `Explain the word/term "${word}" for a Pakistani Grade 9-12 board exam student. Include: 1) Simple definition, 2) Urdu meaning, 3) Board exam context (Physics/Chemistry/Biology/Math/English as relevant), 4) Example sentence, 5) Easy memory tip. Keep it concise and educational.`
+    )
+  } catch (e) { aiExplanation.value = aiErrorMessage(e) }
   aiLoading.value = false
 }
 </script>
@@ -233,7 +234,8 @@ async function getAIExplanation() {
 .dict-hero { text-align: center; padding: 2rem 1rem 1.5rem; }
 .dict-hero-icon { font-size: 3rem; margin-bottom: 0.5rem; }
 .dict-hero-title { font-size: 1.75rem; font-weight: 800; color: var(--t-text1); }
-.dict-hero-sub { color: var(--t-text3); font-size: 0.875rem; margin-bottom: 1.25rem; }
+.dict-hero-sub { color: var(--t-text3); font-size: 0.875rem; margin-bottom: 0.75rem; }
+.dict-token-pill { display: inline-flex; margin-bottom: 0.75rem; }
 .dict-search-wrap { display: flex; gap: 0.5rem; max-width: 500px; margin: 0 auto; }
 .dict-search { flex:1; padding: 0.75rem 1rem; border: 2px solid var(--t-border); border-radius: 12px; background: var(--t-surface); color: var(--t-text1); font-size: 1rem; }
 .dict-search:focus { outline: none; border-color: #4caf50; }

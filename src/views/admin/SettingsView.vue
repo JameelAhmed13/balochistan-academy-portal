@@ -175,11 +175,13 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label class="label">Coin Rate (PKR per coin)</label>
-            <input v-model="coin.coin_rate_pkr" type="number" step="0.01" class="input mt-1" />
+            <input v-model="coin.coin_rate_pkr" type="number" step="0.001" class="input mt-1" />
+            <p class="text-xs mt-1" style="color:var(--t-text3);">{{ coin.coin_rate_pkr > 0 ? Math.round(1 / coin.coin_rate_pkr) : 0 }} coins = Rs. 1</p>
           </div>
           <div>
-            <label class="label">Min Withdrawal Coins</label>
-            <input v-model.number="coin.min_withdrawal" type="number" class="input mt-1" />
+            <label class="label">Coins per AI Token</label>
+            <input v-model.number="coin.coins_per_ai_token" type="number" min="1" class="input mt-1" />
+            <p class="text-xs mt-1" style="color:var(--t-text3);">Coin cost of one extra AI token bought outside a plan's quota</p>
           </div>
           <div>
             <label class="label">Min Questions for Eligibility</label>
@@ -410,6 +412,11 @@
               <input v-model.number="planModal.durationDays" type="number" min="1" class="input mt-1" />
             </div>
             <div>
+              <label class="label">AI Token Quota</label>
+              <input v-model.number="planModal.aiTokenQuota" type="number" min="0" class="input mt-1" />
+              <p class="text-xs mt-1" style="color:var(--t-text3);">AI tokens granted each purchase/renewal</p>
+            </div>
+            <div>
               <label class="label">Sort Order</label>
               <input v-model.number="planModal.sortOrder" type="number" class="input mt-1" />
             </div>
@@ -489,7 +496,7 @@ const sub = reactive({
 const plans = ref([])
 const planModal = reactive({
   open: false, id: null, name: '', description: '', price: 0,
-  durationDays: 30, sortOrder: 0, isActive: true, saving: false, err: '',
+  durationDays: 30, aiTokenQuota: 0, sortOrder: 0, isActive: true, saving: false, err: '',
 })
 
 const showHlPicker = ref(false)
@@ -531,13 +538,13 @@ function openPlanModal(plan) {
   if (plan) {
     Object.assign(planModal, {
       open: true, id: plan.id, name: plan.name, description: plan.description || '',
-      price: plan.price, durationDays: plan.durationDays, sortOrder: plan.sortOrder,
+      price: plan.price, durationDays: plan.durationDays, aiTokenQuota: plan.aiTokenQuota ?? 0, sortOrder: plan.sortOrder,
       isActive: plan.isActive, saving: false,
     })
   } else {
     Object.assign(planModal, {
       open: true, id: null, name: '', description: '', price: 0,
-      durationDays: 30, sortOrder: 0, isActive: true, saving: false,
+      durationDays: 30, aiTokenQuota: 0, sortOrder: 0, isActive: true, saving: false,
     })
   }
 }
@@ -550,7 +557,7 @@ async function savePlan() {
     const payload = {
       name: planModal.name,
       description: descHtml === '<p></p>' ? null : descHtml,
-      price: planModal.price, durationDays: planModal.durationDays,
+      price: planModal.price, durationDays: planModal.durationDays, aiTokenQuota: planModal.aiTokenQuota,
       sortOrder: planModal.sortOrder, isActive: planModal.isActive,
     }
     if (planModal.id) {
@@ -578,8 +585,8 @@ async function deletePlan(id) {
 
 // ── Panel 3 state ────────────────────────────────────────────────────────────
 const coin = reactive({
-  coin_rate_pkr: '0.50',
-  min_withdrawal: '300',
+  coin_rate_pkr: '0.005',
+  coins_per_ai_token: '20',
   min_questions_for_eligibility: '50',
   daily_login_bonus: '2',
   coins_per_90pct: '50',
@@ -639,8 +646,8 @@ onMounted(async () => {
     sub.subscription_activate_on_payment = s['subscription_activate_on_payment'] ?? 'false'
 
     // Coins
-    coin.coin_rate_pkr                  = s['coin_rate_pkr']                  ?? '0.50'
-    coin.min_withdrawal                 = s['min_withdrawal']                  ?? '300'
+    coin.coin_rate_pkr                  = s['coin_rate_pkr']                  ?? '0.005'
+    coin.coins_per_ai_token             = s['coins_per_ai_token']              ?? '20'
     coin.min_questions_for_eligibility  = s['min_questions_for_eligibility']   ?? '50'
     coin.daily_login_bonus              = s['daily_login_bonus']               ?? '2'
     coin.coins_per_90pct                = s['coins_per_90pct']                 ?? '50'
@@ -700,7 +707,7 @@ async function saveCoins() {
   try {
     await settingsStore.saveMany({
       coin_rate_pkr:                 String(coin.coin_rate_pkr),
-      min_withdrawal:                String(coin.min_withdrawal),
+      coins_per_ai_token:            String(coin.coins_per_ai_token),
       min_questions_for_eligibility: String(coin.min_questions_for_eligibility),
       daily_login_bonus:             String(coin.daily_login_bonus),
       coins_per_90pct:               String(coin.coins_per_90pct),

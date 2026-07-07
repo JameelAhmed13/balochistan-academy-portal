@@ -7,6 +7,7 @@
       <div class="lc-hero-icon">💻</div>
       <h1 class="lc-hero-title">Learn Coding</h1>
       <p class="lc-hero-sub">Beginner-friendly programming lessons · AI code helper · Practice exercises</p>
+      <AiTokenPill class="lc-token-pill" />
     </div>
 
     <!-- Language selector -->
@@ -98,6 +99,11 @@
 import { ref, computed } from 'vue'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
+import AiTokenPill from '@/components/platform/AiTokenPill.vue'
+import { useStudentStore } from '@/stores/student'
+import { aiErrorMessage } from '@/composables/useAiTokens'
+
+const student = useStudentStore()
 
 const activeLang = ref(null)
 const activeLesson = ref(null)
@@ -123,15 +129,10 @@ function openLesson(lesson) { activeLesson.value = lesson; quizAnswered.value = 
 async function askAIAboutCode(code) {
   aiLoadingCode.value = true; codeExplanation.value = ''
   try {
-    const key = import.meta.env.VITE_GEMINI_API_KEY
-    if (!key) throw new Error()
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ contents:[{ parts:[{ text:`Explain this code to a beginner Pakistani student (Grade 9-12) who is just learning programming. Explain line by line in simple English. Be encouraging and friendly:\n\n\`\`\`\n${code}\n\`\`\`` }] }] })
-    })
-    const data = await res.json()
-    codeExplanation.value = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.'
-  } catch { codeExplanation.value = 'AI unavailable. Check your VITE_GEMINI_API_KEY.' }
+    codeExplanation.value = await student.generateAi(
+      `Explain this code to a beginner Pakistani student (Grade 9-12) who is just learning programming. Explain line by line in simple English. Be encouraging and friendly:\n\n\`\`\`\n${code}\n\`\`\``
+    )
+  } catch (e) { codeExplanation.value = aiErrorMessage(e) }
   aiLoadingCode.value = false
 }
 
@@ -233,7 +234,8 @@ const languages = [
 .lc-hero { text-align: center; padding: 2rem 1rem 1.5rem; }
 .lc-hero-icon { font-size: 3rem; margin-bottom: 0.5rem; }
 .lc-hero-title { font-size: 1.75rem; font-weight: 800; color: var(--t-text1); }
-.lc-hero-sub { color: var(--t-text3); font-size: 0.875rem; }
+.lc-hero-sub { color: var(--t-text3); font-size: 0.875rem; margin-bottom: 0.6rem; }
+.lc-token-pill { display: inline-flex; }
 .lc-lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
 .lc-lang-card { border: 1px solid var(--t-border); border-radius: 18px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--t-surface); }
 .lc-lang-card:hover { border-color: #4caf50; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(76,175,80,0.15); }

@@ -16,7 +16,8 @@ public class AuthController(
     IPasswordService          passwords,
     ICurrentUserService       currentUser,
     IMapper                   mapper,
-    ISystemSettingsService    settings) : ControllerBase
+    ISystemSettingsService    settings,
+    IAuditService             audit) : ControllerBase
 {
     /// <summary>POST /api/auth/login</summary>
     [HttpPost("login")]
@@ -106,6 +107,8 @@ public class AuthController(
         var rt = tokens.GenerateRefreshToken(user.Id);
         uow.Repository<RefreshToken>().Add(rt);
         await uow.SaveChangesAsync(ct);
+        await audit.LogAsync(user.Id, "Register", "User", user.Id,
+            newValues: new { user.Username, user.GradeCode }, ip: HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
 
         return Created($"/api/users/{user.Id}",
             new AuthResponse(tokens.GenerateAccessToken(user), rt.Token, mapper.Map<UserDto>(user)));

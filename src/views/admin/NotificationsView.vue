@@ -338,7 +338,7 @@ async function loadHistory() {
         ? [n.targetRole, n.targetGrade].filter(Boolean).join(' / ')
         : 'All Students',
       sentTo:     n.sentTo,
-      sentAt:     new Date(n.createdAt).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' }),
+      sentAt:     new Date(n.createdAt).toLocaleString('en-PK', { timeZone: 'Asia/Karachi', dateStyle: 'medium', timeStyle: 'short' }),
       status:     'Delivered',
     }))
   } catch { /* leave empty */ }

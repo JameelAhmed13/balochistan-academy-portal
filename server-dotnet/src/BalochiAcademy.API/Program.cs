@@ -234,6 +234,7 @@ app.UseSwaggerUI(c =>
 app.UseCors();
 app.UseStaticFiles(); // serves wwwroot/uploads/* publicly (auth handled at upload endpoint)
 app.UseAuthentication();
+app.UseMiddleware<BalochiAcademy.API.Middleware.TrialGateMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<BalochiAcademy.API.Middleware.ExceptionMiddleware>();
 app.MapControllers();

@@ -30,7 +30,10 @@
                   :class="{ 'is-current': isExact(it.path) }" @click="open = null">
                   <span class="atn-item-ic"><component :is="it.icon || m.icon" class="w-4 h-4" /></span>
                   <span class="atn-item-text">
-                    <span class="atn-item-label">{{ it.label }}</span>
+                    <span class="atn-item-label">
+                      {{ it.label }}
+                      <span v-if="it.path === '/app/admin/complaints' && openComplaintsCount > 0" class="atn-item-badge">{{ openComplaintsCount }}</span>
+                    </span>
                     <span class="atn-item-desc">{{ it.desc }}</span>
                   </span>
                 </RouterLink>
@@ -44,6 +47,10 @@
       <div class="atn-right">
         <RouterLink to="/app" class="atn-site" title="Back to student site">
           <ExternalLink class="w-4 h-4" /> <span class="atn-site-lbl">View Site</span>
+        </RouterLink>
+        <RouterLink to="/app/admin/complaints" class="atn-icon-btn" title="Open Complaints" aria-label="Open complaints">
+          <MessageSquareWarning class="w-4 h-4" />
+          <span v-if="openComplaintsCount > 0" class="atn-badge-count">{{ openComplaintsCount > 99 ? '99+' : openComplaintsCount }}</span>
         </RouterLink>
         <RouterLink to="/app/admin/notifications" class="atn-icon-btn" title="Notifications" aria-label="Notifications">
           <Bell class="w-4 h-4" />
@@ -85,7 +92,10 @@
         <details v-for="m in menus" :key="m.key" class="atn-acc" open>
           <summary class="atn-acc-sum"><component :is="m.icon" class="w-4 h-4" /> {{ m.label }}</summary>
           <RouterLink v-for="it in m.items" :key="it.path" :to="it.path" class="atn-acc-item"
-            :class="{ 'is-current': isExact(it.path) }" @click="mobileOpen = false">{{ it.label }}</RouterLink>
+            :class="{ 'is-current': isExact(it.path) }" @click="mobileOpen = false">
+            {{ it.label }}
+            <span v-if="it.path === '/app/admin/complaints' && openComplaintsCount > 0" class="atn-item-badge">{{ openComplaintsCount }}</span>
+          </RouterLink>
         </details>
         <RouterLink to="/app" class="atn-acc-item" @click="mobileOpen = false">↗ View student site</RouterLink>
         <button type="button" class="atn-acc-item atn-signout" @click="signOut">Sign out</button>
@@ -98,17 +108,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import {
   LayoutDashboard, BookOpen, ClipboardList, Users, BarChart2, Settings, Bell,
   Menu, X, ChevronDown, ExternalLink, LogOut, Sun, Moon,
   FileText, FolderTree, GraduationCap, Coins, MessageSquareWarning, BellRing, Layers, Globe,
-  Shield, Building2,
+  Shield, Building2, History,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
+import api from '@/services/api'
+import { onComplaintEvent } from '@/stores/notifications'
 
 const route = useRoute()
 const router = useRouter()
@@ -121,6 +133,23 @@ const mobileOpen = ref(false)
 const userBtnEl = ref(null)
 const userMenuEl = ref(null)
 onClickOutside(userMenuEl, () => { userOpen.value = false }, { ignore: [userBtnEl] })
+
+// Header-level "needs attention" badge — only counts complaints nobody has started handling yet.
+const openComplaintsCount = ref(0)
+async function fetchOpenComplaintsCount() {
+  try {
+    const { data } = await api.get('/admin/complaints/stats')
+    const byStatus = Object.fromEntries((data.byStatus || []).map(s => [s.status, s.count]))
+    openComplaintsCount.value = byStatus.open ?? 0
+  } catch { /* leave 0 on failure */ }
+}
+onMounted(fetchOpenComplaintsCount)
+
+// Live-refresh the moment a complaint is created, replied to, or its status changes — this
+// component stays mounted for the whole admin session, so it always reflects the latest count.
+let offComplaintEvent = null
+onMounted(() => { offComplaintEvent = onComplaintEvent(() => fetchOpenComplaintsCount()) })
+onUnmounted(() => { offComplaintEvent?.() })
 
 const isDark = computed(() => theme.isDark)
 const initial = computed(() => (auth.user?.name || 'A').charAt(0).toUpperCase())
@@ -152,6 +181,7 @@ const menus = [
     { label: 'Settings',      path: '/app/admin/settings',      icon: Settings,  desc: 'Platform configuration' },
     { label: 'Notifications', path: '/app/admin/notifications', icon: BellRing,  desc: 'Broadcasts & alerts' },
     { label: 'Institutes',    path: '/app/admin/institutes',    icon: Building2, desc: 'Manage institutes and organisations' },
+    { label: 'Audit Log',     path: '/app/admin/audit-log',     icon: History,   desc: 'Track admin actions and changes' },
   ] },
 ]
 
@@ -207,8 +237,19 @@ function signOut() { auth.logout(); router.push('/login') }
 .atn-right { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 .atn-site { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.7rem; border-radius: 10px; border: 1px solid var(--t-border); color: var(--t-text2); font-size: 0.76rem; font-weight: 600; text-decoration: none; transition: all 0.15s; }
 .atn-site:hover { border-color: var(--t-accent); color: var(--t-accent); }
-.atn-icon-btn { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--t-text2); background: none; border: 1px solid transparent; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+.atn-icon-btn { position: relative; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--t-text2); background: none; border: 1px solid transparent; cursor: pointer; text-decoration: none; transition: all 0.15s; }
 .atn-icon-btn:hover { background: var(--t-hover); color: var(--t-text1); }
+.atn-badge-count {
+  position: absolute; top: 2px; right: 2px;
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px;
+  background: #ef4444; color: #fff; font-size: 0.62rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; line-height: 1; pointer-events: none;
+}
+.atn-item-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 16px; padding: 0 4px; margin-left: 0.3rem; border-radius: 99px;
+  background: #ef4444; color: #fff; font-size: 0.62rem; font-weight: 800; line-height: 1;
+}
 .atn-user { background: none; border: none; cursor: pointer; padding: 0; }
 .atn-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; color: #fff; background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); }
 .atn-user-menu { position: absolute; top: 58px; right: 1rem; width: 220px; background: var(--t-dropdown-bg); border: 1px solid var(--t-border); border-radius: 14px; box-shadow: var(--t-shadow-md); padding: 0.4rem; z-index: 60; }

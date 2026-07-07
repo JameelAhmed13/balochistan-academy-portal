@@ -219,7 +219,7 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.ToTable("CoinLedgers");
                 });
 
-            modelBuilder.Entity("BalochiAcademy.Domain.Entities.Complaint", b =>
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.CoinRedemption", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -227,8 +227,49 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AdminReply")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("CoinsSpent")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PlanId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SubscriptionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TokensGranted")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("SubscriptionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CoinRedemptions");
+                });
+
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.Complaint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
                         .IsRequired()
@@ -274,6 +315,39 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Complaints");
+                });
+
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.ComplaintMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComplaintId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComplaintId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("ComplaintMessages");
                 });
 
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.ContentItem", b =>
@@ -1076,6 +1150,9 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AiTokenQuota")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -1372,6 +1449,9 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasDefaultValue("Balochistan");
 
+                    b.Property<int>("BonusAiTokens")
+                        .HasColumnType("int");
+
                     b.Property<int>("Coins")
                         .HasColumnType("int");
 
@@ -1477,11 +1557,23 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AiTokenQuota")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AiTokensUsedThisPeriod")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("PlanId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
@@ -1711,6 +1803,31 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.CoinRedemption", b =>
+                {
+                    b.HasOne("BalochiAcademy.Domain.Entities.SubscriptionPlan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BalochiAcademy.Domain.Entities.UserSubscription", "Subscription")
+                        .WithMany()
+                        .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("BalochiAcademy.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("Subscription");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.Complaint", b =>
                 {
                     b.HasOne("BalochiAcademy.Domain.Entities.User", "HandledBy")
@@ -1726,6 +1843,25 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
                     b.Navigation("HandledBy");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.ComplaintMessage", b =>
+                {
+                    b.HasOne("BalochiAcademy.Domain.Entities.Complaint", "Complaint")
+                        .WithMany("Messages")
+                        .HasForeignKey("ComplaintId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BalochiAcademy.Domain.Entities.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Complaint");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.ContentItem", b =>
@@ -2165,6 +2301,11 @@ namespace BalochiAcademy.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.Book", b =>
                 {
                     b.Navigation("Units");
+                });
+
+            modelBuilder.Entity("BalochiAcademy.Domain.Entities.Complaint", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("BalochiAcademy.Domain.Entities.Grade", b =>

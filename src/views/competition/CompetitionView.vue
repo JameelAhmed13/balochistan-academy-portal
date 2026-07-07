@@ -151,7 +151,7 @@ function statusCss(t) {
   return 'mep-upcoming'
 }
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')
+  return new Date(iso).toLocaleDateString('en-GB', { timeZone: 'Asia/Karachi', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')
 }
 </script>
 

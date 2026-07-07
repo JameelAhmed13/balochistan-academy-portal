@@ -72,7 +72,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWindowSize } from '@vueuse/core'
-import { LogOut, Home, Bot, BookOpen, Calendar, Trophy, Coins, HelpCircle, Layers, Medal, Sparkles, FileBarChart } from '@lucide/vue'
+import { LogOut, Home, Bot, BookOpen, Calendar, Trophy, Coins, HelpCircle, Layers, Medal, Sparkles, FileBarChart, MessageSquareWarning } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import NavItem from './NavItem.vue'
 
@@ -96,6 +96,7 @@ const navItems = [
   { name: 'Leaderboard',       path: '/app/competition/leaderboard', icon: Medal },
   { name: 'My Report',         path: '/app/report',        icon: FileBarChart },
   { name: 'Coins Earned',      path: '/app/coins',         icon: Coins },
+  { name: 'Complaints',        path: '/app/complaints',    icon: MessageSquareWarning },
   { name: 'How It Works',      path: null,                 icon: HelpCircle, external: 'https://youtube.com' },
 ]
 

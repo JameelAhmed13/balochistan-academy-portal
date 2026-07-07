@@ -1,276 +1,326 @@
 <template>
-  <div class="animate-fade-in space-y-6">
+  <div class="animate-fade-in space-y-5">
 
     <!-- Banner -->
     <div class="ag-banner">
       <div class="ag-banner-icon">💬</div>
-      <div class="ag-banner-title">Complaints &amp; Feedback</div>
-      <div class="ag-banner-sub">Manage student feedback, complaints and suggestions</div>
-      <div class="ag-banner-actions">
-        <div class="ag-banner-stat">12 Open</div>
-        <div class="ag-banner-stat">3 Pending</div>
-        <div class="ag-banner-stat">28 Resolved</div>
-        <RouterLink to="/app/admin" class="btn-ghost flex items-center gap-1.5 text-sm">
-          <ArrowLeft class="w-4 h-4" /> Back
-        </RouterLink>
+      <div class="ag-banner-text">
+        <div class="ag-banner-title">Complaints &amp; Feedback</div>
+        <div class="ag-banner-sub">Manage student feedback, complaints and suggestions</div>
       </div>
+      <div class="ag-banner-actions">
+        <span class="ag-banner-stat">🔴 {{ stats.open }} Open</span>
+        <span class="ag-banner-stat">🟡 {{ stats.inProgress }} In Progress</span>
+        <span class="ag-banner-stat">🟢 {{ stats.resolved }} Resolved</span>
+        <span class="ag-banner-stat">📋 {{ stats.total }} Total</span>
+      </div>
+      <RouterLink to="/app/admin" class="btn-ghost" style="cursor:pointer;">
+        <ArrowLeft class="w-4 h-4" />
+      </RouterLink>
     </div>
 
-    <!-- Stats Row -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div v-for="s in stats" :key="s.label" class="ag-grid-card p-4 flex items-center gap-3">
-        <div class="text-2xl">{{ s.emoji }}</div>
+    <!-- Filters -->
+    <div class="ag-card">
+      <div class="ag-card-body" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+        <div class="ag-tabs" style="border-bottom:none;padding:0;">
+          <button v-for="tab in STATUS_TABS" :key="tab.value" type="button"
+            :class="['ag-tab', statusFilter === tab.value ? 'active' : '']" @click="setStatus(tab.value)">
+            {{ tab.label }}
+          </button>
+        </div>
         <div>
-          <div class="text-2xl font-bold text-[var(--t-text1)]">{{ s.value }}</div>
-          <div class="text-xs text-[var(--t-text3)]">{{ s.label }}</div>
+          <label class="label">Category</label>
+          <select v-model="categoryFilter" class="input mt-1" @change="applyFilters">
+            <option value="">All categories</option>
+            <option v-for="c in CATEGORY_OPTIONS" :key="c" :value="c">{{ c }}</option>
+          </select>
         </div>
       </div>
-    </div>
-
-    <!-- Filter Tabs -->
-    <div class="ag-tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        @click="activeTab = tab.value"
-        :class="['ag-tab', activeTab === tab.value ? 'ag-tab--active' : '']"
-      >
-        {{ tab.label }}
-        <span v-if="tab.count" class="ml-1 text-xs opacity-70">({{ tab.count }})</span>
-      </button>
     </div>
 
     <!-- Complaints List -->
-    <div class="space-y-3">
-      <div
-        v-for="c in filteredComplaints"
-        :key="c.id"
-        class="ag-grid-card overflow-hidden"
-      >
-        <!-- Card Header (always visible) -->
-        <div class="p-4 flex items-start gap-3">
-          <!-- Status dot + Avatar -->
-          <div class="flex flex-col items-center gap-1.5 pt-0.5 shrink-0">
-            <div class="w-2.5 h-2.5 rounded-full mt-1" :style="'background:' + statusColor(c.status)"></div>
-            <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white"
-              :style="'background:' + avatarColor(c.student)">
-              {{ initials(c.student) }}
-            </div>
-          </div>
-
-          <!-- Main Content -->
-          <div class="flex-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="font-semibold text-sm text-[var(--t-text1)]">{{ c.student }}</span>
-              <span class="text-xs text-[var(--t-text3)]">{{ c.date }}</span>
-              <span :class="'badge-' + categoryBadge(c.category) + ' text-xs'">{{ c.category }}</span>
-            </div>
-            <div class="font-semibold text-[var(--t-text1)] mt-0.5">{{ c.title }}</div>
-            <div class="text-sm text-[var(--t-text2)] mt-0.5 line-clamp-2">{{ c.text }}</div>
-          </div>
-
-          <!-- Right side: badges + actions -->
-          <div class="flex flex-col items-end gap-2 shrink-0 ml-2">
-            <div class="flex items-center gap-1.5">
-              <span :class="'badge-' + priorityBadge(c.priority) + ' text-xs'">{{ c.priority }}</span>
-              <span :class="'badge-' + statusBadge(c.status) + ' text-xs'">{{ c.status }}</span>
-            </div>
-            <div class="flex items-center gap-1.5 mt-1">
-              <button
-                class="btn-primary text-xs px-2.5 py-1 flex items-center gap-1"
-                @click.stop="openReplyModal(c)"
-              >
-                <Send class="w-3 h-3" /> Reply
-              </button>
-              <button
-                v-if="c.status !== 'Resolved'"
-                class="btn-secondary text-xs px-2.5 py-1 flex items-center gap-1"
-                @click.stop="resolveComplaint(c)"
-              >
-                <CheckCircle class="w-3 h-3" /> Resolve
-              </button>
-            </div>
-            <button
-              class="flex items-center gap-1 text-xs text-[var(--t-text3)] mt-1 hover:text-[var(--t-text1)] transition-colors"
-              @click="toggleExpand(c.id)"
-            >
-              <component :is="expandedId === c.id ? ChevronUp : ChevronDown" class="w-3.5 h-3.5" />
-              {{ expandedId === c.id ? 'Collapse' : 'View Details' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Expanded Section -->
-        <Transition name="expand">
-          <div v-if="expandedId === c.id" class="border-t px-4 py-4 space-y-3"
-            style="border-color:var(--t-border);background:var(--t-hover);">
-            <div>
-              <div class="text-xs font-semibold text-[var(--t-text3)] uppercase tracking-wide mb-1">Full Message</div>
-              <p class="text-sm text-[var(--t-text1)]">{{ c.text }}</p>
-            </div>
-            <div v-if="c.adminReply">
-              <div class="text-xs font-semibold text-[var(--t-text3)] uppercase tracking-wide mb-1">Admin Reply</div>
-              <p class="text-sm text-[var(--t-text2)] italic">{{ c.adminReply }}</p>
-            </div>
-            <div>
-              <div class="text-xs font-semibold text-[var(--t-text3)] uppercase tracking-wide mb-1">Quick Reply</div>
-              <div class="flex gap-2">
-                <input
-                  v-model="quickReplies[c.id]"
-                  class="input flex-1 text-sm"
-                  placeholder="Type a quick reply…"
-                  @keyup.enter="submitQuickReply(c)"
-                />
-                <button class="btn-primary flex items-center gap-1.5 text-sm" @click="submitQuickReply(c)">
-                  <Send class="w-3.5 h-3.5" /> Send
-                </button>
+    <div class="ag-card" style="padding:0;overflow:hidden;">
+      <div v-if="loading" class="ag-empty" style="padding:40px;">
+        <div class="ag-empty-icon">⏳</div><p>Loading complaints…</p>
+      </div>
+      <div v-else-if="!complaints.length" class="ag-empty" style="padding:48px 24px;">
+        <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-30" />
+        <p>No complaints found for this filter.</p>
+      </div>
+      <div v-else class="space-y-3" style="padding:1rem;">
+        <div v-for="c in complaints" :key="c.id" class="ag-grid-card overflow-hidden">
+          <!-- Card Header (always visible) -->
+          <div class="p-4 flex items-start gap-3">
+            <div class="flex flex-col items-center gap-1.5 pt-0.5 shrink-0">
+              <div class="w-2.5 h-2.5 rounded-full mt-1" :style="'background:' + statusColor(c.status)"></div>
+              <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                :style="'background:' + avatarColor(c.userName || '?')">
+                {{ initials(c.userName || '?') }}
               </div>
             </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-semibold text-sm" style="color:var(--t-text1);">{{ c.userName || 'Unknown' }}</span>
+                <span class="text-xs" style="color:var(--t-text3);">{{ formatDate(c.createdAt) }}</span>
+                <span :class="[typeClass(c.category), 'text-xs']">{{ c.category }}</span>
+                <span v-if="c.messageCount" class="text-xs" style="color:var(--t-text3);">💬 {{ c.messageCount }}</span>
+              </div>
+              <div class="font-semibold mt-0.5" style="color:var(--t-text1);">{{ c.subject }}</div>
+              <div class="text-sm mt-0.5 line-clamp-2" style="color:var(--t-text2);">{{ c.description }}</div>
+            </div>
+
+            <div class="flex flex-col items-end gap-2 shrink-0 ml-2">
+              <span :class="[statusClass(c.status), 'text-xs']">{{ statusLabel(c.status) }}</span>
+              <div class="flex items-center gap-1.5 mt-1">
+                <button v-if="!isLocked(c.status)" class="btn-secondary text-xs px-2.5 py-1 flex items-center gap-1"
+                  :disabled="statusChangingId === c.id" @click.stop="changeStatus(c, 'resolved')">
+                  <CheckCircle class="w-3 h-3" /> Resolve
+                </button>
+              </div>
+              <button class="flex items-center gap-1 text-xs mt-1 transition-colors" style="color:var(--t-text3);" @click="toggleExpand(c)">
+                <component :is="expandedId === c.id ? ChevronUp : ChevronDown" class="w-3.5 h-3.5" />
+                {{ expandedId === c.id ? 'Collapse' : 'View Conversation' }}
+              </button>
+            </div>
           </div>
-        </Transition>
+
+          <!-- Expanded: full chat thread -->
+          <Transition name="expand">
+            <div v-if="expandedId === c.id" class="border-t" style="border-color:var(--t-border);">
+              <div class="cp-thread-messages">
+                <div class="cp-msg">
+                  <div class="cp-msg-bubble">{{ c.description }}</div>
+                  <div class="cp-msg-meta">{{ c.userName || 'Student' }} · {{ formatDateTime(c.createdAt) }}</div>
+                </div>
+
+                <div v-if="threadLoading[c.id]" class="ag-empty" style="padding:16px;">
+                  <div class="ag-empty-icon">⏳</div><p>Loading conversation…</p>
+                </div>
+                <template v-else>
+                  <div v-for="m in (threads[c.id] || [])" :key="m.id" class="cp-msg" :class="{ 'cp-msg--mine': m.isAdmin }">
+                    <div class="cp-msg-bubble">{{ m.message }}</div>
+                    <div class="cp-msg-meta">{{ m.isAdmin ? (m.senderName || 'Admin') : (c.userName || 'Student') }} · {{ formatDateTime(m.createdAt) }}</div>
+                  </div>
+                </template>
+              </div>
+
+              <div v-if="isLocked(c.status)" class="cp-locked-note">
+                This complaint is {{ statusLabel(c.status).toLowerCase() }} — the conversation and status are locked.
+              </div>
+              <template v-else>
+                <div class="cp-status-row">
+                  <label class="text-xs" style="color:var(--t-text3);">Status</label>
+                  <select :value="c.status" class="input" @change="changeStatus(c, $event.target.value)" :disabled="statusChangingId === c.id">
+                    <option v-if="c.status === 'open'" value="open">Open</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+
+                <form class="cp-thread-composer" @submit.prevent="sendReply(c)">
+                  <input v-model="composerText[c.id]" class="input" placeholder="Type a reply…" :disabled="sendingId === c.id" />
+                  <button type="submit" class="btn-primary" :disabled="sendingId === c.id || !composerText[c.id]?.trim()">
+                    <Send class="w-4 h-4" />
+                  </button>
+                </form>
+              </template>
+            </div>
+          </Transition>
+        </div>
       </div>
 
-      <!-- Empty state -->
-      <div v-if="filteredComplaints.length === 0" class="ag-empty">
-        <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-30" />
-        <div>No complaints found for this filter.</div>
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" style="display:flex;justify-content:center;gap:0.5rem;padding:16px;">
+        <button class="btn-ghost text-sm" :disabled="page <= 1" @click="page--; fetchComplaints()">← Prev</button>
+        <span style="font-size:0.8rem;color:var(--t-text3);align-self:center;">Page {{ page }} of {{ totalPages }}</span>
+        <button class="btn-ghost text-sm" :disabled="page >= totalPages" @click="page++; fetchComplaints()">Next →</button>
       </div>
     </div>
-
-    <!-- Reply Modal -->
-    <Dialog v-model:visible="replyModal.visible" modal :header="'Reply: ' + (replyModal.complaint?.title || '')"
-      :style="{ width: '520px', maxWidth: '95vw' }" :pt="{ mask: { style: 'backdrop-filter:blur(4px)' } }">
-      <div v-if="replyModal.complaint" class="space-y-4 pt-2">
-        <div class="p-3 rounded-xl text-sm text-[var(--t-text2)]" style="background:var(--t-hover);">
-          {{ replyModal.complaint.text }}
-        </div>
-        <div>
-          <label class="label">Your Reply</label>
-          <textarea v-model="replyText" class="input mt-1 resize-none" rows="4"
-            placeholder="Write your reply to the student…"></textarea>
-        </div>
-        <label class="flex items-center gap-2.5 cursor-pointer text-sm text-[var(--t-text2)]">
-          <input type="checkbox" v-model="resolveOnReply" class="w-4 h-4 rounded accent-[var(--t-accent)]" />
-          Mark as Resolved after replying
-        </label>
-        <div class="flex gap-3 pt-1">
-          <button class="btn-primary flex items-center gap-2" @click="submitReply">
-            <Send class="w-4 h-4" /> Send Reply
-          </button>
-          <button class="btn-ghost" @click="replyModal.visible = false">Cancel</button>
-        </div>
-      </div>
-    </Dialog>
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { ArrowLeft, MessageSquare, CheckCircle, Clock, AlertCircle, ChevronDown, ChevronUp, Send, Flag } from '@lucide/vue'
-import Dialog from 'primevue/dialog'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ArrowLeft, MessageSquare, CheckCircle, ChevronDown, ChevronUp, Send } from '@lucide/vue'
+import { useToast } from 'primevue/usetoast'
+import api from '@/services/api'
+import { onComplaintEvent } from '@/stores/notifications'
 
-const activeTab = ref('all')
-const expandedId = ref(null)
-const replyText = ref('')
-const resolveOnReply = ref(false)
-const quickReplies = ref({})
+const toast = useToast()
 
-const replyModal = ref({ visible: false, complaint: null })
-
-const tabs = [
-  { value: 'all',        label: 'All',         count: 43 },
-  { value: 'Open',       label: 'Open',        count: 12 },
-  { value: 'Pending',    label: 'Pending',     count: 3 },
-  { value: 'Resolved',   label: 'Resolved',    count: 28 },
-  { value: 'Suggestion', label: 'Suggestions', count: null },
+const CATEGORY_OPTIONS = ['Complaint', 'Suggestion', 'Bug Report', 'Feature Request', 'General Feedback']
+const STATUS_TABS = [
+  { value: '',             label: 'All' },
+  { value: 'open',         label: 'Open' },
+  { value: 'in-progress',  label: 'In Progress' },
+  { value: 'resolved',     label: 'Resolved' },
+  { value: 'closed',       label: 'Closed' },
 ]
 
-const stats = [
-  { emoji: '🔴', value: 12, label: 'Open' },
-  { emoji: '🟡', value: 3,  label: 'Pending' },
-  { emoji: '🟢', value: 28, label: 'Resolved' },
-  { emoji: '📋', value: 43, label: 'Total' },
-]
+const statusFilter   = ref('')
+const categoryFilter = ref('')
+const complaints  = ref([])
+const loading     = ref(false)
+const page        = ref(1)
+const pageSize    = 20
+const total       = ref(0)
+const totalPages  = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 
-const complaints = ref([
-  { id: 1, student: 'Ali Hassan',    date: '10 Jun 2026', category: 'Complaint', title: 'Cannot access Physics MCQs', text: 'I have been trying to access the Physics Chapter 4 MCQs but the page keeps loading indefinitely. I have cleared my browser cache and tried on mobile too but the issue persists.', status: 'Open',     priority: 'High',   adminReply: null },
-  { id: 2, student: 'Sara Malik',    date: '9 Jun 2026',  category: 'Bug',       title: 'Timer resets mid-test',     text: 'During my weekly test session the countdown timer reset itself back to the full time. This happened twice and it feels unfair to other students.', status: 'Pending',  priority: 'High',   adminReply: 'We are investigating the timer issue. It may be related to a recent update. We will push a fix within 24 hours.' },
-  { id: 3, student: 'Umar Farooq',   date: '9 Jun 2026',  category: 'Suggestion',title: 'Add dark mode option',      text: 'The platform is great but studying at night is hard on the eyes. Please add a proper dark mode toggle. Many students study late and this would be very helpful.', status: 'Open',     priority: 'Normal', adminReply: null },
-  { id: 4, student: 'Fatima Zahra',  date: '8 Jun 2026',  category: 'Content',   title: 'Wrong answer in Biology Q', text: 'In Biology Chapter 3, Question 12 about cell division — the marked correct answer is Mitosis but according to my textbook the answer should be Meiosis for that specific scenario.', status: 'Resolved', priority: 'High',   adminReply: 'Thank you for reporting this. We have verified and corrected the answer. Your attention to detail helps everyone.' },
-  { id: 5, student: 'Bilal Ahmed',   date: '7 Jun 2026',  category: 'Complaint', title: 'Coins not credited after test', text: 'I scored 95% in the Chemistry test on June 5th but my coin balance did not update. I should have received at least 15 coins based on the coin economy rules.', status: 'Pending',  priority: 'Normal', adminReply: 'We have raised a ticket to the backend team. You will be credited within 1 business day.' },
-  { id: 6, student: 'Ayesha Noor',   date: '6 Jun 2026',  category: 'Suggestion',title: 'Offline PDF download for notes', text: 'It would be really useful to download notes as PDFs for offline study, especially for students who have limited internet access in rural areas.', status: 'Open',     priority: 'Low',    adminReply: null },
-  { id: 7, student: 'Hamza Qureshi', date: '5 Jun 2026',  category: 'Bug',       title: 'AI Tutor gives wrong answers', text: 'The AI Tutor gave me an incorrect explanation for Newton\'s Third Law and when I asked a follow-up it contradicted itself. The answers seem unreliable for Physics topics.', status: 'Open',     priority: 'High',   adminReply: null },
-  { id: 8, student: 'Zara Khan',     date: '4 Jun 2026',  category: 'Complaint', title: 'Subscription payment issue',   text: 'I paid for the annual subscription via EasyPaisa on June 3rd. The payment was deducted but my account still shows as a free user. Transaction ID: EP2026060312345.', status: 'Resolved', priority: 'High',   adminReply: 'We have verified your payment and manually activated your premium subscription. Sorry for the inconvenience.' },
-])
+const stats = ref({ open: 0, inProgress: 0, resolved: 0, closed: 0, total: 0 })
 
-const filteredComplaints = computed(() => {
-  if (activeTab.value === 'all') return complaints.value
-  if (activeTab.value === 'Suggestion') return complaints.value.filter(c => c.category === 'Suggestion')
-  return complaints.value.filter(c => c.status === activeTab.value)
+async function fetchComplaints() {
+  loading.value = true
+  try {
+    const params = { page: page.value, pageSize }
+    if (statusFilter.value)   params.status = statusFilter.value
+    if (categoryFilter.value) params.category = categoryFilter.value
+    const { data } = await api.get('/admin/complaints', { params })
+    complaints.value = data.items
+    total.value = data.total
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Could not load complaints', detail: e.message, life: 4000 })
+  } finally {
+    loading.value = false
+  }
+}
+
+async function fetchStats() {
+  try {
+    const { data } = await api.get('/admin/complaints/stats')
+    const byStatus = Object.fromEntries((data.byStatus || []).map(s => [s.status, s.count]))
+    stats.value = {
+      open:       byStatus.open ?? 0,
+      inProgress: byStatus['in-progress'] ?? 0,
+      resolved:   byStatus.resolved ?? 0,
+      closed:     byStatus.closed ?? 0,
+      total:      data.total ?? 0,
+    }
+  } catch { /* leave zeros on failure */ }
+}
+
+function setStatus(value) {
+  statusFilter.value = value
+  applyFilters()
+}
+function applyFilters() {
+  page.value = 1
+  fetchComplaints()
+}
+
+onMounted(() => {
+  fetchComplaints()
+  fetchStats()
 })
 
-function toggleExpand(id) {
-  expandedId.value = expandedId.value === id ? null : id
-}
+// ── Real-time updates (new complaints / student &amp; admin messages / status) ──
+let offComplaintEvent = null
+onMounted(() => { offComplaintEvent = onComplaintEvent(handleComplaintEvent) })
+onUnmounted(() => { offComplaintEvent?.() })
 
-function openReplyModal(c) {
-  replyModal.value.complaint = c
-  replyText.value = c.adminReply || ''
-  resolveOnReply.value = false
-  replyModal.value.visible = true
-}
-
-function submitReply() {
-  if (!replyText.value.trim()) return
-  const c = complaints.value.find(x => x.id === replyModal.value.complaint.id)
-  if (c) {
-    c.adminReply = replyText.value
-    if (resolveOnReply.value) c.status = 'Resolved'
+function handleComplaintEvent(payload) {
+  if (payload.type === 'complaintCreated') {
+    fetchStats()
+    if (page.value === 1) fetchComplaints()
+  } else if (payload.type === 'complaintMessage') {
+    const { complaintId, message } = payload
+    if (threads.value[complaintId] && !threads.value[complaintId].some(m => m.id === message.id)) {
+      threads.value = { ...threads.value, [complaintId]: [...threads.value[complaintId], message] }
+    }
+    const c = complaints.value.find(x => x.id === complaintId)
+    if (c) c.messageCount = (c.messageCount || 0) + 1
+  } else if (payload.type === 'complaintStatus') {
+    const { complaintId, status } = payload
+    const c = complaints.value.find(x => x.id === complaintId)
+    if (c) c.status = status
+    fetchStats()
   }
-  replyModal.value.visible = false
-  replyText.value = ''
 }
 
-function submitQuickReply(c) {
-  const text = quickReplies.value[c.id]
+// ── Conversation thread (lazy-loaded on expand) ──────────────────────────────
+const expandedId    = ref(null)
+const threads       = ref({})   // complaintId -> ComplaintMessageDto[]
+const threadLoading = ref({})   // complaintId -> boolean
+const composerText  = ref({})   // complaintId -> string
+
+async function toggleExpand(c) {
+  expandedId.value = expandedId.value === c.id ? null : c.id
+  if (expandedId.value === c.id && threads.value[c.id] === undefined) {
+    threadLoading.value = { ...threadLoading.value, [c.id]: true }
+    try {
+      const { data } = await api.get(`/complaints/${c.id}/messages`)
+      threads.value = { ...threads.value, [c.id]: data }
+    } catch (e) {
+      toast.add({ severity: 'error', summary: 'Could not load conversation', detail: e.message, life: 4000 })
+    } finally {
+      threadLoading.value = { ...threadLoading.value, [c.id]: false }
+    }
+  }
+}
+
+const sendingId = ref(null)
+async function sendReply(c) {
+  const text = composerText.value[c.id]
   if (!text?.trim()) return
-  const target = complaints.value.find(x => x.id === c.id)
-  if (target) target.adminReply = text
-  quickReplies.value[c.id] = ''
+  sendingId.value = c.id
+  try {
+    const { data } = await api.post(`/complaints/${c.id}/messages`, { message: text.trim() })
+    threads.value = { ...threads.value, [c.id]: [...(threads.value[c.id] || []), data] }
+    composerText.value[c.id] = ''
+    c.messageCount = (c.messageCount || 0) + 1
+    toast.add({ severity: 'success', summary: 'Reply sent', life: 2500 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Could not send reply', detail: e.response?.data?.error || e.message, life: 4000 })
+  } finally {
+    sendingId.value = null
+  }
 }
 
-function resolveComplaint(c) {
-  const target = complaints.value.find(x => x.id === c.id)
-  if (target) target.status = 'Resolved'
+// ── Status change (independent of messaging) ─────────────────────────────────
+const statusChangingId = ref(null)
+async function changeStatus(c, status) {
+  statusChangingId.value = c.id
+  try {
+    const { data } = await api.put(`/admin/complaints/${c.id}`, { status })
+    Object.assign(c, data)
+    fetchStats()
+    toast.add({ severity: 'success', summary: `Marked as ${statusLabel(status)}`, life: 2500 })
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Could not update status', detail: e.response?.data?.error || e.message, life: 4000 })
+  } finally {
+    statusChangingId.value = null
+  }
 }
 
+// ── Presentation helpers ─────────────────────────────────────────────────────
 function initials(name) {
   return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
 }
-
 function avatarColor(name) {
-  const colors = ['#6366f1','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#10b981','#3b82f6','#ef4444']
+  const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#10b981', '#3b82f6', '#ef4444']
   let hash = 0
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) & 0xffff
   return colors[hash % colors.length]
 }
-
 function statusColor(status) {
-  return { Open: '#ef4444', Pending: '#f59e0b', Resolved: '#10b981' }[status] || '#6b7280'
+  return { open: '#f59e0b', 'in-progress': '#3b82f6', resolved: '#10b981', closed: '#6366f1' }[status] || '#6b7280'
 }
-
-function statusBadge(status) {
-  return { Open: 'red', Pending: 'yellow', Resolved: 'green' }[status] || 'blue'
+const STATUS_CLASSES = { open: 'badge-amber', 'in-progress': 'badge-blue', resolved: 'badge-green', closed: 'badge-indigo' }
+function statusClass(status) { return STATUS_CLASSES[status] ?? 'badge-amber' }
+function statusLabel(status) {
+  return { open: 'Open', 'in-progress': 'In Progress', resolved: 'Resolved', closed: 'Closed' }[status] ?? status
 }
-
-function priorityBadge(p) {
-  return { High: 'red', Normal: 'blue', Low: 'green' }[p] || 'blue'
+const TYPE_CLASSES = {
+  Complaint: 'badge-red', Suggestion: 'badge-blue', 'Bug Report': 'badge-amber',
+  'Feature Request': 'badge-purple', 'General Feedback': 'badge-indigo',
 }
-
-function categoryBadge(cat) {
-  return { Complaint: 'red', Suggestion: 'blue', Bug: 'yellow', Content: 'purple' }[cat] || 'blue'
-}
+function typeClass(type) { return TYPE_CLASSES[type] ?? 'badge-indigo' }
+// A resolved/closed complaint is a locked, read-only thread — no further messages or status changes.
+function isLocked(status) { return status === 'resolved' || status === 'closed' }
+function formatDate(iso) { return new Date(iso).toLocaleDateString('en-PK', { dateStyle: 'medium', timeZone: 'Asia/Karachi' }) }
+function formatDateTime(iso) { return new Date(iso).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Karachi' }) }
 </script>
 
 <style scoped>
@@ -284,6 +334,28 @@ function categoryBadge(cat) {
 }
 .expand-enter-to, .expand-leave-from {
   opacity: 1;
-  max-height: 400px;
+  max-height: 600px;
 }
+
+/* Chat thread */
+.cp-thread-messages {
+  display: flex; flex-direction: column; gap: 0.65rem;
+  padding: 1rem 1.25rem; max-height: 360px; min-height: 100px; overflow-y: auto;
+  background: var(--t-bg);
+}
+.cp-msg { display: flex; flex-direction: column; max-width: 78%; align-self: flex-start; }
+.cp-msg--mine { align-self: flex-end; align-items: flex-end; }
+.cp-msg-bubble {
+  padding: 0.6rem 0.85rem; border-radius: 14px; font-size: 0.85rem; line-height: 1.5;
+  background: var(--t-hover); color: var(--t-text1); border: 1px solid var(--t-border);
+}
+.cp-msg--mine .cp-msg-bubble {
+  background: linear-gradient(135deg, var(--t-accent), var(--t-accent2)); color: #fff; border-color: transparent;
+}
+.cp-msg-meta { font-size: 0.68rem; color: var(--t-text3); margin-top: 0.25rem; padding: 0 0.2rem; }
+.cp-status-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1.25rem; border-top: 1px solid var(--t-border); }
+.cp-status-row select.input { width: auto; padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+.cp-thread-composer { display: flex; gap: 0.5rem; padding: 0.85rem 1.25rem; border-top: 1px solid var(--t-border); }
+.cp-thread-composer .input { flex: 1; }
+.cp-locked-note { padding: 0.85rem 1.25rem; border-top: 1px solid var(--t-border); font-size: 0.8rem; color: var(--t-text3); text-align: center; }
 </style>

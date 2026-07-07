@@ -129,7 +129,7 @@ const trend = computed(() => student.chartData.series[0]?.data || [])
 
 function statusBadge(s) { return s === 'Strong' ? 'badge-green' : s === 'On track' ? 'badge-amber' : 'badge-red' }
 function barColor(v) { return v >= 85 ? 'var(--t-success)' : v >= 60 ? 'var(--t-gold)' : 'var(--t-danger)' }
-function fmtDate(d) { try { return new Date(d).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' }) } catch { return '' } }
+function fmtDate(d) { try { return new Date(d).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi', day: 'numeric', month: 'short' }) } catch { return '' } }
 function print() { window.print() }
 
 const aiSummary = ref('')

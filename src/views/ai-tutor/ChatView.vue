@@ -46,6 +46,9 @@
           <div class="text-xs" style="color:var(--t-text3)">{{ tutor?.subject }} · {{ tutor?.desc }}</div>
         </div>
         <div class="ml-auto flex items-center gap-2">
+          <RouterLink to="/app/coins/redeem" class="cv-token-pill" :class="{ empty: student.totalAiTokens <= 0 }">
+            🪙 {{ student.totalAiTokens }} AI token{{ student.totalAiTokens !== 1 ? 's' : '' }} left
+          </RouterLink>
           <span class="badge-green text-xs flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400" />Online</span>
           <RouterLink to="/app/ai-tutor" class="btn-ghost text-xs"><ArrowLeft class="w-3.5 h-3.5" /> Back</RouterLink>
         </div>
@@ -179,11 +182,13 @@ import { ArrowLeft, Send, History, EyeOff, Layers, Link, Pencil } from '@lucide/
 import { AI_TUTORS } from '@/stores/content'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'
+import { useStudentStore } from '@/stores/student'
 import api from '@/services/api'
 
 const props = defineProps({ subject: String })
 const auth = useAuthStore()
 const catalog = useCatalogStore()
+const student = useStudentStore()
 
 // prefer the admin-managed tutor (carries subject_name + system_prompt); fall back to the static persona
 const tutor = computed(() => {
@@ -196,7 +201,10 @@ const tutor = computed(() => {
   }
   return AI_TUTORS.find(t => t.slug === props.subject)
 })
-onMounted(() => { if (!catalog.tutors.length) catalog.fetchTutors().catch(() => {}) })
+onMounted(() => {
+  if (!catalog.tutors.length) catalog.fetchTutors().catch(() => {})
+  student.fetchSubscription().catch(() => {})
+})
 const initials = computed(() => auth.user?.name?.split(' ').map(w => w[0]).slice(0,2).join('') || 'U')
 
 // Slugs whose AI should respond in Urdu
@@ -237,7 +245,10 @@ async function callAI(prompt, history = []) {
     system: buildSystemInstruction(),
     messages: [...history, { role: 'user', content: prompt }],
   })
-  return data  // { reply, engine }
+  // Backend spends one token per call — sync the local balance so the pill and gate stay accurate.
+  if (student.subscription) student.subscription.tokensRemainingThisPeriod = data.tokensRemainingThisPeriod
+  student.bonusAiTokens = data.bonusAiTokens
+  return data  // { reply, engine, tokensRemainingThisPeriod, bonusAiTokens }
 }
 
 async function sendMessage(text) {
@@ -269,8 +280,13 @@ async function send() {
     console.error('[AITutor send]', e)
     const idx = messages.value.indexOf(thinkMsg)
     const errDetail = e?.message || 'Unknown error'
-    const friendly = isUrduMode.value ? 'معذرت، ابھی جواب نہیں آ سکا۔ دوبارہ کوشش کریں۔' : 'Both AI engines are unavailable right now. Please try again.'
-    messages.value[idx] = { id: thinkMsg.id, role: 'assistant', thinking: false, content: friendly, errorDetail: errDetail, showError: false, urdu: false, urduText: '', engText: '', showEng: false }
+    const outOfTokens = e?.response?.status === 402 && e.response.data?.outOfTokens
+    const friendly = outOfTokens
+      ? (isUrduMode.value
+          ? 'آپ کے AI ٹوکن ختم ہو گئے ہیں۔ <a href="/app/coins/redeem">مزید ٹوکن خریدیں →</a>'
+          : 'You\'re out of AI tokens. <a href="/app/coins/redeem">Buy more tokens →</a>')
+      : (isUrduMode.value ? 'معذرت، ابھی جواب نہیں آ سکا۔ دوبارہ کوشش کریں۔' : 'Both AI engines are unavailable right now. Please try again.')
+    messages.value[idx] = { id: thinkMsg.id, role: 'assistant', thinking: false, content: friendly, errorDetail: outOfTokens ? null : errDetail, showError: false, urdu: false, urduText: '', engText: '', showEng: false }
   }
   loading.value = false
   await nextTick(); scrollDown()
@@ -342,6 +358,20 @@ function clearHistory() { sessions.value = []; localStorage.removeItem(`bap_chat
 <style scoped>
 .cv-div-b { border-bottom: 1px solid var(--t-border); }
 .cv-div-t { border-top: 1px solid var(--t-border); }
+
+.cv-token-pill {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.72rem; font-weight: 700; text-decoration: none;
+  padding: 0.25rem 0.65rem; border-radius: 999px;
+  background: var(--t-hover); border: 1px solid var(--t-border); color: var(--t-text2);
+  transition: all 0.15s;
+}
+.cv-token-pill:hover { border-color: var(--t-accent); color: var(--t-accent); }
+.cv-token-pill.empty {
+  background: color-mix(in srgb, #ef4444 10%, transparent);
+  border-color: color-mix(in srgb, #ef4444 30%, transparent);
+  color: #ef4444;
+}
 
 .cv-session { color: var(--t-text2); transition: background 0.15s, color 0.15s; }
 .cv-session:hover { background: var(--t-hover); color: var(--t-text1); }

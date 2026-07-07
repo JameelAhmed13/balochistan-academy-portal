@@ -527,8 +527,18 @@ function shortUrl(url) {
   catch { return url.slice(0, 38) + (url.length > 38 ? '…' : '') }
 }
 
+function absoluteUrl(url) {
+  try { return new URL(url, window.location.origin).href }
+  catch { return url }
+}
+
 function isLocalUrl(url) {
-  return /^\/uploads\/|^https?:\/\/(localhost|127\.)/.test(url)
+  try {
+    const { hostname } = new URL(url, window.location.origin)
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('127.')
+  } catch {
+    return true
+  }
 }
 
 function detectViewerType(r) {
@@ -584,10 +594,11 @@ const viewerEmbedUrl = computed(() => {
 const officeIframeUrl = computed(() => {
   const url = viewerResource.value?.url
   if (!url) return ''
+  const abs = absoluteUrl(url)
   if (officeViewerStep.value === 0)
-    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
+    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(abs)}`
   if (officeViewerStep.value === 1)
-    return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(abs)}&embedded=true`
   return ''
 })
 

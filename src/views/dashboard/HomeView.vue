@@ -66,7 +66,6 @@
 import { computed, onMounted } from 'vue'
 import { TrendingUp } from '@lucide/vue'
 import { useStudentStore } from '@/stores/student'
-import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import KpiCard from '@/components/ui/KpiCard.vue'
 import ActionCard from '@/components/ui/ActionCard.vue'
@@ -74,7 +73,6 @@ import ActionCard from '@/components/ui/ActionCard.vue'
 const theme = useThemeStore()
 
 const student = useStudentStore()
-const auth = useAuthStore()
 
 onMounted(() => student.fetchStats().catch(() => {}))
 
@@ -86,7 +84,7 @@ const kpis = computed(() => {
     { label: 'Avg Score',   value: student.avgPercent + '%',  icon: '📊', color: 'purple' },
     { label: 'Pass Rate',   value: passRate + '%',            icon: '🎯', color: 'teal' },
     { label: 'This Month',  value: student.monthlyTests,      icon: '📅', color: 'amber' },
-    { label: 'Coins',       value: auth.user?.coins ?? 0,     icon: '🪙', color: 'rose' },
+    { label: 'Coins',       value: student.totalCoins,        icon: '🪙', color: 'rose' },
   ]
 })
 

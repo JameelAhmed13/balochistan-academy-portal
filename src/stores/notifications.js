@@ -5,6 +5,16 @@ import api from '@/services/api'
 
 const HUB_URL = '/hubs/notifications'
 
+// Complaint events ride the same "notification" SignalR message but are routed to whichever
+// complaint views are currently mounted instead of the generic notification bell — multiple
+// subscribers supported since the admin top-nav badge and a complaints page can both be mounted
+// at once, each needing its own independent subscribe/unsubscribe lifecycle.
+const _complaintHandlers = new Set()
+export function onComplaintEvent(fn) {
+  _complaintHandlers.add(fn)
+  return () => _complaintHandlers.delete(fn)
+}
+
 export const useNotificationsStore = defineStore('notifications', () => {
   const notifications = ref([])
   const connected     = ref(false)
@@ -48,6 +58,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
     _hub.on('notification', (payload) => {
       if (payload?.type === 'forceLogout') {
         import('@/stores/auth').then(({ useAuthStore }) => useAuthStore().logout())
+        return
+      }
+      if (payload?.type?.startsWith('complaint')) {
+        _complaintHandlers.forEach(fn => fn(payload))
         return
       }
       notifications.value.unshift({ ...payload, read: false, receivedAt: new Date().toISOString() })

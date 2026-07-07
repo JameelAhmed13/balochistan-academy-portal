@@ -15,6 +15,7 @@ public class User : AuditableEntity
     public int?    InstituteId { get; set; }
     public string  Board       { get; set; } = "Balochistan";
     public int     Coins       { get; set; }
+    public int     BonusAiTokens { get; set; }   // coin-purchased AI tokens; persist across subscription renewals
     public bool    IsActive    { get; set; } = true;
     public DateTime? LastLoginAt { get; set; }
 
