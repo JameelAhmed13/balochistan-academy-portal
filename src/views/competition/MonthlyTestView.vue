@@ -1,5 +1,10 @@
 <template>
   <div class="animate-fade-in space-y-5">
+    <!-- Loading -->
+    <div v-if="phase === 'loading'" class="mt-loading">
+      <div class="mt-loading-text">⏳ Loading questions…</div>
+    </div>
+
     <!-- Setup screen -->
     <div v-if="phase === 'setup'">
       <h2 class="section-title">Monthly Combined Exam — Setup</h2>
@@ -7,7 +12,7 @@
         <div class="mt-setup-section">
           <div class="mt-setup-label">Select Subjects</div>
           <div class="mt-subject-grid">
-            <label v-for="s in SUBJECTS" :key="s.id" class="mt-subj-item"
+            <label v-for="s in subjects" :key="s.id" class="mt-subj-item"
               :class="{ 'mt-subj-active': selectedSubjects.includes(s.id) }">
               <input type="checkbox" v-model="selectedSubjects" :value="s.id" />
               <span>{{ s.icon }}</span>
@@ -62,16 +67,17 @@
           </div>
         </div>
       </div>
-      <div class="mt-q-card">
+      <div class="mt-q-card" ref="mathContainer">
         <div class="mt-q-num">Question {{ currentQIdx + 1 }}</div>
         <CognitiveBadge :level="currentQ.cognitiveLevel" />
         <DifficultyBadge :level="currentQ.difficulty" />
-        <div class="mt-q-stem" :dir="currentQ.isUrdu ? 'rtl' : 'ltr'">{{ currentQ.stem }}</div>
+        <div class="mt-q-stem" :dir="currentQ.isUrdu ? 'rtl' : 'ltr'" v-html="prepareMath(currentQ.stem)" />
         <div class="mt-options">
           <label v-for="(opt, oi) in currentQ.options" :key="oi" class="mt-opt"
             :class="{ 'mt-opt-sel': objAnswers[currentSubjectIdx]?.[currentQIdx] === oi }">
             <input type="radio" :name="`obj_${currentSubjectIdx}_${currentQIdx}`" :value="oi"
-              @change="setObjAnswer(oi)" /> {{ opt }}
+              @change="setObjAnswer(oi)" />
+            <span v-html="prepareMath(opt)" />
           </label>
         </div>
       </div>
@@ -96,7 +102,7 @@
         <div class="mt-q-num">Q{{ qi + 1 }}</div>
         <CognitiveBadge :level="q.cognitiveLevel" />
         <DifficultyBadge :level="q.difficulty" />
-        <div class="mt-q-stem">{{ q.stem }}</div>
+        <div class="mt-q-stem" v-html="prepareMath(q.stem)" />
         <div class="mt-subj-input-row">
           <textarea v-model="subjAnswers[currentSubjectIdx][qi]" placeholder="Write your answer..."
             class="mt-subj-textarea" rows="4" />
@@ -115,17 +121,69 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { SUBJECTS, useContentStore } from '@/stores/content'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
+import { useContentStore } from '@/stores/content'
+import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 import { useStudentStore } from '@/stores/student'
+import { getRealQuestions } from '@/services/assessmentBank'
+import api from '@/services/api'
 import CognitiveBadge from '@/components/platform/CognitiveBadge.vue'
 import DifficultyBadge from '@/components/platform/DifficultyBadge.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const router = useRouter()
+const auth = useAuthStore()
+const catalog = useCatalogStore()
 const content = useContentStore()
 const student = useStudentStore()
+
+const mathContainer = ref(null)
+const KATEX_OPTS = {
+  delimiters: [
+    { left: '\\[', right: '\\]', display: true },
+    { left: '\\(', right: '\\)', display: false },
+    { left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false },
+  ],
+  throwOnError: false,
+}
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(text) {
+  if (!text) return ''
+  return String(text).replace(ENV_RE, (m) => `\\[${m}\\]`)
+}
+function renderMath() {
+  nextTick(() => { if (mathContainer.value) renderMathInElement(mathContainer.value, KATEX_OPTS) })
+}
+
+const gradeCode = computed(() => auth.user?.gradeCode || auth.user?.grade || '9')
+const subjects = computed(() => catalog.subjectsForGrade(gradeCode.value))
+
+onMounted(async () => {
+  if (!subjects.value.length) {
+    await catalog.fetchSubjectsForGrade(gradeCode.value).catch(() => {})
+  }
+})
+
+function normalizeObjQ(q) {
+  if (q.optionsJson !== undefined) {
+    let opts = []
+    try { opts = JSON.parse(q.optionsJson || '[]') } catch { opts = [] }
+    return { stem: q.stem, options: opts, correct: q.correctIndex ?? 0, cognitiveLevel: 'Knowledge', difficulty: 'Medium', isUrdu: false }
+  }
+  return {
+    stem: q.stem || q.question,
+    options: q.options || [],
+    correct: q.correct ?? 0,
+    cognitiveLevel: q.cognitiveLevel || 'Knowledge',
+    difficulty: q.difficulty || 'Medium',
+    isUrdu: q.isUrdu || false,
+  }
+}
 
 const phase = ref('setup')
 const selectedSubjects = ref([])
@@ -143,19 +201,37 @@ const allObjQs = ref({})
 const allSubjQs = ref({})
 
 const currentSubjectId = computed(() => selectedSubjects.value[currentSubjectIdx.value])
-const currentSubjectName = computed(() => SUBJECTS.find(s => s.id === currentSubjectId.value)?.name || '')
+const currentSubjectName = computed(() => subjects.value.find(s => s.id === currentSubjectId.value)?.name || '')
 const currentObjectiveQs = computed(() => allObjQs.value[currentSubjectId.value] || [])
 const currentSubjectiveQs = computed(() => allSubjQs.value[currentSubjectId.value] || [])
 const currentQ = computed(() => currentObjectiveQs.value[currentQIdx.value] || {})
 const hasMoreSubjects = computed(() => currentSubjectIdx.value < selectedSubjects.value.length - 1)
+watch(currentQ, renderMath, { deep: true })
 
-function startExam() {
-  selectedSubjects.value.forEach(id => {
-    allObjQs.value[id] = content.getQuestions(id, { limit: mcqCount.value })
+async function startExam() {
+  phase.value = 'loading'
+  const loadPromises = selectedSubjects.value.map(async (id) => {
+    const subjectName = subjects.value.find(s => s.id === id)?.name || ''
+    let qs = []
+    try {
+      const res = await api.get('/questions/random', { params: { subjectId: id, grade: gradeCode.value, limit: mcqCount.value } })
+      qs = (res.data || []).map(normalizeObjQ)
+    } catch { /* fall through */ }
+    if (!qs.length && subjectName) {
+      try {
+        const real = await getRealQuestions({ grade: gradeCode.value, subject: subjectName, limit: mcqCount.value })
+        qs = real.map(normalizeObjQ)
+      } catch { qs = [] }
+    }
+    if (!qs.length) {
+      qs = content.getQuestions(id, { limit: mcqCount.value }).map(normalizeObjQ)
+    }
+    allObjQs.value[id] = qs
     allSubjQs.value[id] = content.getSubjectiveQuestions(id, { limit: subjCount.value })
     objAnswers.value[id] = {}
     subjAnswers.value[id] = {}
   })
+  await Promise.all(loadPromises)
   timeLeft.value = timeLimit.value * 60
   phase.value = 'objective'
   currentSubjectIdx.value = 0
@@ -224,4 +300,9 @@ onUnmounted(() => clearInterval(timer))
 .mt-subj-input-row { display: flex; gap: 0.75rem; align-items: flex-start; }
 .mt-subj-textarea { flex: 1; padding: 0.75rem; border: 1px solid var(--t-border); border-radius: 8px; background: var(--t-bg); color: var(--t-text1); font-size: 0.875rem; resize: vertical; }
 .mt-mic-btn { padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--t-border); background: var(--t-surface); cursor: pointer; font-size: 1.1rem; flex-shrink: 0; }
+.mt-loading { text-align: center; padding: 3rem 1rem; }
+.mt-loading-text { font-size: 1.1rem; color: var(--t-text3); }
+
+.mt-q-card :deep(.katex-display) { margin: 0.4rem 0; overflow-x: auto; }
+.mt-q-card :deep(.katex) { font-size: 1em; color: var(--t-text1); }
 </style>

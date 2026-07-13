@@ -118,10 +118,8 @@ import { ref, computed } from 'vue'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 import AiTokenPill from '@/components/platform/AiTokenPill.vue'
-import { useStudentStore } from '@/stores/student'
-import { aiErrorMessage } from '@/composables/useAiTokens'
+import { chatWithFallback } from '@/services/ollamaService'
 
-const student = useStudentStore()
 
 const query = ref('')
 const result = ref(null)
@@ -221,10 +219,11 @@ async function getAIExplanation() {
   if (!word) return
   aiLoading.value = true; aiExplanation.value = ''
   try {
-    aiExplanation.value = await student.generateAi(
-      `Explain the word/term "${word}" for a Pakistani Grade 9-12 board exam student. Include: 1) Simple definition, 2) Urdu meaning, 3) Board exam context (Physics/Chemistry/Biology/Math/English as relevant), 4) Example sentence, 5) Easy memory tip. Keep it concise and educational.`
-    )
-  } catch (e) { aiExplanation.value = aiErrorMessage(e) }
+    aiExplanation.value = await chatWithFallback({
+      system: 'You are an educational AI helper for Pakistani Grade 9-12 board exam students.',
+      messages: [{ role: 'user', content: `Explain the word/term "${word}" for a Pakistani Grade 9-12 board exam student. Include: 1) Simple definition, 2) Urdu meaning, 3) Board exam context (Physics/Chemistry/Biology/Math/English as relevant), 4) Example sentence, 5) Easy memory tip. Keep it concise and educational.` }],
+    })
+  } catch { aiExplanation.value = 'AI is unavailable right now. Please try again.' }
   aiLoading.value = false
 }
 </script>

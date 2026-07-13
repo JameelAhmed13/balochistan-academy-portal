@@ -11,23 +11,25 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div v-if="loading" class="text-center py-10" style="color:var(--t-text3)">Loading subjects…</div>
+    <div v-else-if="!subjects.length" class="text-center py-10" style="color:var(--t-text3)">No subjects found for your grade.</div>
+    <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       <button v-for="subj in filteredSubjects" :key="subj.id"
         type="button"
         @click="selectSubject(subj)"
         class="card-hover group p-4 flex flex-col items-center text-center gap-3"
-        :aria-label="subj.name + ' — ' + subj.nameUr"
+        :aria-label="subj.name"
       >
         <div class="w-16 h-20 rounded-xl flex items-center justify-center text-4xl shadow-sm transition-transform group-hover:scale-105"
-          :class="subj.color">
-          {{ subj.icon }}
+          :class="subj.color || 'grad-indigo'">
+          {{ subj.icon || '📘' }}
         </div>
         <div>
           <div class="font-semibold text-sm" style="color:var(--t-text1)">{{ subj.name }}</div>
-          <div class="text-xs mt-0.5" :class="subj.medium === 'urdu' ? 'urdu' : ''" style="color:var(--t-text3)">{{ subj.nameUr }}</div>
+          <div v-if="subj.nameUr" class="text-xs mt-0.5 urdu" dir="rtl" style="color:var(--t-text3)">{{ subj.nameUr }}</div>
         </div>
         <div class="flex gap-1 flex-wrap justify-center">
-          <span class="badge-blue">Grade 9</span>
+          <span class="badge-blue">Grade {{ auth.user?.gradeCode || '9' }}</span>
           <span class="badge-purple">Balochistan</span>
         </div>
       </button>
@@ -61,19 +63,38 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { SUBJECTS } from '@/stores/content'
+import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const router = useRouter()
+const auth = useAuthStore()
+const catalog = useCatalogStore()
+
 const mediumFilter = ref('All')
 const showModal = ref(false)
 const selectedSubject = ref(null)
+const loading = ref(false)
+
+const subjects = computed(() => {
+  const code = auth.user?.gradeCode
+  return code ? (catalog.gradeSubjects[code] || []) : []
+})
 
 const filteredSubjects = computed(() => {
-  if (mediumFilter.value === 'All') return SUBJECTS
-  return SUBJECTS.filter(s => s.medium === mediumFilter.value.toLowerCase())
+  if (mediumFilter.value === 'All') return subjects.value
+  return subjects.value.filter(s => (s.medium || '').toLowerCase() === mediumFilter.value.toLowerCase())
+})
+
+onMounted(async () => {
+  const code = auth.user?.gradeCode
+  if (code && !subjects.value.length) {
+    loading.value = true
+    try { await catalog.fetchSubjectsForGrade(code) } catch { /* offline */ }
+    loading.value = false
+  }
 })
 
 function selectSubject(subj) {

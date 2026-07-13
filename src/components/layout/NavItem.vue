@@ -25,11 +25,14 @@ import { useRoute } from 'vue-router'
 
 const props = defineProps({ item: Object, collapsed: Boolean })
 const route = useRoute()
-const isActive = computed(() => props.item.path && (
-  props.item.path === '/app'
-    ? route.path === '/app' || route.path === '/app/'
-    : route.path.startsWith(props.item.path)
-))
+const isActive = computed(() => {
+  if (!props.item.path) return false
+  if (props.item.path === '/app') return route.path === '/app' || route.path === '/app/'
+  if (!route.path.startsWith(props.item.path)) return false
+  // Don't highlight this item when a more-specific child nav item owns the route
+  if (props.item.exclude && route.path.startsWith(props.item.exclude)) return false
+  return true
+})
 </script>
 
 <style scoped>

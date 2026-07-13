@@ -131,14 +131,18 @@ onMounted(async () => {
   try {
     const code = auth.user?.gradeCode
     const rows = (await api.get('/tests/leaderboard', { params: code ? { gradeCode: code } : {} })).data
-    liveEntries.value = rows.map((r, i) => ({
-      rank: i + 1, name: r.name || 'Student',
-      initials: (r.name || 'S').split(' ').map((n) => n[0]).join('').slice(0, 2),
-      city: '', color: COLORS[i % COLORS.length],
-      tests: r.totalAttempts || 0, avg: Math.round(r.avgPercent || 0),
-      score: Math.round((r.avgPercent || 0) * (r.totalAttempts || 0)) + (r.coins || 0),
-      isMe: r.id === auth.user?.id,
-    }))
+    liveEntries.value = rows
+      .map((r) => ({
+        name: r.name || 'Student',
+        initials: (r.name || 'S').split(' ').map((n) => n[0]).join('').slice(0, 2),
+        city: '',
+        tests: r.totalAttempts || 0,
+        avg: Math.round(r.avgPercent || 0),
+        score: Math.round((r.avgPercent || 0) * (r.totalAttempts || 0)) + (r.coins || 0),
+        isMe: r.id === auth.user?.id,
+      }))
+      .sort((a, b) => b.score - a.score || b.tests - a.tests)
+      .map((e, i) => ({ ...e, rank: i + 1, color: COLORS[i % COLORS.length] }))
   } catch { /* backend offline → keep mock board */ }
 })
 
@@ -173,11 +177,19 @@ const mockEntries = computed(() => {
 })
 
 const userScore = computed(() => student.avgPercent ? Math.round(student.passedTests * student.avgPercent * 1.1) : 0)
-const userEntry = computed(() => ({
-  rank: mockEntries.value.findIndex(e=>e.score <= userScore.value) + 1 || mockEntries.value.length + 1,
-  score: userScore.value,
-  name: 'You',
-}))
+const userEntry = computed(() => {
+  if (liveEntries.value.length) {
+    const me = liveEntries.value.find(e => e.isMe)
+    if (me) return me
+    // Current user has no attempts yet — place at the bottom
+    return { rank: liveEntries.value.length + 1, score: 0, name: auth.user?.name || 'You' }
+  }
+  return {
+    rank: mockEntries.value.findIndex(e => e.score <= userScore.value) + 1 || mockEntries.value.length + 1,
+    score: userScore.value,
+    name: 'You',
+  }
+})
 const displayList = computed(() => {
   // prefer the live, grade-scoped board when the backend returned peers
   if (liveEntries.value.length) return liveEntries.value.slice(0, 25)

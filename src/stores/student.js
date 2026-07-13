@@ -122,8 +122,16 @@ export const useStudentStore = defineStore('student', () => {
       answersJson: record.answers ? JSON.stringify(record.answers) : null,
       attemptType: mapAttemptType(record.type),
     }).then(res => {
-      local.serverId = res.data?.id
-      if (res.data?.coinsEarned > 0) fetchStats().catch(() => {})
+      // Replace the array item with a new object so Vue's reactivity picks up new fields
+      const idx = testRecords.value.findIndex(r => r.id === local.id)
+      if (idx !== -1) {
+        testRecords.value[idx] = { ...testRecords.value[idx], serverId: res.data?.id, coins: res.data?.coinsEarned ?? 0 }
+        localStorage.setItem('bap_tests', JSON.stringify(testRecords.value.slice(0, 200)))
+      }
+      if (res.data?.coinsEarned > 0) {
+        fetchStats().catch(() => {})
+        fetchCoinData().catch(() => {})
+      }
     }).catch(() => {})
 
     return local.id
@@ -184,6 +192,33 @@ export const useStudentStore = defineStore('student', () => {
     return data.reply
   }
 
+  // ── Sync server-side attempt history into testRecords (once per session) ────
+  const _attemptsFetched = ref(false)
+  async function fetchAttempts() {
+    if (_attemptsFetched.value) return
+    _attemptsFetched.value = true
+    try {
+      const { data } = await api.get('/tests/me/attempts', { params: { pageSize: 200 } })
+      const items = data?.items || data || []
+      const existingIds = new Set(testRecords.value.filter(r => r.serverId).map(r => String(r.serverId)))
+      const newRecords = items
+        .filter(r => !existingIds.has(String(r.id)))
+        .map(r => ({
+          id: r.id,
+          serverId: r.id,
+          subject: r.subject || r.subjectName || '',
+          type: r.attemptType || r.type || 'self-test',
+          score: r.score ?? 0,
+          total: r.total ?? 0,
+          date: r.createdAt || r.submittedAt || r.date || new Date().toISOString(),
+        }))
+      if (newRecords.length) {
+        testRecords.value.push(...newRecords)
+        localStorage.setItem('bap_tests', JSON.stringify(testRecords.value.slice(0, 200)))
+      }
+    } catch { /* keep local-only data */ }
+  }
+
   // ── Map UI type strings to backend attemptType values ───────────────────────
   function mapAttemptType(type) {
     if (!type) return 'self-test'
@@ -211,6 +246,6 @@ export const useStudentStore = defineStore('student', () => {
     bonusAiTokens, coinsPerAiToken, totalAiTokens, plans, accessStatus, trialDaysLeft, trialEndsAt,
     totalTests, passedTests, avgPercent, totalCoins, monthlyTests, chartData,
     fetchStats, fetchCoinData, fetchCoinTransactions, fetchBalance, fetchSubscription, fetchPlans,
-    saveTest, submitAttempt, purchaseSubscription, renewSubscription, buyTokens, purchaseCash, generateAi,
+    saveTest, submitAttempt, purchaseSubscription, renewSubscription, buyTokens, purchaseCash, generateAi, fetchAttempts,
   }
 })

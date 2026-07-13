@@ -183,7 +183,7 @@ import { AI_TUTORS } from '@/stores/content'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'
 import { useStudentStore } from '@/stores/student'
-import api from '@/services/api'
+import { chatWithFallback, getLastEngine, ollamaConfig } from '@/services/ollamaService'
 
 const props = defineProps({ subject: String })
 const auth = useAuthStore()
@@ -241,14 +241,13 @@ function buildSystemInstruction() {
 }
 
 async function callAI(prompt, history = []) {
-  const { data } = await api.post('/ai/chat', {
+  const reply = await chatWithFallback({
     system: buildSystemInstruction(),
     messages: [...history, { role: 'user', content: prompt }],
   })
-  // Backend spends one token per call — sync the local balance so the pill and gate stay accurate.
-  if (student.subscription) student.subscription.tokensRemainingThisPeriod = data.tokensRemainingThisPeriod
-  student.bonusAiTokens = data.bonusAiTokens
-  return data  // { reply, engine, tokensRemainingThisPeriod, bonusAiTokens }
+  const engine = getLastEngine()
+  const model = engine === 'gemini' ? ollamaConfig.GEMINI_MODEL : ollamaConfig.MODEL
+  return { reply, engine, model }
 }
 
 async function sendMessage(text) {
@@ -272,8 +271,7 @@ async function send() {
       .filter(m => !m.thinking && m.content)
       .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
 
-    const { reply, engine: eng } = await callAI(text, history)
-    const modelName = eng === 'gemini' ? 'gemini-2.5-flash-lite' : 'llama3'
+    const { reply, engine: eng, model: modelName } = await callAI(text, history)
     const idx = messages.value.indexOf(thinkMsg)
     messages.value[idx] = { id: thinkMsg.id, role: 'assistant', thinking: false, content: reply, engine: eng, model: modelName, urdu: false, urduText: '', engText: '', showEng: false }
   } catch (e) {
@@ -309,7 +307,7 @@ async function followUp(type, context) {
 async function translateMsg(msg) {
   if (msg.urduText) { msg.urdu = true; return }
   loading.value = true
-  const { reply: urduReply } = await callAI(`Translate this to Urdu (keep technical terms in Urdu script): ${msg.content}`)
+  const { reply: urduReply } = await callAI(`Translate to Urdu (keep technical terms in Urdu script): ${msg.content}`)
   msg.urduText = urduReply
   msg.urdu = true
   loading.value = false
@@ -318,7 +316,7 @@ async function translateMsg(msg) {
 async function translateToEng(msg) {
   if (msg.engText) { msg.showEng = true; return }
   loading.value = true
-  const { reply: engReply } = await callAI(`Translate this Urdu text to English (plain translation): ${msg.content}`)
+  const { reply: engReply } = await callAI(`Translate this Urdu text to English: ${msg.content}`)
   msg.engText = engReply
   msg.showEng = true
   loading.value = false

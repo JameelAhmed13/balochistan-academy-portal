@@ -100,10 +100,8 @@ import { ref, computed } from 'vue'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 import AiTokenPill from '@/components/platform/AiTokenPill.vue'
-import { useStudentStore } from '@/stores/student'
-import { aiErrorMessage } from '@/composables/useAiTokens'
+import { chatWithFallback } from '@/services/ollamaService'
 
-const student = useStudentStore()
 
 const activeLang = ref(null)
 const activeLesson = ref(null)
@@ -129,10 +127,11 @@ function openLesson(lesson) { activeLesson.value = lesson; quizAnswered.value = 
 async function askAIAboutCode(code) {
   aiLoadingCode.value = true; codeExplanation.value = ''
   try {
-    codeExplanation.value = await student.generateAi(
-      `Explain this code to a beginner Pakistani student (Grade 9-12) who is just learning programming. Explain line by line in simple English. Be encouraging and friendly:\n\n\`\`\`\n${code}\n\`\`\``
-    )
-  } catch (e) { codeExplanation.value = aiErrorMessage(e) }
+    codeExplanation.value = await chatWithFallback({
+      system: 'You are an encouraging coding teacher for beginner Pakistani students (Grade 9-12).',
+      messages: [{ role: 'user', content: `Explain this code to a beginner Pakistani student (Grade 9-12) who is just learning programming. Explain line by line in simple English. Be encouraging and friendly:\n\n\`\`\`\n${code}\n\`\`\`` }],
+    })
+  } catch { codeExplanation.value = 'AI is unavailable right now. Please try again.' }
   aiLoadingCode.value = false
 }
 

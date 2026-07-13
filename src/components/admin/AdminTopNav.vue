@@ -67,6 +67,7 @@
             <button type="button" class="atn-user-item" @click="theme.toggle?.()">
               <component :is="isDark ? Sun : Moon" class="w-4 h-4" /> {{ isDark ? 'Light mode' : 'Dark mode' }}
             </button>
+            <RouterLink to="/app/admin/profile" class="atn-user-item" @click="userOpen = false"><UserCog class="w-4 h-4" /> My Profile</RouterLink>
             <RouterLink to="/app" class="atn-user-item" @click="userOpen = false"><LayoutDashboard class="w-4 h-4" /> Student dashboard</RouterLink>
             <button type="button" class="atn-user-item atn-signout" @click="signOut"><LogOut class="w-4 h-4" /> Sign out</button>
           </div>
@@ -115,7 +116,7 @@ import {
   LayoutDashboard, BookOpen, ClipboardList, Users, BarChart2, Settings, Bell,
   Menu, X, ChevronDown, ExternalLink, LogOut, Sun, Moon,
   FileText, FolderTree, GraduationCap, Coins, MessageSquareWarning, BellRing, Layers, Globe,
-  Shield, Building2, History,
+  Shield, Building2, History, Upload, UserCog, Inbox,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -165,8 +166,9 @@ const menus = [
     { label: 'AI Tutors',          path: '/app/admin/tutors',   icon: Users,           desc: 'Persona tutors per subject/grade' },
   ] },
   { key: 'assessments', label: 'Assessments', icon: ClipboardList, items: [
-    { label: 'Question Bank',  path: '/app/admin/questions', icon: FileText,      desc: 'Manage MCQ & subjective items' },
-    { label: 'Tests & Papers', path: '/app/admin/tests',     icon: ClipboardList, desc: 'Create, assign & track tests' },
+    { label: 'Question Bank',       path: '/app/admin/questions',           icon: FileText,      desc: 'Manage MCQ & subjective items' },
+    { label: 'Tests & Papers',      path: '/app/admin/tests',               icon: ClipboardList, desc: 'Create, assign & track tests' },
+    { label: 'Upload Assessments',  path: '/app/admin/upload-assessments',  icon: Upload,        desc: 'Upload past papers & assessment bank' },
   ] },
   { key: 'people', label: 'People', icon: Users, items: [
     { label: 'Users',           path: '/app/admin/users',  icon: GraduationCap, desc: 'Students, teachers & admins' },
@@ -178,10 +180,11 @@ const menus = [
     { label: 'Complaints', path: '/app/admin/complaints', icon: MessageSquareWarning, desc: 'Tickets & resolutions' },
   ] },
   { key: 'system', label: 'System', icon: Settings, items: [
-    { label: 'Settings',      path: '/app/admin/settings',      icon: Settings,  desc: 'Platform configuration' },
-    { label: 'Notifications', path: '/app/admin/notifications', icon: BellRing,  desc: 'Broadcasts & alerts' },
-    { label: 'Institutes',    path: '/app/admin/institutes',    icon: Building2, desc: 'Manage institutes and organisations' },
-    { label: 'Audit Log',     path: '/app/admin/audit-log',     icon: History,   desc: 'Track admin actions and changes' },
+    { label: 'Settings',             path: '/app/admin/settings',            icon: Settings,  desc: 'Platform configuration' },
+    { label: 'Notifications',        path: '/app/admin/notifications',       icon: BellRing,  desc: 'Broadcasts & alerts' },
+    { label: 'Notifications Inbox',  path: '/app/admin/notifications/inbox', icon: Inbox,     desc: 'Your received notifications' },
+    { label: 'Institutes',           path: '/app/admin/institutes',          icon: Building2, desc: 'Manage institutes and organisations' },
+    { label: 'Audit Log',            path: '/app/admin/audit-log',           icon: History,   desc: 'Track admin actions and changes' },
   ] },
 ]
 

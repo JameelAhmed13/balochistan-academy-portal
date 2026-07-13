@@ -72,19 +72,33 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useStudentStore } from '@/stores/student'
 import StatCards from '@/components/platform/StatCards.vue'
 import TestTable from '@/components/platform/TestTable.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const student = useStudentStore()
+onMounted(() => { student.fetchAttempts() })
 
 const allRecords = computed(() => student.testRecords)
 const taken = computed(() => allRecords.value.filter(r => r.score !== undefined).length)
 const pending = computed(() => allRecords.value.length - taken.value)
 const uniqueSubjects = computed(() => new Set(allRecords.value.map(t => t.subject)).size)
-const streak = 3
+const streak = computed(() => {
+  const records = allRecords.value.filter(r => r.score !== undefined && r.date)
+  if (!records.length) return 0
+  const today = new Date()
+  const dateSet = new Set(records.map(r => new Date(r.date).toISOString().slice(0, 10)))
+  let count = 0
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() - i)
+    if (dateSet.has(d.toISOString().slice(0, 10))) count++
+    else if (i > 0) break
+  }
+  return count
+})
 
 const avgScore = computed(() => {
   const scored = allRecords.value.filter(r => r.score !== undefined && r.total)

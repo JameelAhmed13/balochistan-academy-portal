@@ -66,6 +66,7 @@ const routes = [
           { path: ':bookId/simulations',     name: 'PrepSimulations', component: () => import('@/views/preparation/panels/SimulationsPanel.vue'), props: true },
           { path: ':bookId/vlab',            name: 'PrepVirtualLab',  component: () => import('@/views/preparation/panels/VirtualLabPanel.vue'),  props: true },
           { path: ':bookId/pastpapers',      name: 'PrepPastPapers',  component: () => import('@/views/preparation/panels/PastPapersPanel.vue'),  props: true },
+          { path: ':bookId/syllabus',        name: 'PrepSyllabus',    component: () => import('@/views/preparation/panels/SyllabusPanel.vue'),       props: true },
           { path: ':bookId/test/objective',  name: 'ObjectiveTest',   component: () => import('@/views/preparation/ObjectiveTestView.vue'), props: true },
           { path: ':bookId/test/subjective', name: 'SubjectiveTest',  component: () => import('@/views/preparation/SubjectiveTestView.vue'), props: true },
         ],

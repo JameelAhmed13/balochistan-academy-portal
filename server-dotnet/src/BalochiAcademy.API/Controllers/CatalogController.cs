@@ -157,6 +157,34 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
         return Ok(result);
     }
 
+    // ── Past Papers ───────────────────────────────────────────────────────────
+
+    /// <summary>GET /api/past-papers?subjectId=&amp;gradeCode= — returns all active past papers for a subject/grade.</summary>
+    [HttpGet("past-papers")]
+    public async Task<IActionResult> GetPastPapers(
+        [FromQuery] int?    subjectId,
+        [FromQuery] string? gradeCode,
+        CancellationToken   ct)
+    {
+        var q = uow.Repository<PastPaper>().Query().Where(p => p.IsActive);
+        if (subjectId.HasValue)              q = q.Where(p => p.SubjectId == subjectId.Value);
+        if (!string.IsNullOrEmpty(gradeCode)) q = q.Where(p => p.GradeCode == gradeCode);
+
+        var papers = await q
+            .OrderByDescending(p => p.Year)
+            .ThenBy(p => p.PaperType)
+            .ThenBy(p => p.SortOrder)
+            .Select(p => new
+            {
+                p.Id, p.Year, p.Board, p.PaperType,
+                p.TotalMarks, p.TimeLimitMinutes,
+                SubjectName = p.Subject!.Name,
+            })
+            .ToListAsync(ct);
+
+        return Ok(papers);
+    }
+
     // ── ADMIN: Mediums ────────────────────────────────────────────────────────
 
     [HttpPost("admin/mediums"), Authorize(Policy = "AdminOnly")]

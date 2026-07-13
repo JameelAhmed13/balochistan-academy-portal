@@ -47,6 +47,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<SystemSetting>     SystemSettings     => Set<SystemSetting>();
     public DbSet<SubscriptionPlan>  SubscriptionPlans  => Set<SubscriptionPlan>();
     public DbSet<UserSubscription>  UserSubscriptions  => Set<UserSubscription>();
+    public DbSet<PastPaper>         PastPapers         => Set<PastPaper>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

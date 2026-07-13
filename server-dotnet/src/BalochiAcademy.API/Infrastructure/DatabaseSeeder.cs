@@ -1,15 +1,20 @@
 using BalochiAcademy.Application.Common.Interfaces;
 using BalochiAcademy.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace BalochiAcademy.API.Infrastructure;
 
 public static class DatabaseSeeder
 {
-    public static async Task SeedAsync(IApplicationDbContext db, IPasswordService passwords)
+    public static async Task SeedAsync(IApplicationDbContext db, IPasswordService passwords, IConfiguration? config = null)
     {
         try
         {
+            // Always sync AI settings from appsettings → DB so the correct Ollama URL
+            // and Gemini key are picked up without a manual SQL update.
+            if (config != null)
+                await SyncAiSettingsAsync(db, config);
             // Seed grade bands independently so adding new bands works even after initial seed
             if (!await db.GradeBands.AnyAsync())
             {
@@ -157,11 +162,59 @@ public static class DatabaseSeeder
                 await db.SaveChangesAsync();
             }
 
+            // Seed subscription plans (idempotent)
+            if (!await db.SubscriptionPlans.AnyAsync())
+            {
+                db.SubscriptionPlans.AddRange(
+                    new SubscriptionPlan
+                    {
+                        Name         = "Free Trial",
+                        Description  = "7-day free access to explore the platform — no payment required.",
+                        Price        = 0m,
+                        DurationDays = 7,
+                        AiTokenQuota = 20,
+                        IsActive     = true,
+                        SortOrder    = 1,
+                    },
+                    new SubscriptionPlan
+                    {
+                        Name         = "Monthly Plan",
+                        Description  = "Full access for 30 days — all subjects, daily tests, AI Tutor, and video lectures.",
+                        Price        = 299m,
+                        DurationDays = 30,
+                        AiTokenQuota = 150,
+                        IsActive     = true,
+                        SortOrder    = 2,
+                    },
+                    new SubscriptionPlan
+                    {
+                        Name         = "Annual Plan",
+                        Description  = "Best value — 365 days of unlimited access with maximum AI Tutor tokens.",
+                        Price        = 999m,
+                        DurationDays = 365,
+                        AiTokenQuota = 1000,
+                        IsActive     = true,
+                        SortOrder    = 3,
+                    }
+                );
+                await db.SaveChangesAsync();
+            }
+
             // Always ensure all expected settings keys exist (safe to re-run on existing DB)
             await EnsureSystemSettingsAsync(db);
 
+            // Seed past papers once subjects exist in DB
+            if (!await db.PastPapers.AnyAsync() && await db.Subjects.AnyAsync())
+                await SeedPastPapersAsync(db);
+
             // Idempotent: skip if any roles already exist
-            if (await db.Roles.AnyAsync()) return;
+            if (await db.Roles.AnyAsync())
+            {
+                // Catch the case where roles existed but past papers weren't seeded yet
+                if (!await db.PastPapers.AnyAsync() && await db.Subjects.AnyAsync())
+                    await SeedPastPapersAsync(db);
+                return;
+            }
 
             // ── STEP 1: Roles ─────────────────────────────────────────────────────
             var admin = new Role { Name = "admin", Description = "Administrator — full system access" };
@@ -467,6 +520,98 @@ public static class DatabaseSeeder
 
         foreach (var (key, (value, desc)) in missing)
             db.SystemSettings.Add(new SystemSetting { Key = key, Value = value, Description = desc });
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedPastPapersAsync(IApplicationDbContext db)
+    {
+        // Look up subject IDs by name (subjects must already be in the DB).
+        var subjectMap = await db.Subjects
+            .Select(s => new { s.Name, s.Id })
+            .ToDictionaryAsync(s => s.Name, s => s.Id);
+
+        if (subjectMap.Count == 0) return;
+
+        // Subjects that have real Balochistan Board exam papers.
+        var subjectNames = new[]
+        {
+            "Mathematics", "Physics", "Chemistry", "Biology",
+            "English", "Urdu", "Islamiat", "Pakistan Studies", "Computer Science",
+        };
+
+        // Grades with board exams.
+        var gradeYears = new Dictionary<string, int[]>
+        {
+            ["9"]  = [2018, 2019, 2020, 2021, 2022, 2023, 2024],
+            ["10"] = [2018, 2019, 2020, 2021, 2022, 2023, 2024],
+        };
+
+        var papers = new List<PastPaper>();
+        int order = 0;
+
+        foreach (var (grade, years) in gradeYears)
+        foreach (var subjectName in subjectNames)
+        {
+            if (!subjectMap.TryGetValue(subjectName, out var sid)) continue;
+            foreach (var year in years)
+            {
+                // Annual paper — every year.
+                papers.Add(new PastPaper
+                {
+                    SubjectId = sid, GradeCode = grade, Year = year,
+                    Board = "Balochistan Board (BISE)", PaperType = "Annual",
+                    TotalMarks = 75, TimeLimitMinutes = 180, SortOrder = order++,
+                });
+
+                // Supplementary paper — available for 2018–2023.
+                if (year <= 2023)
+                    papers.Add(new PastPaper
+                    {
+                        SubjectId = sid, GradeCode = grade, Year = year,
+                        Board = "Balochistan Board (BISE)", PaperType = "Supplementary",
+                        TotalMarks = 75, TimeLimitMinutes = 180, SortOrder = order++,
+                    });
+            }
+        }
+
+        db.PastPapers.AddRange(papers);
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Upserts AI infrastructure settings from appsettings.json into SystemSettings so the
+    /// correct Ollama URL and Gemini key are active without a manual SQL UPDATE.
+    /// Only updates keys whose appsettings value is non-empty.
+    /// </summary>
+    private static async Task SyncAiSettingsAsync(IApplicationDbContext db, IConfiguration config)
+    {
+        var sync = new Dictionary<string, string>
+        {
+            ["ollama_url"]         = config["Ai:OllamaUrl"]         ?? "",
+            ["ollama_model"]       = config["Ai:OllamaModel"]       ?? "",
+            ["ollama_timeout_sec"] = config["Ai:OllamaTimeoutSec"]  ?? "",
+            ["gemini_api_key"]     = config["Ai:GeminiApiKey"]      ?? "",
+            ["gemini_model"]       = config["Ai:GeminiModel"]       ?? "",
+            ["tts_api_key"]        = config["Ai:TtsApiKey"]         ?? "",
+        };
+
+        // Only push keys that have a value in config.
+        var toSync = sync.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)).ToList();
+        if (toSync.Count == 0) return;
+
+        var keys     = toSync.Select(kv => kv.Key).ToList();
+        var existing = await db.SystemSettings
+            .Where(s => keys.Contains(s.Key))
+            .ToDictionaryAsync(s => s.Key);
+
+        foreach (var (key, value) in toSync)
+        {
+            if (existing.TryGetValue(key, out var row))
+                row.Value = value;
+            else
+                db.SystemSettings.Add(new SystemSetting { Key = key, Value = value, Description = $"Synced from appsettings — {key}" });
+        }
 
         await db.SaveChangesAsync();
     }

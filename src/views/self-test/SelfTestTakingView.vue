@@ -6,7 +6,7 @@
         <span class="take-subj-icon">{{ subject.icon }}</span>
         <div>
           <div class="take-subj-name">{{ subject.name }}</div>
-          <div class="take-subj-grade">Grade 9 | PTB</div>
+          <div class="take-subj-grade">Grade {{ gradeCode }} | Balochistan Board</div>
         </div>
       </div>
       <div class="take-badges">
@@ -20,22 +20,24 @@
     <div v-else-if="!questions.length" class="take-loading">No questions available for this subject yet.</div>
     <div v-else class="take-body">
       <!-- Question area -->
-      <div class="take-main">
+      <div class="take-main" ref="questionEl">
         <div class="take-q-header">
           <CognitiveBadge :level="currentQ.cognitiveLevel" />
           <DifficultyBadge :level="currentQ.difficulty" />
         </div>
-        <div class="take-q-text urdu" dir="rtl" v-if="subject.medium === 'urdu'">
-          {{ currentQ.stem }}
-        </div>
-        <div class="take-q-text" v-else>{{ currentQ.stem }}</div>
+        <div class="take-q-text"
+          :dir="subject.medium === 'urdu' ? 'rtl' : 'ltr'"
+          :class="subject.medium === 'urdu' ? 'urdu' : ''"
+          v-html="prepareMath(currentQ.stem)"
+        />
 
         <div class="take-options" :dir="subject.medium === 'urdu' ? 'rtl' : 'ltr'">
           <label v-for="(opt, oi) in currentQ.options" :key="oi" class="take-opt"
             :class="{ selected: answers[currentIdx] === oi }">
             <input type="radio" :name="'q' + currentIdx" :value="oi"
               v-model="answers[currentIdx]" class="take-radio" />
-            {{ ['A','B','C','D'][oi] }}. {{ opt }}
+            <span class="take-opt-letter">{{ ['A','B','C','D'][oi] }}</span>
+            <span v-html="prepareMath(opt)" />
           </label>
         </div>
 
@@ -83,34 +85,106 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
 import { useRoute, useRouter } from 'vue-router'
-import { SUBJECTS, useContentStore } from '@/stores/content'
 import { useStudentStore } from '@/stores/student'
 import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
+import api from '@/services/api'
+import { getRealQuestions } from '@/services/assessmentBank'
 import CognitiveBadge from '@/components/platform/CognitiveBadge.vue'
 import DifficultyBadge from '@/components/platform/DifficultyBadge.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const route = useRoute()
 const router = useRouter()
-const content = useContentStore()
 const student = useStudentStore()
 const auth = useAuthStore()
+const catalog = useCatalogStore()
 
 const bookId = computed(() => +route.params.bookId)
-const subject = computed(() => SUBJECTS.find(s => s.id === bookId.value))
+const gradeCode = computed(() => auth.user?.gradeCode || '9')
+
+const subject = computed(() => {
+  const all = Object.values(catalog.gradeSubjects).flat()
+  return all.find(s => String(s.id) === String(bookId.value)) || null
+})
 const difficulty = computed(() => route.query.difficulty || 'Easy,Medium,Hard')
+
+// Wrap bare \begin{...} environments in \[...\] — but ONLY if not already inside \[...\]
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(html) {
+  if (!html) return ''
+  const s = String(html)
+  return s.replace(ENV_RE, (match, _env, offset) => {
+    const before = s.slice(0, offset)
+    const opens = (before.match(/\\\[/g) || []).length
+    const closes = (before.match(/\\\]/g) || []).length
+    return opens > closes ? match : `\\[${match}\\]`
+  })
+}
+
+const KATEX_OPTS = {
+  delimiters: [
+    { left: '\\[', right: '\\]', display: true },
+    { left: '\\(', right: '\\)', display: false },
+    { left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false },
+  ],
+  throwOnError: false,
+}
+
+const questionEl = ref(null)
+function renderMath() {
+  nextTick(() => { if (questionEl.value) renderMathInElement(questionEl.value, KATEX_OPTS) })
+}
+
+// Normalize a QuestionDto from the API to the shape the template/result view expect
+function normalizeQuestion(q) {
+  let options = []
+  try { options = JSON.parse(q.optionsJson || '[]') } catch { options = [] }
+  return {
+    id: q.id,
+    stem: q.stem,
+    options,
+    correct: q.correctIndex ?? 0,
+    difficulty: q.difficulty || 'Medium',
+    cognitiveLevel: q.cognitiveLevel || 'Understanding',
+    topic: q.sloCode || '',
+    reason: q.feedback || '',
+    aiGenerated: q.isAiGenerated,
+  }
+}
 
 const questions = ref([])
 const loadingQ = ref(true)
+
 async function loadQuestions() {
   loadingQ.value = true
-  questions.value = await content.getQuestionsReal(bookId.value, {
-    grade: auth.user?.gradeCode || 9,
-    subjectName: subject.value?.name,
-    limit: 30,
-  })
+  try {
+    // Try backend first (questions ingested from board docs)
+    const { data } = await api.get('/questions/random', {
+      params: { gradeCode: gradeCode.value, subjectId: bookId.value, kind: 'objective', count: 30 },
+    })
+    if (data?.length) {
+      questions.value = data.map(normalizeQuestion)
+      loadingQ.value = false
+      return
+    }
+  } catch { /* fall through */ }
+
+  // Fallback: static assessment bank (17.5k+ board questions bundled with the app)
+  try {
+    questions.value = await getRealQuestions({
+      grade: gradeCode.value,
+      subject: subject.value?.name,
+      limit: 30,
+    })
+  } catch {
+    questions.value = []
+  }
   loadingQ.value = false
 }
 
@@ -155,8 +229,12 @@ function finishTest() {
   router.push(`/app/self-test/${bookId.value}/result?score=${score}&total=${questions.value.length}`)
 }
 
+watch(currentIdx, renderMath)
+watch(questions, renderMath)
+
 onMounted(async () => {
   await loadQuestions()
+  renderMath()
   timer = setInterval(() => {
     if (timeLeft.value > 0) timeLeft.value--
     else finishTest()

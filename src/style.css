@@ -572,3 +572,64 @@ html.dark .ag-grid-card {
   .sp-card, .sp-pill, .sp-item-hd, .sp-back, .sp-item-chev { transition: none; }
   .sp-card:hover { transform: none; }
 }
+
+/* ─── Print styles ─── */
+@media print {
+  /* Hide all UI chrome */
+  .cosmic-sidebar,
+  .cosmic-header,
+  .aih-wrap,
+  .bottom-6.right-6,
+  .skip-link,
+  nav,
+  button.pr-print { display: none !important; }
+
+  /* Remove shell overflow/height constraints so full page renders */
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    color: #0f1424 !important;
+  }
+  .h-screen { height: auto !important; }
+  .overflow-hidden { overflow: visible !important; }
+  .overflow-y-auto { overflow: visible !important; height: auto !important; }
+
+  /* Main content expands to full width */
+  .flex.flex-col.flex-1.min-w-0 {
+    width: 100% !important;
+    overflow: visible !important;
+  }
+  #main-content {
+    overflow: visible !important;
+    height: auto !important;
+    padding: 1.5rem !important;
+    background: white !important;
+  }
+
+  /* Cards should not split across pages */
+  .card, .pr-card { break-inside: avoid; page-break-inside: avoid; }
+
+  /* Force white background and dark text on cards */
+  .card, .pr-kpi, .pr-card {
+    background: white !important;
+    border: 1px solid #e5e7f2 !important;
+    box-shadow: none !important;
+    color: #0f1424 !important;
+  }
+
+  /* KPI values */
+  .pr-kpi-val { color: #6b54e8 !important; }
+
+  /* Progress bars should retain color */
+  .pr-bar span { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+  /* Trend bars */
+  .pr-trend-bar { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm 1cm;
+  }
+}

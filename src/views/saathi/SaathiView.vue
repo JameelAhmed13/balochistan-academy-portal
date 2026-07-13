@@ -98,7 +98,7 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { GraduationCap, CalendarDays, ListChecks, Gauge, Users, Sparkles, Send, User, AlertTriangle, Cpu } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
-import api from '@/services/api'
+import { chatWithFallback, getLastEngine, ollamaConfig } from '@/services/ollamaService'
 import { buildPrompt } from '@/services/studentAssistantPrompts'
 
 const auth = useAuthStore()
@@ -111,7 +111,7 @@ const draft = ref('')
 const messages = ref([])
 const loading = ref(false)
 const engine = ref(null)
-const ollamaModel = 'llama3'
+const ollamaModel = ollamaConfig.MODEL
 const threadEl = ref(null)
 
 const modes = [
@@ -201,13 +201,13 @@ async function send(forceText) {
   await scrollThread()
   try {
     const system = buildPrompt(mode.value, grade.value, injectedFor())
-    const { data } = await api.post('/ai/chat', {
-      messages: [...history, { role: 'user', content: text }],
+    const reply = await chatWithFallback({
       system,
+      messages: [...history, { role: 'user', content: text }],
     })
-    const eng = data.engine
-    const modelName = eng === 'gemini' ? 'gemini-2.5-flash-lite' : ollamaModel
-    messages.value.push({ role: 'saathi', text: data.reply || '…', engine: eng, model: modelName })
+    const eng = getLastEngine()
+    const modelName = eng === 'gemini' ? ollamaConfig.GEMINI_MODEL : ollamaModel
+    messages.value.push({ role: 'saathi', text: reply || '…', engine: eng, model: modelName })
     engine.value = eng
     saveModeMessages()
   } catch (e) {

@@ -59,6 +59,11 @@
       </div>
     </div>
 
+    <!-- Loading -->
+    <div v-if="phase === 'loading'" class="wq-loading">
+      <div class="wq-loading-spinner">⏳ Loading questions…</div>
+    </div>
+
     <!-- Taking -->
     <div v-if="phase === 'taking'" class="wq-taking">
       <div class="wq-take-header">
@@ -70,9 +75,9 @@
         <div class="wq-take-bar"><div class="wq-take-fill" :style="{width: ((currentIdx+1)/questions.length*100)+'%'}"/></div>
         <span>{{ currentIdx+1 }}/{{ questions.length }}</span>
       </div>
-      <div v-if="currentQ" class="wq-question">
+      <div v-if="currentQ" ref="questionEl" class="wq-question">
         <div class="wq-q-num">Question {{ currentIdx + 1 }}</div>
-        <div class="wq-q-text">{{ currentQ.question }}</div>
+        <div class="wq-q-text" v-html="prepareMath(currentQ.question)" />
         <div class="wq-q-opts">
           <button v-for="(opt, i) in currentQ.options" :key="i" @click="answer(i)" class="wq-opt"
             :class="{
@@ -80,12 +85,14 @@
               correct: showAns && i === currentQ.correct,
               wrong: showAns && selectedAns === i && i !== currentQ.correct,
             }" :disabled="showAns">
-            <span class="wq-opt-letter">{{ 'ABCD'[i] }}</span> {{ opt }}
+            <span class="wq-opt-letter">{{ 'ABCD'[i] }}</span>
+            <span v-html="prepareMath(opt)" />
           </button>
         </div>
         <div v-if="showAns" class="wq-ans-feedback">
           <div :class="selectedAns === currentQ.correct ? 'wq-correct' : 'wq-wrong'">
-            {{ selectedAns === currentQ.correct ? '✅ Correct!' : '❌ Wrong — Correct: ' + currentQ.options[currentQ.correct] }}
+            <span v-if="selectedAns === currentQ.correct">✅ Correct!</span>
+            <span v-else>❌ Wrong — Correct: <span v-html="prepareMath(currentQ.options[currentQ.correct])" /></span>
           </div>
           <button @click="next" class="wq-next-btn">{{ currentIdx < questions.length - 1 ? 'Next →' : 'Finish Quiz →' }}</button>
         </div>
@@ -110,12 +117,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
-import { SUBJECTS } from '@/stores/content'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 import { useStudentStore } from '@/stores/student'
+import { getRealQuestions } from '@/services/assessmentBank'
+import api from '@/services/api'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
+const auth = useAuthStore()
+const catalog = useCatalogStore()
 const student = useStudentStore()
 const phase = ref('setup')
 const activeSubject = ref(null)
@@ -125,9 +139,18 @@ const selectedAns = ref(null)
 const showAns = ref(false)
 const answers = ref([])
 const timeLeft = ref(600)
+const questionEl = ref(null)
 let timer = null
 
-const subjects = SUBJECTS || []
+const gradeCode = computed(() => auth.user?.gradeCode || auth.user?.grade || '9')
+const subjects = computed(() => catalog.subjectsForGrade(gradeCode.value))
+
+onMounted(async () => {
+  if (!subjects.value.length) {
+    await catalog.fetchSubjectsForGrade(gradeCode.value).catch(() => {})
+  }
+})
+
 const now = new Date()
 const weekNumber = computed(() => {
   const start = new Date(now.getFullYear(), 0, 1)
@@ -137,89 +160,81 @@ const weekRange = computed(() => {
   const day = now.getDay()
   const mon = new Date(now); mon.setDate(now.getDate() - day + 1)
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6)
-  return `${mon.toLocaleDateString('en-PK',{month:'short',day:'numeric'})} – ${sun.toLocaleDateString('en-PK',{month:'short',day:'numeric'})}`
+  return `${mon.toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })} – ${sun.toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}`
 })
 
 const weeklyScoresKey = `bap_weekly_${weekNumber.value}`
 const weeklyScores = ref(JSON.parse(localStorage.getItem(weeklyScoresKey) || '{}'))
 const streak = computed(() => JSON.parse(localStorage.getItem('bap_weekly_streak') || '1'))
 
-const quizSubjects = computed(() => subjects.slice(0,6).map(s => ({ ...s, questions: 10, duration: 15 })))
+const quizSubjects = computed(() => subjects.value.slice(0, 6).map(s => ({ ...s, icon: s.icon || '📚', questions: 10, duration: 15 })))
 const completedCount = computed(() => Object.keys(weeklyScores.value).length)
 const weeklyAvg = computed(() => {
   const vals = Object.values(weeklyScores.value)
   if (!vals.length) return 0
-  return Math.round(vals.reduce((s,v)=>s+v.pct,0)/vals.length)
+  return Math.round(vals.reduce((s, v) => s + v.pct, 0) / vals.length)
 })
 
-function getStatusText(id) {
-  return weeklyScores.value[id] ? `${weeklyScores.value[id].pct}% ✓` : 'Pending'
-}
+function getStatusText(id) { return weeklyScores.value[id] ? `${weeklyScores.value[id].pct}% ✓` : 'Pending' }
 function getStatusClass(id) { return weeklyScores.value[id] ? 'done' : 'pending' }
 
-const QUESTION_BANK = {
-  physics: [
-    {q:'What is the formula for Ohm\'s Law?',opts:['V = IR','V = I/R','I = VR','R = VI'],ans:0},
-    {q:'Unit of power is:',opts:['Joule','Newton','Watt','Pascal'],ans:2},
-    {q:'Acceleration due to gravity on Earth is approximately:',opts:['9.8 m/s²','10.8 m/s²','8.9 m/s²','11 m/s²'],ans:0},
-    {q:'Wave speed = frequency × ___',opts:['Amplitude','Period','Wavelength','Phase'],ans:2},
-    {q:'Kinetic energy = ½mv². If mass doubles, KE becomes:',opts:['Same','Half','Double','Quadruple'],ans:2},
-    {q:'The SI unit of work is:',opts:['Watt','Newton','Joule','Pascal'],ans:2},
-    {q:'Refractive index n = speed in vacuum / speed in medium. If n > 1, the medium is ___ than vacuum:',opts:['Faster','Slower','Same speed','Depends'],ans:1},
-    {q:'Frequency and wavelength are:',opts:['Directly proportional','Inversely proportional','Unrelated','Equal'],ans:1},
-    {q:'Ohm\'s Law states that V is directly proportional to I when ___ is constant:',opts:['Power','Temperature','Resistance','Frequency'],ans:2},
-    {q:'In which medium does sound travel fastest?',opts:['Air','Water','Vacuum','Solids'],ans:3},
-  ],
-  chemistry: [
-    {q:'What type of bond forms between Na and Cl in NaCl?',opts:['Covalent','Ionic','Metallic','Hydrogen'],ans:1},
-    {q:'pH of pure water at 25°C is:',opts:['0','7','14','6'],ans:1},
-    {q:'The process of converting liquid to gas is called:',opts:['Condensation','Evaporation','Sublimation','Deposition'],ans:1},
-    {q:'Which element has the highest electronegativity?',opts:['Oxygen','Nitrogen','Chlorine','Fluorine'],ans:3},
-    {q:'Endothermic reactions:',opts:['Release heat','Absorb heat','Neither','Both'],ans:1},
-    {q:'The formula of sulfuric acid is:',opts:['HCl','H₂SO₄','H₂SO₃','H₂S'],ans:1},
-    {q:'During electrolysis, oxidation occurs at the:',opts:['Cathode','Anode','Both electrodes','Neither'],ans:1},
-    {q:'Alkanes have the general formula:',opts:['CₙH₂ₙ','CₙH₂ₙ₊₂','CₙH₂ₙ₋₂','CₙHₙ'],ans:1},
-    {q:'A neutral atom has equal numbers of protons and:',opts:['Neutrons','Electrons','Both','Neither'],ans:1},
-    {q:'What is produced when an acid reacts with a metal carbonate?',opts:['Salt only','Salt + water','Salt + water + CO₂','Salt + H₂'],ans:2},
-  ],
-  biology: [
-    {q:'The cell membrane is made mainly of:',opts:['Proteins','Lipids','Carbohydrates','Phospholipid bilayer'],ans:3},
-    {q:'Chlorophyll absorbs mainly ___ light:',opts:['Green','Red and blue','Yellow','White'],ans:1},
-    {q:'The primary site of photosynthesis in a leaf is:',opts:['Epidermis','Stomata','Mesophyll cells','Veins'],ans:2},
-    {q:'Which organ produces bile?',opts:['Pancreas','Kidney','Liver','Stomach'],ans:2},
-    {q:'A recessive allele is expressed only when:',opts:['One copy is present','Two copies are present','Combined with dominant','Never expressed'],ans:1},
-    {q:'The process of diffusion requires ___ energy:',opts:['A lot','Some','No','ATP'],ans:2},
-    {q:'ADH (Anti-Diuretic Hormone) regulates:',opts:['Blood glucose','Water reabsorption','Temperature','Digestion'],ans:1},
-    {q:'Ribosomes are the site of:',opts:['DNA replication','Protein synthesis','Lipid synthesis','ATP production'],ans:1},
-    {q:'Natural selection was proposed by:',opts:['Mendel','Darwin','Watson','Lamarck'],ans:1},
-    {q:'During meiosis II, ___ cells are produced:',opts:['2 diploid','4 haploid','2 haploid','4 diploid'],ans:1},
-  ],
-  mathematics: [
-    {q:'If f(x) = x³, then f\'(x) is:',opts:['x²','2x','3x²','3x³'],ans:2},
-    {q:'sin²θ + cos²θ = ?',opts:['0','1','2','sin2θ'],ans:1},
-    {q:'The equation of a circle with center (0,0) and radius r is:',opts:['y=mx+c','x²+y²=r²','x²+y²=r','ax+by=c'],ans:1},
-    {q:'log(ab) = ?',opts:['log a - log b','log a + log b','log a × log b','log a / log b'],ans:1},
-    {q:'nCr = n! / (r! × ___)',opts:['n!','(n+r)!','(n-r)!','r²!'],ans:2},
-    {q:'The sum of an arithmetic series with first term a, last term l, n terms is:',opts:['n(a+l)/2','n(a+l)','(a+l)/2','na+l'],ans:0},
-    {q:'A complex number a+bi has modulus:',opts:['a+b','a-b','√(a²+b²)','a×b'],ans:2},
-    {q:'Geometric mean of 4 and 16 is:',opts:['8','10','6','12'],ans:0},
-    {q:'If P(A) = 0.3, then P(A\') = ?',opts:['0.3','0.7','1','0'],ans:1},
-    {q:'The derivative of sin(x) is:',opts:['-sin(x)','cos(x)','-cos(x)','tan(x)'],ans:1},
-  ],
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(html) {
+  if (!html) return ''
+  const s = String(html)
+  return s.replace(ENV_RE, (match, _env, offset) => {
+    const before = s.slice(0, offset)
+    const opens = (before.match(/\\\[/g) || []).length
+    const closes = (before.match(/\\\]/g) || []).length
+    return opens > closes ? match : `\\[${match}\\]`
+  })
 }
+const KATEX_OPTS = {
+  delimiters: [
+    { left: '\\[', right: '\\]', display: true },
+    { left: '\\(', right: '\\)', display: false },
+    { left: '$', right: '$', display: false },
+  ],
+  throwOnError: false,
+}
+async function renderMath() {
+  await nextTick()
+  if (questionEl.value) renderMathInElement(questionEl.value, KATEX_OPTS)
+}
+watch(currentIdx, renderMath)
+watch(phase, renderMath)
 
-function startQuiz(subj) {
+async function startQuiz(subj) {
   activeSubject.value = subj
-  const bank = QUESTION_BANK[subj.id] || QUESTION_BANK.physics
-  questions.value = bank.map(q=>({ question:q.q, options:q.opts, correct:q.ans }))
-  answers.value = new Array(questions.value.length).fill(null)
+  phase.value = 'loading'
+  let qs = []
+  try {
+    const res = await api.get('/questions/random', { params: { subjectId: subj.id, grade: gradeCode.value, limit: 10 } })
+    qs = (res.data || []).map(q => {
+      let opts = []
+      try { opts = JSON.parse(q.optionsJson || '[]') } catch { opts = [] }
+      return { question: q.stem || q.question, options: opts, correct: q.correctIndex ?? 0 }
+    })
+  } catch { /* fall through */ }
+
+  if (!qs.length) {
+    try {
+      const real = await getRealQuestions({ grade: gradeCode.value, subject: subj.name, limit: 10 })
+      qs = real.map(q => ({ question: q.stem || q.question, options: q.options || [], correct: q.correct ?? q.correctIndex ?? 0 }))
+    } catch { qs = [] }
+  }
+
+  if (!qs.length) { phase.value = 'setup'; return }
+
+  questions.value = qs
+  answers.value = new Array(qs.length).fill(null)
   currentIdx.value = 0; selectedAns.value = null; showAns.value = false
   timeLeft.value = subj.duration * 60
   phase.value = 'taking'
-  timer = setInterval(()=>{ timeLeft.value--; if(timeLeft.value<=0){clearInterval(timer);finish()} },1000)
+  timer = setInterval(() => { timeLeft.value--; if (timeLeft.value <= 0) { clearInterval(timer); finish() } }, 1000)
 }
 
-const currentQ = computed(()=>questions.value[currentIdx.value])
+const currentQ = computed(() => questions.value[currentIdx.value])
 function answer(idx) { selectedAns.value = idx; showAns.value = true; answers.value[currentIdx.value] = idx }
 function next() {
   if (currentIdx.value < questions.value.length - 1) { currentIdx.value++; selectedAns.value = null; showAns.value = false }
@@ -228,14 +243,17 @@ function next() {
 function finish() {
   clearInterval(timer)
   phase.value = 'result'
-  const correct = answers.value.filter((a,i)=>a===questions.value[i]?.correct).length
-  const pct = Math.round(correct/questions.value.length*100)
+  const correct = answers.value.filter((a, i) => a === questions.value[i]?.correct).length
+  const pct = Math.round(correct / questions.value.length * 100)
   weeklyScores.value[activeSubject.value.id] = { correct, total: questions.value.length, pct }
   localStorage.setItem(weeklyScoresKey, JSON.stringify(weeklyScores.value))
-  student.saveTest({ subject: activeSubject.value.id, type: 'weekly', score: correct, total: questions.value.length, bookId: 'weekly' })
+  student.saveTest({ subject: activeSubject.value.name, type: 'weekly', score: correct, total: questions.value.length, bookId: 'weekly' })
 }
-const resultData = computed(()=>{ const correct=answers.value.filter((a,i)=>a===questions.value[i]?.correct).length; return { correct, total:questions.value.length, pct:Math.round(correct/questions.value.length*100) } })
-onUnmounted(()=>clearInterval(timer))
+const resultData = computed(() => {
+  const correct = answers.value.filter((a, i) => a === questions.value[i]?.correct).length
+  return { correct, total: questions.value.length, pct: Math.round(correct / questions.value.length * 100) }
+})
+onUnmounted(() => clearInterval(timer))
 </script>
 
 <style scoped>
@@ -301,4 +319,6 @@ onUnmounted(()=>clearInterval(timer))
 .wq-result-btn { padding: 0.75rem 1.5rem; border-radius: 14px; font-weight: 700; font-size: 0.9rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
 .wq-result-btn.secondary { border: 1px solid var(--t-border); background: var(--t-hover); color: var(--t-text1); }
 .wq-result-btn.primary { background: linear-gradient(135deg, #4caf50, #00bcd4); color: white; border: none; }
+.wq-loading { text-align: center; padding: 3rem 1rem; }
+.wq-loading-spinner { font-size: 1.1rem; color: var(--t-text3); }
 </style>

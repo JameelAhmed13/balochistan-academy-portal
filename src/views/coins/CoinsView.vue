@@ -87,7 +87,7 @@ const student = useStudentStore()
 
 const totalCoins = computed(() => student.totalCoins)
 
-onMounted(() => student.fetchCoinData())
+onMounted(() => Promise.allSettled([student.fetchCoinData(), student.fetchStats()]))
 
 function formatDate(iso) { return new Date(iso).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi', day: 'numeric', month: 'short', year: 'numeric' }) }
 </script>

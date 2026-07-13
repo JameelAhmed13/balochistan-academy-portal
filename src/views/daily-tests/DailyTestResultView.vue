@@ -1,5 +1,5 @@
 <template>
-  <div class="animate-fade-in space-y-5">
+  <div class="animate-fade-in space-y-5" ref="resultEl">
     <ExamCompleted :score="scorePercent" label="Daily Challenge Complete!" :subtitle="`${correctCount} / ${totalCount} Correct`" />
 
     <!-- KUA cards -->
@@ -23,7 +23,10 @@
     </div>
 
     <!-- Per-question table -->
-    <div class="qt-wrap">
+    <div v-if="!questions.length" class="qt-empty">
+      Question-level breakdown is not available for this attempt. Score recorded: {{ correctCount }}/{{ totalCount }}.
+    </div>
+    <div v-else class="qt-wrap">
       <table class="qt-table">
         <thead>
           <tr class="qt-thead">
@@ -42,22 +45,22 @@
                 <CognitiveBadge :level="q.cognitiveLevel" />
                 <DifficultyBadge :level="q.difficulty" />
               </div>
-              <div class="qt-stem">{{ q.stem }}</div>
+              <div class="qt-stem" v-html="prepareMath(q.stem)" />
             </td>
             <td>
               <div class="qt-answer">
-                <span>{{ q.userAnswer !== undefined ? q.options[q.userAnswer] : 'Skipped' }}</span>
+                <span v-html="prepareMath(q.userAnswer !== undefined ? q.options[q.userAnswer] : 'Skipped')" />
                 <span v-if="q.userAnswer !== undefined && q.userAnswer !== q.correct" class="qt-wrong">Incorrect</span>
                 <span v-else-if="q.userAnswer === undefined" class="qt-skipped">Skipped</span>
                 <span v-else class="qt-correct-pill">Correct</span>
               </div>
             </td>
-            <td>{{ q.options[q.correct] }}</td>
-            <td class="qt-reason">{{ q.reason }}</td>
+            <td v-html="prepareMath(q.options[q.correct])" />
+            <td class="qt-reason" v-html="prepareMath(q.reason)" />
           </tr>
         </tbody>
       </table>
-    </div>
+    </div><!-- end v-else -->
 
     <div class="dtr-actions">
       <RouterLink to="/app/daily-tests" class="dtr-btn-back">← Back to Hub</RouterLink>
@@ -69,10 +72,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStudentStore } from '@/stores/student'
-import { useContentStore } from '@/stores/content'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
 import ExamCompleted from '@/components/platform/ExamCompleted.vue'
 import CognitiveBadge from '@/components/platform/CognitiveBadge.vue'
 import DifficultyBadge from '@/components/platform/DifficultyBadge.vue'
@@ -80,7 +84,12 @@ import PageFooter from '@/components/platform/PageFooter.vue'
 
 const route = useRoute()
 const student = useStudentStore()
-const content = useContentStore()
+
+const resultEl = ref(null)
+const KATEX_OPTS = { delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }, { left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false }
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(t) { if (!t) return ''; return String(t).replace(ENV_RE, (m) => `\\[${m}\\]`) }
+onMounted(() => nextTick(() => { if (resultEl.value) renderMathInElement(resultEl.value, KATEX_OPTS) }))
 
 const record = computed(() => {
   if (route.params.id === 'new') return null
@@ -88,13 +97,20 @@ const record = computed(() => {
 })
 
 const questions = computed(() => {
-  const qs = record.value?.questions || content.getQuestions(1, { limit: 15 })
+  const qs = record.value?.questions || []
   return qs.map((q, i) => ({ ...q, userAnswer: record.value?.answers?.[i] }))
 })
 
-const totalCount = computed(() => questions.value.length)
-const correctCount = computed(() => questions.value.filter(q => q.userAnswer === q.correct).length)
-const scorePercent = computed(() => Math.round(correctCount.value / totalCount.value * 100))
+const totalCount = computed(() => record.value?.total || questions.value.length || 0)
+const correctCount = computed(() => {
+  if (questions.value.length) return questions.value.filter(q => q.userAnswer === q.correct).length
+  return record.value?.score || 0
+})
+const scorePercent = computed(() => {
+  if (!totalCount.value) return 0
+  if (record.value?.score !== undefined && record.value?.total) return Math.round(record.value.score / record.value.total * 100)
+  return Math.round(correctCount.value / totalCount.value * 100)
+})
 
 const knowledgeQs = computed(() => questions.value.filter(q => q.cognitiveLevel === 'Knowledge'))
 const understandingQs = computed(() => questions.value.filter(q => q.cognitiveLevel === 'Understanding'))
@@ -109,7 +125,7 @@ const understandingScore = computed(() => catScore(understandingQs.value))
 const understandingPct = computed(() => catPct(understandingQs.value))
 const applyingScore = computed(() => catScore(applyingQs.value))
 const applyingPct = computed(() => catPct(applyingQs.value))
-const coinsEarned = computed(() => record.value?.coins || correctCount.value)
+const coinsEarned = computed(() => record.value?.coins ?? 0)
 </script>
 
 <style scoped>
@@ -126,6 +142,7 @@ html.dark .kua-rose  { background: rgba(183,28,28,0.2); border-color: rgba(183,2
 html.dark .kua-amber { background: rgba(245,127,23,0.2); border-color: rgba(245,127,23,0.4); }
 .kua-val { font-size: 1.4rem; font-weight: 800; color: var(--t-text1); }
 .kua-lbl { font-size: 0.7rem; color: var(--t-text2); margin-top: 0.2rem; }
+.qt-empty { padding: 1.25rem 1.5rem; background: var(--t-surface); border: 1px solid var(--t-border); border-radius: 12px; font-size: 0.85rem; color: var(--t-text3); }
 .qt-wrap { background: var(--t-surface); border: 1px solid var(--t-border); border-radius: 12px; overflow: hidden; }
 .qt-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .qt-thead th { background: #4caf50; color: white; padding: 0.75rem 1rem; text-align: left; font-weight: 600; }

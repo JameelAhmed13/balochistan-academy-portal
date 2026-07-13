@@ -96,6 +96,12 @@
             </tr>
           </thead>
           <tbody>
+            <tr v-if="loadingTests">
+              <td colspan="6" style="text-align:center;padding:1.5rem;color:var(--t-text3)">Loading institute tests…</td>
+            </tr>
+            <tr v-else-if="!instituteTests.length">
+              <td colspan="6" style="text-align:center;padding:1.5rem;color:var(--t-text3)">No institute tests assigned yet.</td>
+            </tr>
             <tr v-for="(t, i) in instituteTests" :key="t.id">
               <td>{{ i + 1 }}</td>
               <td>{{ t.title }}</td>
@@ -120,37 +126,55 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import StatCards from '@/components/platform/StatCards.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
+import api from '@/services/api'
 
-const instituteTests = ref([
-  { id: 1, title: 'June Monthly Combined Test — All Subjects', opens: '2026-06-01', closes: '2026-06-30', taken: false },
-  { id: 2, title: 'May Science Test — Biology, Chemistry, Physics', opens: '2026-05-01', closes: '2026-05-31', taken: true },
-  { id: 3, title: 'April Urdu + Pakistan Studies', opens: '2026-04-01', closes: '2026-04-30', taken: false },
-])
+const instituteTests = ref([])
+const loadingTests = ref(false)
+
+onMounted(async () => {
+  loadingTests.value = true
+  try {
+    const res = await api.get('/tests', { params: { assigned: true, type: 'monthly' } })
+    instituteTests.value = (res.data || []).map(t => ({
+      id: t.id,
+      title: t.title || t.name || `Test ${t.id}`,
+      opens: t.opensAt || t.startsAt || t.openDate || t.opens || null,
+      closes: t.closesAt || t.endsAt || t.closeDate || t.closes || null,
+      taken: t.taken ?? false,
+    }))
+  } catch {
+    instituteTests.value = []
+  } finally {
+    loadingTests.value = false
+  }
+})
 
 const takenCount = computed(() => instituteTests.value.filter(t => t.taken).length)
 const pendingCount = computed(() => instituteTests.value.filter(t => !t.taken && isAvailable(t)).length)
 const expiredCount = computed(() => instituteTests.value.filter(t => !t.taken && !isAvailable(t) && new Date() > new Date(t.closes)).length)
 
 function isAvailable(t) {
+  if (!t.opens || !t.closes) return false
   const now = new Date(); const o = new Date(t.opens); const c = new Date(t.closes)
   return now >= o && now <= c
 }
 function statusLabel(t) {
   if (t.taken) return 'Taken'
   if (isAvailable(t)) return 'Opening'
-  if (new Date() > new Date(t.closes)) return 'Expired-Waiting'
+  if (t.closes && new Date() > new Date(t.closes)) return 'Expired'
   return 'Upcoming'
 }
 function statusCss(t) {
   if (t.taken) return 'mep-taken'
   if (isAvailable(t)) return 'mep-opening'
-  if (new Date() > new Date(t.closes)) return 'mep-expired'
+  if (t.closes && new Date() > new Date(t.closes)) return 'mep-expired'
   return 'mep-upcoming'
 }
 function formatDate(iso) {
+  if (!iso) return '—'
   return new Date(iso).toLocaleDateString('en-GB', { timeZone: 'Asia/Karachi', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')
 }
 </script>
