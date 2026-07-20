@@ -111,7 +111,7 @@
                 <span :class="['mep-status', statusCss(t)]">{{ statusLabel(t) }}</span>
               </td>
               <td>
-                <RouterLink v-if="!t.taken && isAvailable(t)" :to="`/app/competition/monthly-test`" class="btn-attempt">ATTEMPT</RouterLink>
+                <RouterLink v-if="!t.taken && isAvailable(t)" :to="`/app/competition/scheduled/${t.id}`" class="btn-attempt">ATTEMPT</RouterLink>
                 <RouterLink v-else-if="t.taken" :to="`/app/competition/result/${t.id}`" class="btn-view">VIEW DETAILS</RouterLink>
                 <span v-else class="status-notq">—</span>
               </td>
@@ -130,6 +130,11 @@ import { ref, computed, onMounted } from 'vue'
 import StatCards from '@/components/platform/StatCards.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
+import { useStudentStore } from '@/stores/student'
+
+const auth = useAuthStore()
+const student = useStudentStore()
 
 const instituteTests = ref([])
 const loadingTests = ref(false)
@@ -137,13 +142,18 @@ const loadingTests = ref(false)
 onMounted(async () => {
   loadingTests.value = true
   try {
-    const res = await api.get('/tests', { params: { assigned: true, type: 'monthly' } })
-    instituteTests.value = (res.data || []).map(t => ({
+    await student.fetchAttempts().catch(() => {})
+    const takenTestIds = new Set(student.testRecords.filter(r => r.testId).map(r => String(r.testId)))
+    const res = await api.get('/tests', {
+      params: { kind: 'monthly', gradeCode: auth.user?.gradeCode || undefined, published: true, pageSize: 50 },
+    })
+    const items = res.data?.items || []
+    instituteTests.value = items.map(t => ({
       id: t.id,
-      title: t.title || t.name || `Test ${t.id}`,
-      opens: t.opensAt || t.startsAt || t.openDate || t.opens || null,
-      closes: t.closesAt || t.endsAt || t.closeDate || t.closes || null,
-      taken: t.taken ?? false,
+      title: t.title || `Test ${t.id}`,
+      opens: t.scheduledAt || null,
+      closes: t.endsAt || null,
+      taken: takenTestIds.has(String(t.id)),
     }))
   } catch {
     instituteTests.value = []

@@ -53,11 +53,15 @@ public class MappingProfile : Profile
                 src.CreatedAt))
             .ForAllMembers(opt => opt.Ignore());
 
+        // SubjectName isn't on TestAttempt itself — the controller attaches it afterward via a batch
+        // lookup (AttachSubjectNames) since it needs a cross-row Subject-table join, not a per-row map.
         CreateMap<TestAttempt, AttemptResultDto>()
             .ConstructUsing(src => new AttemptResultDto(
                 src.Id,
                 src.UserId,
                 src.TestId,
+                src.SubjectId,
+                null,
                 src.Score,
                 src.Total,
                 src.Percent,

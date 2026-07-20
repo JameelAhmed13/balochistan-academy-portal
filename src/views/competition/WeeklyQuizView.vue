@@ -209,7 +209,7 @@ async function startQuiz(subj) {
   phase.value = 'loading'
   let qs = []
   try {
-    const res = await api.get('/questions/random', { params: { subjectId: subj.id, grade: gradeCode.value, limit: 10 } })
+    const res = await api.get('/questions/random', { params: { subjectId: subj.id, gradeCode: gradeCode.value, count: 10 } })
     qs = (res.data || []).map(q => {
       let opts = []
       try { opts = JSON.parse(q.optionsJson || '[]') } catch { opts = [] }
@@ -247,7 +247,14 @@ function finish() {
   const pct = Math.round(correct / questions.value.length * 100)
   weeklyScores.value[activeSubject.value.id] = { correct, total: questions.value.length, pct }
   localStorage.setItem(weeklyScoresKey, JSON.stringify(weeklyScores.value))
-  student.saveTest({ subject: activeSubject.value.name, type: 'weekly', score: correct, total: questions.value.length, bookId: 'weekly' })
+  student.saveTest({
+    subject: activeSubject.value.name,
+    subjectId: activeSubject.value?.id ?? null,
+    type: 'weekly',
+    score: correct,
+    total: questions.value.length,
+    bookId: 'weekly',
+  })
 }
 const resultData = computed(() => {
   const correct = answers.value.filter((a, i) => a === questions.value[i]?.correct).length

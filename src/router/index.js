@@ -92,11 +92,15 @@ const routes = [
       // Daily Tests
       { path: 'daily-tests',                    name: 'DailyTests',           component: () => import('@/views/daily-tests/DailyTestsView.vue') },
       { path: 'daily-tests/combined',           name: 'DailyCombinedTest',    component: () => import('@/views/daily-tests/DailyCombinedTestView.vue') },
+      { path: 'daily-tests/scheduled/:id',      name: 'ScheduledDailyTest',   component: () => import('@/views/tests/ScheduledTestTakingView.vue'),
+        props: (route) => ({ id: route.params.id, attemptType: 'daily', resultBase: '/app/daily-tests/result' }) },
       { path: 'daily-tests/result/:id',         name: 'DailyTestResult',      component: () => import('@/views/daily-tests/DailyTestResultView.vue'), props: true },
 
       // Competition / Monthly / Challenge / Weekly / Leaderboard
       { path: 'competition',                    name: 'Competition',          component: () => import('@/views/competition/CompetitionView.vue') },
       { path: 'competition/monthly-test',       name: 'MonthlyTest',          component: () => import('@/views/competition/MonthlyTestView.vue') },
+      { path: 'competition/scheduled/:id',      name: 'ScheduledMonthlyTest', component: () => import('@/views/tests/ScheduledTestTakingView.vue'),
+        props: (route) => ({ id: route.params.id, attemptType: 'monthly', resultBase: '/app/competition/result' }) },
       { path: 'competition/result/:id',         name: 'MonthlyTestResult',    component: () => import('@/views/competition/MonthlyTestResultView.vue'), props: true },
       { path: 'competition/challenge',          name: 'ChallengeQuiz',        component: () => import('@/views/competition/ChallengeQuizView.vue') },
       { path: 'competition/weekly',             name: 'WeeklyQuiz',           component: () => import('@/views/competition/WeeklyQuizView.vue') },

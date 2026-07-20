@@ -36,6 +36,7 @@ export const useStudentStore = defineStore('student', () => {
     return Math.round(testRecords.value.reduce((a, t) => a + (t.score / t.total) * 100, 0) / testRecords.value.length)
   })
   const monthlyTests = computed(() => {
+    if (_apiStats.value) return _apiStats.value.thisMonth ?? 0
     const now = new Date(); const m = now.getMonth(); const y = now.getFullYear()
     return testRecords.value.filter(t => { const d = new Date(t.date); return d.getMonth() === m && d.getFullYear() === y }).length
   })
@@ -116,6 +117,7 @@ export const useStudentStore = defineStore('student', () => {
     // Fire-and-forget backend attempt for coins/leaderboard
     api.post('/tests/attempts', {
       testId:      record.testId || null,
+      subjectId:   record.subjectId || null,
       score:       record.score       || 0,
       total:       record.total       || 0,
       durationSec: record.durationSec || 0,
@@ -198,7 +200,7 @@ export const useStudentStore = defineStore('student', () => {
     if (_attemptsFetched.value) return
     _attemptsFetched.value = true
     try {
-      const { data } = await api.get('/tests/me/attempts', { params: { pageSize: 200 } })
+      const { data } = await api.get('/tests/attempts', { params: { pageSize: 200 } })
       const items = data?.items || data || []
       const existingIds = new Set(testRecords.value.filter(r => r.serverId).map(r => String(r.serverId)))
       const newRecords = items
@@ -206,6 +208,8 @@ export const useStudentStore = defineStore('student', () => {
         .map(r => ({
           id: r.id,
           serverId: r.id,
+          testId: r.testId ?? null,
+          subjectId: r.subjectId ?? null,
           subject: r.subject || r.subjectName || '',
           type: r.attemptType || r.type || 'self-test',
           score: r.score ?? 0,

@@ -1,5 +1,7 @@
+using AutoMapper;
 using BalochiAcademy.Application.Common.Interfaces;
 using BalochiAcademy.Application.Grades;
+using BalochiAcademy.Application.Questions;
 using BalochiAcademy.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +11,7 @@ namespace BalochiAcademy.API.Controllers;
 
 [ApiController]
 [Route("api")]
-public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUserService cu, ISystemSettingsService settings) : ControllerBase
+public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUserService cu, ISystemSettingsService settings, IMapper mapper) : ControllerBase
 {
     // ── PUBLIC ────────────────────────────────────────────────────────────────
 
@@ -183,6 +185,23 @@ public class CatalogController(IUnitOfWork uow, IAuditService audit, ICurrentUse
             .ToListAsync(ct);
 
         return Ok(papers);
+    }
+
+    /// <summary>GET /api/past-papers/{id}/questions — the real questions tagged to this specific paper, in paper order.
+    /// Returns an empty array (not 404) if the paper exists but has no questions tagged yet — callers should fall
+    /// back to a general subject/grade question pool in that case rather than treating it as an error.</summary>
+    [HttpGet("past-papers/{id:int}/questions")]
+    public async Task<IActionResult> GetPastPaperQuestions(int id, CancellationToken ct)
+    {
+        var paperExists = await uow.Repository<PastPaper>().Query().AnyAsync(p => p.Id == id && p.IsActive, ct);
+        if (!paperExists) return NotFound();
+
+        var questions = await uow.Repository<Question>().Query()
+            .Where(q => q.PastPaperId == id)
+            .OrderBy(q => q.Id)
+            .ToListAsync(ct);
+
+        return Ok(mapper.Map<List<QuestionDto>>(questions));
     }
 
     // ── ADMIN: Mediums ────────────────────────────────────────────────────────

@@ -13,8 +13,21 @@
       </div>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loadingQ" class="card p-10 text-center flex flex-col items-center gap-3">
+      <div class="text-4xl">⏳</div>
+      <p class="text-sm" style="color:var(--t-text2)">Loading questions…</p>
+    </div>
+
+    <!-- Error / empty (no bundled fallback — this app is online-only for graded tests) -->
+    <div v-else-if="loadErr || !questions.length" class="card p-10 text-center flex flex-col items-center gap-3">
+      <div class="text-4xl">📭</div>
+      <p class="text-sm" style="color:var(--t-text2)">No questions available for this subject yet.</p>
+      <button @click="loadQuestions" class="btn-secondary">Retry</button>
+    </div>
+
     <!-- Not started screen -->
-    <div v-if="!started" class="card p-10 text-center flex flex-col items-center gap-4">
+    <div v-else-if="!started" class="card p-10 text-center flex flex-col items-center gap-4">
       <div class="text-5xl">✍️</div>
       <h3 class="text-lg font-semibold text-slate-800">Subjective Self Test</h3>
       <p class="text-sm text-slate-500 max-w-md">Answer {{ shortQs.length }} short questions and {{ longQs.length }} long questions. Your answers will be AI-graded against model answers.</p>
@@ -142,24 +155,57 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { ArrowLeft, Timer, Play, CheckCircle, Bold, Italic, List, Mic, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from '@lucide/vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import { useContentStore } from '@/stores/content'
 import { findPrepSubject } from '@/views/preparation/prepSubjects'
 import { useStudentStore } from '@/stores/student'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 import { gradeSubjectiveAnswers } from '@/services/ollamaService'
 
 const props = defineProps({ bookId: String })
-const content = useContentStore()
 const student = useStudentStore()
 const auth = useAuthStore()
 
 const subject = computed(() => findPrepSubject(props.bookId))
-const questions = ref(content.getSubjectiveQuestions(+props.bookId, { limit: 20 }))
+const gradeCode = computed(() => auth.user?.gradeCode || 9)
+
+function normalizeQuestion(q) {
+  const type = q.questionType === 'Long' ? 'Long' : 'Short'
+  return {
+    id: q.id,
+    stem: q.stem,
+    type,
+    difficulty: q.difficulty || 'Medium',
+    cognitiveLevel: q.cognitiveLevel || 'Understanding',
+    marks: q.marks ?? (type === 'Long' ? 7 : 3),
+    modelAnswer: q.modelAnswer || 'No model answer available for this question yet.',
+  }
+}
+
+const questions = ref([])
+const loadingQ = ref(true)
+const loadErr = ref(false)
+
+async function loadQuestions() {
+  loadingQ.value = true
+  loadErr.value = false
+  try {
+    const { data } = await api.get('/questions/random', {
+      params: { gradeCode: gradeCode.value, subjectId: +props.bookId, kind: 'subjective', count: 20 },
+    })
+    questions.value = (data || []).map(normalizeQuestion)
+  } catch {
+    questions.value = []
+    loadErr.value = true
+  }
+  loadingQ.value = false
+}
+onMounted(loadQuestions)
+
 const shortQs = computed(() => questions.value.filter(q => q.type === 'Short'))
 const longQs  = computed(() => questions.value.filter(q => q.type === 'Long'))
 
@@ -236,7 +282,7 @@ async function finishTest() {
   gradingDone.value = true
   const totalMarks = questions.value.reduce((a, q) => a + q.marks, 0)
   const earned = Object.values(grades.value).reduce((a, g) => a + g.marks, 0)
-  student.saveTest({ subject: subject.value?.name, type: 'Subjective Test', score: earned, total: totalMarks, bookId: +props.bookId })
+  student.saveTest({ subject: subject.value?.name, subjectId: +props.bookId, type: 'Subjective Test', score: earned, total: totalMarks, bookId: +props.bookId })
 }
 
 function toggleVoice() {

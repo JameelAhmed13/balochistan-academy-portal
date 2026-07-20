@@ -17,83 +17,97 @@
       </select>
     </div>
 
-    <!-- Top 3 podium -->
-    <div class="lb-podium">
-      <div class="lb-podium-item lb-second" v-if="topThree[1]">
-        <div class="lb-podium-avatar" style="background: linear-gradient(135deg,#9ca3af,#6b7280)">{{ topThree[1].initials }}</div>
-        <div class="lb-podium-rank">🥈</div>
-        <div class="lb-podium-name">{{ topThree[1].name }}</div>
-        <div class="lb-podium-score">{{ topThree[1].score }}</div>
-        <div class="lb-podium-block lb-podium-block-2"></div>
-      </div>
-      <div class="lb-podium-item lb-first" v-if="topThree[0]">
-        <div class="lb-crown">👑</div>
-        <div class="lb-podium-avatar lb-first-avatar" style="background: linear-gradient(135deg,#f59e0b,#d97706)">{{ topThree[0].initials }}</div>
-        <div class="lb-podium-rank">🥇</div>
-        <div class="lb-podium-name">{{ topThree[0].name }}</div>
-        <div class="lb-podium-score">{{ topThree[0].score }}</div>
-        <div class="lb-podium-block lb-podium-block-1"></div>
-      </div>
-      <div class="lb-podium-item lb-third" v-if="topThree[2]">
-        <div class="lb-podium-avatar" style="background: linear-gradient(135deg,#b45309,#92400e)">{{ topThree[2].initials }}</div>
-        <div class="lb-podium-rank">🥉</div>
-        <div class="lb-podium-name">{{ topThree[2].name }}</div>
-        <div class="lb-podium-score">{{ topThree[2].score }}</div>
-        <div class="lb-podium-block lb-podium-block-3"></div>
-      </div>
+    <!-- Loading -->
+    <div v-if="loading" class="lb-state">Loading leaderboard…</div>
+
+    <!-- Error -->
+    <div v-else-if="loadError" class="lb-state lb-state--error">
+      <span>Couldn't load the leaderboard — check your connection and try again.</span>
+      <button type="button" class="btn-ghost" @click="load">Retry</button>
     </div>
 
-    <!-- User's rank card -->
-    <div v-if="userEntry" class="lb-my-rank-card">
-      <div class="lb-my-rank-label">Your Rank</div>
-      <div class="lb-my-rank-num">#{{ userEntry.rank }}</div>
-      <div class="lb-my-rank-score">{{ userEntry.score }} pts</div>
-      <div class="lb-my-rank-tip">{{ userRankTip }}</div>
-    </div>
+    <!-- Empty -->
+    <div v-else-if="!displayList.length" class="lb-state">No leaderboard entries yet — take a test to appear here.</div>
 
-    <!-- Full leaderboard table -->
-    <div class="lb-table-wrap">
-      <table class="lb-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Student</th>
-            <th>Score</th>
-            <th>Tests</th>
-            <th>Avg%</th>
-            <th>Badge</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="entry in displayList" :key="entry.rank" :class="{ 'lb-me-row': entry.isMe }">
-            <td>
-              <span v-if="entry.rank === 1">🥇</span>
-              <span v-else-if="entry.rank === 2">🥈</span>
-              <span v-else-if="entry.rank === 3">🥉</span>
-              <span v-else class="lb-rank-num">{{ entry.rank }}</span>
-            </td>
-            <td>
-              <div class="lb-student-cell">
-                <div class="lb-avatar" :style="{background: entry.color}">{{ entry.initials }}</div>
-                <div>
-                  <div class="lb-student-name">{{ entry.name }} {{ entry.isMe ? '(You)' : '' }}</div>
-                  <div class="lb-student-city">{{ entry.city }}</div>
+    <template v-else>
+      <!-- Top 3 podium -->
+      <div class="lb-podium">
+        <div class="lb-podium-item lb-second" v-if="topThree[1]">
+          <div class="lb-podium-avatar" style="background: linear-gradient(135deg,#9ca3af,#6b7280)">{{ topThree[1].initials }}</div>
+          <div class="lb-podium-rank">🥈</div>
+          <div class="lb-podium-name">{{ topThree[1].name }}</div>
+          <div class="lb-podium-score">{{ topThree[1].score }}</div>
+          <div class="lb-podium-block lb-podium-block-2"></div>
+        </div>
+        <div class="lb-podium-item lb-first" v-if="topThree[0]">
+          <div class="lb-crown">👑</div>
+          <div class="lb-podium-avatar lb-first-avatar" style="background: linear-gradient(135deg,#f59e0b,#d97706)">{{ topThree[0].initials }}</div>
+          <div class="lb-podium-rank">🥇</div>
+          <div class="lb-podium-name">{{ topThree[0].name }}</div>
+          <div class="lb-podium-score">{{ topThree[0].score }}</div>
+          <div class="lb-podium-block lb-podium-block-1"></div>
+        </div>
+        <div class="lb-podium-item lb-third" v-if="topThree[2]">
+          <div class="lb-podium-avatar" style="background: linear-gradient(135deg,#b45309,#92400e)">{{ topThree[2].initials }}</div>
+          <div class="lb-podium-rank">🥉</div>
+          <div class="lb-podium-name">{{ topThree[2].name }}</div>
+          <div class="lb-podium-score">{{ topThree[2].score }}</div>
+          <div class="lb-podium-block lb-podium-block-3"></div>
+        </div>
+      </div>
+
+      <!-- User's rank card -->
+      <div v-if="userEntry" class="lb-my-rank-card">
+        <div class="lb-my-rank-label">Your Rank</div>
+        <div class="lb-my-rank-num">#{{ userEntry.rank }}</div>
+        <div class="lb-my-rank-score">{{ userEntry.score }} pts</div>
+        <div class="lb-my-rank-tip">{{ userRankTip }}</div>
+      </div>
+
+      <!-- Full leaderboard table -->
+      <div class="lb-table-wrap">
+        <table class="lb-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student</th>
+              <th>Score</th>
+              <th>Tests</th>
+              <th>Avg%</th>
+              <th>Badge</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="entry in displayList" :key="entry.rank" :class="{ 'lb-me-row': entry.isMe }">
+              <td>
+                <span v-if="entry.rank === 1">🥇</span>
+                <span v-else-if="entry.rank === 2">🥈</span>
+                <span v-else-if="entry.rank === 3">🥉</span>
+                <span v-else class="lb-rank-num">{{ entry.rank }}</span>
+              </td>
+              <td>
+                <div class="lb-student-cell">
+                  <div class="lb-avatar" :style="{background: entry.color}">{{ entry.initials }}</div>
+                  <div>
+                    <div class="lb-student-name">{{ entry.name }} {{ entry.isMe ? '(You)' : '' }}</div>
+                    <div class="lb-student-city">{{ entry.city }}</div>
+                  </div>
                 </div>
-              </div>
-            </td>
-            <td><span class="lb-score">{{ entry.score }}</span></td>
-            <td class="lb-num">{{ entry.tests }}</td>
-            <td>
-              <div class="lb-avg-bar">
-                <div class="lb-avg-fill" :style="{width: entry.avg+'%', background: entry.avg >= 80 ? '#4caf50' : entry.avg >= 60 ? '#f59e0b' : '#ef4444'}"/>
-                <span>{{ entry.avg }}%</span>
-              </div>
-            </td>
-            <td><span class="lb-badge" :class="getBadgeClass(entry.avg)">{{ getBadge(entry.avg) }}</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              </td>
+              <td><span class="lb-score">{{ entry.score }}</span></td>
+              <td class="lb-num">{{ entry.tests }}</td>
+              <td>
+                <div class="lb-avg-bar">
+                  <div class="lb-avg-fill" :style="{width: entry.avg+'%', background: entry.avg >= 80 ? '#4caf50' : entry.avg >= 60 ? '#f59e0b' : '#ef4444'}"/>
+                  <span>{{ entry.avg }}%</span>
+                </div>
+              </td>
+              <td><span class="lb-badge" :class="getBadgeClass(entry.avg)">{{ getBadge(entry.avg) }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
 
     <!-- Achievements section -->
     <div class="lb-achievements">
@@ -125,9 +139,17 @@ const auth = useAuthStore()
 const activeFilter = ref('all-time')
 const activeSubject = ref('all')
 
-// Live, grade-scoped leaderboard from the backend (peers in the same grade).
+const COLORS = ['linear-gradient(135deg,#6d54e8,#a855f7)','linear-gradient(135deg,#4caf50,#00bcd4)','linear-gradient(135deg,#f59e0b,#ef4444)','linear-gradient(135deg,#ec4899,#8b5cf6)','linear-gradient(135deg,#10b981,#3b82f6)','linear-gradient(135deg,#f97316,#eab308)']
+
+// Live, grade-scoped leaderboard from the backend (peers in the same grade). No fake/mock
+// fallback — if the backend is unreachable we show a real error + retry, not fabricated names.
 const liveEntries = ref([])
-onMounted(async () => {
+const loading = ref(true)
+const loadError = ref(false)
+
+async function load() {
+  loading.value = true
+  loadError.value = false
   try {
     const code = auth.user?.gradeCode
     const rows = (await api.get('/tests/leaderboard', { params: code ? { gradeCode: code } : {} })).data
@@ -143,8 +165,14 @@ onMounted(async () => {
       }))
       .sort((a, b) => b.score - a.score || b.tests - a.tests)
       .map((e, i) => ({ ...e, rank: i + 1, color: COLORS[i % COLORS.length] }))
-  } catch { /* backend offline → keep mock board */ }
-})
+  } catch {
+    liveEntries.value = []
+    loadError.value = true
+  } finally {
+    loading.value = false
+  }
+}
+onMounted(load)
 
 const subjects = SUBJECTS || []
 const filters = [
@@ -153,53 +181,14 @@ const filters = [
   { label: 'This Week', value: 'weekly' },
 ]
 
-const COLORS = ['linear-gradient(135deg,#6d54e8,#a855f7)','linear-gradient(135deg,#4caf50,#00bcd4)','linear-gradient(135deg,#f59e0b,#ef4444)','linear-gradient(135deg,#ec4899,#8b5cf6)','linear-gradient(135deg,#10b981,#3b82f6)','linear-gradient(135deg,#f97316,#eab308)']
-const CITIES = ['Karachi','Lahore','Islamabad','Quetta','Peshawar','Multan','Faisalabad','Rawalpindi','Hyderabad','Sialkot']
-const NAMES = ['Ahmed Hassan','Sara Khan','Ali Raza','Fatima Malik','Usman Tariq','Ayesha Noor','Bilal Ahmed','Zara Sheikh','Hamza Butt','Saira Iqbal','Junaid Ali','Maryam Shah','Faisal Khan','Nadia Hussain','Imran Qureshi','Hina Baig','Asad Mehmood','Uzma Riaz','Tariq Bashir','Sana Javed']
-
-const mockEntries = computed(() => {
-  return NAMES.map((name, i) => {
-    const seed = (name.charCodeAt(0) + name.charCodeAt(1) + i) % 37
-    const tests = 15 + ((seed * 7 + i * 3) % 20)
-    const avg = 45 + ((seed * 11 + i * 5) % 50)
-    return {
-      rank: i + 1,
-      name,
-      initials: name.split(' ').map(n=>n[0]).join(''),
-      city: CITIES[i % CITIES.length],
-      color: COLORS[i % COLORS.length],
-      tests,
-      avg,
-      score: tests * Math.round(avg * 1.2),
-      isMe: false,
-    }
-  }).sort((a,b)=>b.score-a.score).map((e,i)=>({...e, rank:i+1}))
-})
-
-const userScore = computed(() => student.avgPercent ? Math.round(student.passedTests * student.avgPercent * 1.1) : 0)
 const userEntry = computed(() => {
-  if (liveEntries.value.length) {
-    const me = liveEntries.value.find(e => e.isMe)
-    if (me) return me
-    // Current user has no attempts yet — place at the bottom
-    return { rank: liveEntries.value.length + 1, score: 0, name: auth.user?.name || 'You' }
-  }
-  return {
-    rank: mockEntries.value.findIndex(e => e.score <= userScore.value) + 1 || mockEntries.value.length + 1,
-    score: userScore.value,
-    name: 'You',
-  }
+  const me = liveEntries.value.find((e) => e.isMe)
+  if (me) return me
+  // Current user has no attempts yet, or isn't in the top-N returned by the backend.
+  return { rank: liveEntries.value.length + 1, score: 0, name: auth.user?.name || 'You' }
 })
-const displayList = computed(() => {
-  // prefer the live, grade-scoped board when the backend returned peers
-  if (liveEntries.value.length) return liveEntries.value.slice(0, 25)
-  const list = [...mockEntries.value]
-  const myIdx = list.findIndex(e=>e.score <= userScore.value)
-  const meEntry = { rank: myIdx + 1, name: student.name || 'You', initials: (student.name||'Y').split(' ').map(n=>n[0]).join(''), city:'Your City', color: COLORS[0], tests: student.passedTests || 0, avg: student.avgPercent || 0, score: userScore.value, isMe: true }
-  if (userScore.value > 0) list.splice(myIdx, 0, meEntry)
-  return list.slice(0, 25).map((e,i)=>({...e, rank:i+1}))
-})
-const topThree = computed(()=>displayList.value.slice(0,3))
+const displayList = computed(() => liveEntries.value.slice(0, 25))
+const topThree = computed(() => displayList.value.slice(0, 3))
 const userRankTip = computed(()=>{
   const rank = userEntry.value.rank
   if (rank <= 1) return 'You are #1! Incredible work! 🔥'
@@ -236,6 +225,8 @@ const achievements = computed(()=>[
 .lb-header { text-align: center; padding: 1.5rem 0; }
 .lb-title { font-size: 1.75rem; font-weight: 800; color: var(--t-text1); }
 .lb-sub { color: var(--t-text3); font-size: 0.875rem; }
+.lb-state { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; color: var(--t-text3); font-size: 0.9rem; text-align: center; }
+.lb-state--error { color: #ef4444; }
 .lb-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
 .lb-filter-btn { padding: 0.4rem 1rem; border-radius: 99px; border: 1px solid var(--t-border); background: var(--t-hover); color: var(--t-text2); font-size: 0.82rem; cursor: pointer; }
 .lb-filter-btn.active, .lb-filter-btn:hover { background: rgba(245,158,11,0.1); color: #f59e0b; border-color: rgba(245,158,11,0.3); }

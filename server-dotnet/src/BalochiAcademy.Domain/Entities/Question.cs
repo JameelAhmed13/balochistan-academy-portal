@@ -29,11 +29,13 @@ public class Question : AuditableEntity
     public string?   SloCode        { get; set; }
     public string?   ContentHash    { get; set; }
     public int?      CreatedById    { get; set; }
+    public int?      PastPaperId    { get; set; }
 
-    public Grade?    Grade    { get; set; }
-    public Subject?  Subject  { get; set; }
-    public Unit?     Unit     { get; set; }
-    public Topic?    Topic    { get; set; }
-    public User?     CreatedBy { get; set; }
+    public Grade?     Grade      { get; set; }
+    public Subject?   Subject    { get; set; }
+    public Unit?      Unit       { get; set; }
+    public Topic?     Topic      { get; set; }
+    public User?      CreatedBy  { get; set; }
+    public PastPaper? PastPaper  { get; set; }
     public ICollection<TestQuestion> TestQuestions { get; set; } = [];
 }

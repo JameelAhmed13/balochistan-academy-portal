@@ -68,6 +68,7 @@ public class QuestionsController(IUnitOfWork uow, ICurrentUserService cu, IMappe
             CognitiveLevel = req.CognitiveLevel, Feedback   = req.Feedback,
             SloCode        = req.SloCode,     IsEntranceExam = req.IsEntranceExam,
             IsAiGenerated  = req.IsAiGenerated, CreatedById   = cu.UserId,
+            PastPaperId    = req.PastPaperId,
         };
         uow.Repository<Question>().Add(question);
         await uow.SaveChangesAsync(ct);
@@ -88,6 +89,8 @@ public class QuestionsController(IUnitOfWork uow, ICurrentUserService cu, IMappe
         if (req.CognitiveLevel != null) q.CognitiveLevel = req.CognitiveLevel;
         if (req.Feedback       != null) q.Feedback       = req.Feedback;
         if (req.Marks          != null) q.Marks          = req.Marks;
+        if (req.ClearPastPaper) q.PastPaperId = null;
+        else if (req.PastPaperId != null) q.PastPaperId = req.PastPaperId;
         await uow.SaveChangesAsync(ct);
         return Ok(mapper.Map<QuestionDto>(q));
     }

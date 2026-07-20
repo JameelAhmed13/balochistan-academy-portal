@@ -278,6 +278,17 @@
             </div>
           </div>
 
+          <!-- Past paper tag (optional) -->
+          <div>
+            <label class="label" style="font-size:0.75rem;">
+              Past Paper <span style="font-size:0.72rem; color:var(--t-text3);">(optional — links this question to a specific paper so students attempting it get the real paper)</span>
+            </label>
+            <select v-model="form.pastPaperId" class="input" style="font-size:0.82rem;" :disabled="!form.gradeCode || !form.subjectId">
+              <option :value="null">{{ (form.gradeCode && form.subjectId) ? 'Not tied to a past paper' : 'Select grade + subject first' }}</option>
+              <option v-for="p in modalPastPapers" :key="p.id" :value="p.id">{{ p.year }} {{ p.paperType }} ({{ p.board }})</option>
+            </select>
+          </div>
+
           <!-- Stem -->
           <div>
             <label class="label">Question Stem</label>
@@ -556,12 +567,24 @@ const aiSuccessMsg = ref('')
 
 // ── Form ──────────────────────────────────────────────────────────────
 const mkForm = () => ({
-  kind: 'objective', gradeCode: null, subjectId: null,
+  kind: 'objective', gradeCode: null, subjectId: null, pastPaperId: null,
   stem: '', options: ['', '', '', ''], correctIndex: 0,
   questionType: 'Short', marks: 2, modelAnswer: '',
   difficulty: 'Medium', cognitiveLevel: 'Remember',
 })
 const form = ref(mkForm())
+const modalPastPapers = ref([])
+
+async function loadModalPastPapers() {
+  if (!form.value.gradeCode || !form.value.subjectId) { modalPastPapers.value = []; return }
+  try {
+    const { data } = await api.get('/past-papers', { params: { subjectId: form.value.subjectId, gradeCode: form.value.gradeCode } })
+    modalPastPapers.value = data || []
+  } catch {
+    modalPastPapers.value = []
+  }
+}
+watch(() => [form.value.gradeCode, form.value.subjectId], loadModalPastPapers)
 
 const mkAiForm = () => ({ kind: 'objective', gradeCode: null, subjectId: null, topic: '', count: 5, difficulty: '' })
 const aiForm = ref(mkAiForm())
@@ -664,6 +687,7 @@ async function openEdit(q) {
     kind:           q.kind,
     gradeCode:      q.gradeCode ?? null,
     subjectId:      q.subjectId ?? null,
+    pastPaperId:    q.pastPaperId ?? null,
     stem:           q.stem,
     options:        [...parseOptions(q.optionsJson), '', '', '', ''].slice(0, 4),
     correctIndex:   q.correctIndex ?? 0,
@@ -690,6 +714,8 @@ async function saveQuestion() {
   try {
     if (editingId.value) {
       const payload = { stem: form.value.stem, difficulty: form.value.difficulty, cognitiveLevel: form.value.cognitiveLevel }
+      if (form.value.pastPaperId) payload.pastPaperId = form.value.pastPaperId
+      else payload.clearPastPaper = true
       if (form.value.kind === 'objective') {
         payload.optionsJson  = JSON.stringify(form.value.options)
         payload.correctIndex = form.value.correctIndex
@@ -703,6 +729,7 @@ async function saveQuestion() {
         kind:           form.value.kind,
         gradeCode:      form.value.gradeCode,
         subjectId:      form.value.subjectId,
+        pastPaperId:    form.value.pastPaperId,
         stem:           form.value.stem,
         difficulty:     form.value.difficulty,
         cognitiveLevel: form.value.cognitiveLevel,

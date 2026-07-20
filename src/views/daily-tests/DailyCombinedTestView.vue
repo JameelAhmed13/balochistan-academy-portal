@@ -217,7 +217,7 @@ async function startExam() {
     const subjectName = subjects.value.find(s => s.id === id)?.name || ''
     let qs = []
     try {
-      const res = await api.get('/questions/random', { params: { subjectId: id, grade: gradeCode.value, limit: mcqCount.value } })
+      const res = await api.get('/questions/random', { params: { subjectId: id, gradeCode: gradeCode.value, count: mcqCount.value } })
       qs = (res.data || []).map(normalizeObjQ)
     } catch { /* fall through */ }
     if (!qs.length) {
@@ -261,12 +261,45 @@ function advanceSubject() {
   }
 }
 
+// Flattens the per-subject objective question/answer maps into a single ordered list so the
+// result screen can render a combined breakdown, and scores each answer against its real
+// correct index (the old code just counted how many questions were answered, not correctness).
+function buildAttemptPayload() {
+  const questions = []
+  const answers = {}
+  selectedSubjects.value.forEach((id) => {
+    const qs = allObjQs.value[id] || []
+    const subjectAnswers = objAnswers.value[id] || {}
+    qs.forEach((q, i) => {
+      const flatIdx = questions.length
+      questions.push({ ...q, id: flatIdx })
+      if (subjectAnswers[i] !== undefined) answers[flatIdx] = subjectAnswers[i]
+    })
+  })
+  const score = questions.reduce((total, q, i) => total + (answers[i] === q.correct ? 1 : 0), 0)
+  return { questions, answers, score, total: questions.length }
+}
+
 function finish() {
   clearInterval(timer)
-  const score = Object.values(objAnswers.value).reduce((total, answers) => {
-    return total + Object.keys(answers).length
-  }, 0)
-  router.push('/app/daily-tests/result/new?score=' + score)
+  const { questions, answers, score, total } = buildAttemptPayload()
+  const subjectNames = selectedSubjects.value
+    .map(id => subjects.value.find(s => s.id === id)?.name)
+    .filter(Boolean)
+    .join(', ')
+  const durationSec = (timeLimit.value * 60) - timeLeft.value
+
+  const id = student.saveTest({
+    subject: subjectNames || 'Daily Combined Challenge',
+    type: 'daily',
+    score,
+    total,
+    durationSec,
+    questions,
+    answers,
+    attemptType: 'daily',
+  })
+  router.push(`/app/daily-tests/result/${id}`)
 }
 
 function formatTime(s) {

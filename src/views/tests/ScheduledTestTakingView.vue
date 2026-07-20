@@ -1,51 +1,29 @@
 <template>
-  <div class="animate-fade-in" v-if="subject">
+  <div class="animate-fade-in" v-if="!loading && test">
     <!-- Top bar -->
     <div class="take-topbar">
-      <button v-if="!started" @click="$router.go(-1)" class="btn-ghost">
-        <ArrowLeft class="w-4 h-4" />
-      </button>
+      <button v-if="!started" @click="$router.go(-1)" class="btn-ghost"><ArrowLeft class="w-4 h-4" /></button>
       <div class="take-subject">
-        <span class="take-subj-icon">{{ subject.icon }}</span>
         <div>
-          <div class="take-subj-name">{{ subject.name }}</div>
-          <div class="take-subj-grade">Grade {{ gradeCode }} | Objective Test</div>
+          <div class="take-subj-name">{{ test.title }}</div>
+          <div class="take-subj-grade">{{ test.gradeCode ? `Grade ${test.gradeCode}` : 'All grades' }} · Institute-scheduled {{ test.kind }} test</div>
         </div>
       </div>
-      <div class="take-badges">
-        <span class="tbadge tbadge-blue">📝 {{ questions.length }} Questions</span>
-        <span class="tbadge tbadge-orange">⏱ Graded Mode</span>
-      </div>
-      <div v-if="started && !finished" class="take-qinfo">
-        Question {{ currentIdx + 1 }}/{{ questions.length }}
-      </div>
+      <div v-if="started && !finished" class="take-qinfo">Question {{ currentIdx + 1 }}/{{ questions.length }}</div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loadingQ" class="take-start-card">
-      <div class="text-4xl mb-2">⏳</div>
-      <p style="color:var(--t-text2)">Loading questions…</p>
-    </div>
-
-    <!-- Error / empty (no bundled fallback — this app is online-only for graded tests) -->
-    <div v-else-if="loadErr || !questions.length" class="take-start-card">
+    <!-- Empty (no questions attached yet) -->
+    <div v-if="!questions.length" class="take-start-card">
       <div class="text-4xl mb-2">📭</div>
-      <p style="color:var(--t-text2)">No questions available for this subject yet.</p>
-      <button @click="loadQuestions" class="btn-secondary mt-3">Retry</button>
+      <p style="color:var(--t-text2)">This test doesn't have any questions attached yet — check back once your institute publishes them.</p>
     </div>
 
     <!-- Not started -->
     <div v-else-if="!started" class="take-start-card">
       <div class="text-5xl mb-3">📝</div>
-      <h3 class="text-lg font-semibold" style="color:var(--t-text1)">Ready to test your knowledge?</h3>
+      <h3 class="text-lg font-semibold" style="color:var(--t-text1)">Ready to start "{{ test.title }}"?</h3>
       <p class="text-sm mt-1 max-w-sm" style="color:var(--t-text3)">
-        {{ questions.length }} objective questions · {{ questions.length }} minutes · Answers hidden until you submit
-      </p>
-      <p v-if="isPastPaper && usedPaperQuestions" class="text-xs mt-1" style="color:var(--t-text3)">
-        ✅ Real {{ paperYear }} paper questions
-      </p>
-      <p v-else-if="isPastPaper" class="text-xs mt-1" style="color:var(--t-text3)">
-        Practicing with the {{ subject?.name }} question pool{{ paperYear ? ' · ' + paperYear + ' model paper style' : '' }} — this paper's own questions aren't tagged yet
+        {{ questions.length }} questions · {{ test.durationMin }} minutes · Answers hidden until you submit
       </p>
       <button @click="startTest" class="btn-primary mt-5 px-8 py-3 text-base gap-2">
         <Play class="w-5 h-5" /> Start Test
@@ -54,17 +32,12 @@
 
     <!-- In progress -->
     <div v-else-if="!finished" class="take-body">
-      <!-- Question area -->
       <div class="take-main" ref="testEl">
         <div class="take-q-header">
-          <CognitiveBadge :level="currentQ.cognitiveLevel" />
           <DifficultyBadge :level="currentQ.difficulty" />
         </div>
-        <div class="take-q-text"
-             :class="subject.medium === 'urdu' ? 'urdu' : ''"
-             :dir="subject.medium === 'urdu' ? 'rtl' : 'ltr'"
-             v-html="prepareMath(currentQ.stem)" />
-        <div class="take-options" :dir="subject.medium === 'urdu' ? 'rtl' : 'ltr'">
+        <div class="take-q-text" v-html="prepareMath(currentQ.stem)" />
+        <div class="take-options">
           <label v-for="(opt, oi) in currentQ.options" :key="oi"
             class="take-opt" :class="{ selected: answers[currentIdx] === oi }">
             <input type="radio" :name="'q' + currentIdx" :value="oi"
@@ -81,7 +54,6 @@
         </div>
       </div>
 
-      <!-- Sidebar: palette + timer -->
       <div class="take-sidebar">
         <div class="palette-section">
           <div class="palette-title">Questions</div>
@@ -89,14 +61,9 @@
             <button v-for="(q, i) in questions" :key="i"
               type="button"
               @click="currentIdx = i"
-              :class="['pal-btn', answers[i] !== undefined ? 'pal-answered' : '', currentIdx === i ? 'pal-current' : '']"
-              :aria-label="`Q${i+1}${answers[i] !== undefined ? ' (answered)' : ''}`">
+              :class="['pal-btn', answers[i] !== undefined ? 'pal-answered' : '', currentIdx === i ? 'pal-current' : '']">
               {{ i + 1 }}
             </button>
-          </div>
-          <div class="pal-legend">
-            <span class="pal-leg-item pal-answered-item"></span>Answered
-            <span class="pal-leg-item"></span>Unanswered
           </div>
         </div>
         <div class="timer-section">
@@ -106,101 +73,79 @@
       </div>
     </div>
 
-    <!-- Saving state -->
+    <!-- Saving -->
     <div v-else class="take-start-card">
       <div class="text-4xl mb-2">⏳</div>
       <p style="color:var(--t-text2)">Saving your results…</p>
     </div>
   </div>
+  <div v-else-if="loading" class="take-start-card">
+    <div class="text-4xl mb-2">⏳</div>
+    <p style="color:var(--t-text2)">Loading test…</p>
+  </div>
+  <div v-else class="take-start-card">
+    <div class="text-4xl mb-2">❌</div>
+    <p style="color:var(--t-text2)">This test couldn't be found — it may have been unpublished.</p>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import renderMathInElement from 'katex/contrib/auto-render'
 import 'katex/dist/katex.min.css'
 import { ArrowLeft, Play } from '@lucide/vue'
-import { useRoute, useRouter } from 'vue-router'
-import { findPrepSubject } from '@/views/preparation/prepSubjects'
-import { useStudentStore } from '@/stores/student'
-import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
-import CognitiveBadge from '@/components/platform/CognitiveBadge.vue'
+import { useStudentStore } from '@/stores/student'
 import DifficultyBadge from '@/components/platform/DifficultyBadge.vue'
 
-const props = defineProps({ bookId: String })
+// Takes a real, institute/admin-scheduled Test row by id (GET /api/tests/{id}) — the counterpart
+// to the fully-generated Daily/Monthly flows, for whichever attemptType/result route the caller wants.
+const props = defineProps({
+  id: { type: [String, Number], default: null },
+  attemptType: { type: String, default: 'daily' },
+  resultBase: { type: String, default: '/app/daily-tests/result' },
+})
 const route = useRoute()
 const router = useRouter()
 const student = useStudentStore()
-const auth = useAuthStore()
 
-const subject = computed(() => findPrepSubject(props.bookId))
-const gradeCode = computed(() => auth.user?.gradeCode || 9)
+const testId = computed(() => props.id ?? route.params.id)
 
-// Past-paper context carried through from the Past Papers panel (?type=past&year=&paperId=).
-// If the paper has real questions tagged to it (Question.PastPaperId), those are used verbatim;
-// otherwise this falls back to the subject/grade's general question pool.
-const paperId = computed(() => route.query.paperId || null)
-const paperYear = computed(() => route.query.year || null)
-const isPastPaper = computed(() => route.query.type === 'past')
-const usedPaperQuestions = ref(false)
-
-const testEl = ref(null)
-const KATEX_OPTS = { delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }, { left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false }
 const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
 function prepareMath(t) { if (!t) return ''; return String(t).replace(ENV_RE, (m) => `\\[${m}\\]`) }
+const KATEX_OPTS = { delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }, { left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false }
 
 function normalizeQuestion(q) {
   let options = []
   try { options = JSON.parse(q.optionsJson || '[]') } catch { options = [] }
-  return {
-    id: q.id,
-    stem: q.stem,
-    options,
-    correct: q.correctIndex ?? 0,
-    difficulty: q.difficulty || 'Medium',
-    cognitiveLevel: q.cognitiveLevel || 'Understanding',
-  }
+  return { id: q.id, stem: q.stem, options, correct: q.correctIndex ?? 0, difficulty: q.difficulty || 'Medium' }
 }
 
+const test = ref(null)
 const questions = ref([])
-const loadingQ = ref(true)
-const loadErr = ref(false)
+const loading = ref(true)
 
-async function loadQuestions() {
-  loadingQ.value = true
-  loadErr.value = false
-  usedPaperQuestions.value = false
-
-  // If we arrived from a specific past paper, try its real tagged questions first.
-  if (paperId.value) {
-    try {
-      const { data } = await api.get(`/past-papers/${paperId.value}/questions`)
-      if (data?.length) {
-        questions.value = data.map(normalizeQuestion)
-        usedPaperQuestions.value = true
-        loadingQ.value = false
-        return
-      }
-    } catch { /* paper not found / no tagged questions yet — fall through to the general pool */ }
-  }
-
+async function load() {
+  loading.value = true
   try {
-    const { data } = await api.get('/questions/random', {
-      params: { gradeCode: gradeCode.value, subjectId: +props.bookId, kind: 'objective', count: 35 },
-    })
-    questions.value = (data || []).map(normalizeQuestion)
+    const { data } = await api.get(`/tests/${testId.value}`)
+    test.value = data
+    questions.value = (data.questions || []).map(normalizeQuestion)
   } catch {
+    test.value = null
     questions.value = []
-    loadErr.value = true
   }
-  loadingQ.value = false
+  loading.value = false
 }
+onMounted(load)
 
+const testEl = ref(null)
 const currentIdx = ref(0)
 const answers = ref({})
 const started = ref(false)
 const finished = ref(false)
-const timeLeft = ref(35 * 60)
+const timeLeft = ref(0)
 let timer = null
 
 const currentQ = computed(() => questions.value[currentIdx.value])
@@ -208,6 +153,7 @@ watch(currentQ, () => nextTick(() => { if (testEl.value) renderMathInElement(tes
 
 function startTest() {
   started.value = true
+  timeLeft.value = (test.value.durationMin || 30) * 60
   timer = setInterval(() => {
     if (timeLeft.value > 0) timeLeft.value--
     else finishTest()
@@ -231,22 +177,22 @@ function finishTest() {
   finished.value = true
   let score = 0
   questions.value.forEach((q, i) => { if (answers.value[i] === q.correct) score++ })
-  const elapsed = 35 * 60 - timeLeft.value
+  const elapsed = (test.value.durationMin || 30) * 60 - timeLeft.value
   const savedId = student.saveTest({
-    subject:     subject.value?.name,
-    subjectId:   +props.bookId,
-    type:        'Objective Test',
+    subject:     test.value.title,
+    subjectId:   test.value.subjectId ?? null,
+    testId:      test.value.id,
+    type:        props.attemptType,
     score,
     total:       questions.value.length,
-    bookId:      +props.bookId,
     questions:   questions.value,
     answers:     answers.value,
     durationSec: elapsed,
+    attemptType: props.attemptType,
   })
-  router.push(`/app/objective-tests/${savedId}/result`)
+  router.push(`${props.resultBase}/${savedId}`)
 }
 
-onMounted(loadQuestions)
 onUnmounted(() => clearInterval(timer))
 </script>
 
@@ -257,15 +203,8 @@ onUnmounted(() => clearInterval(timer))
   background: var(--t-surface); border: 1px solid var(--t-border); border-radius: 12px;
 }
 .take-subject { display: flex; align-items: center; gap: 0.75rem; }
-.take-subj-icon { font-size: 1.5rem; }
 .take-subj-name { font-weight: 700; font-size: 0.9rem; color: var(--t-text1); }
 .take-subj-grade { font-size: 0.7rem; color: var(--t-text3); }
-.take-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.tbadge { padding: 0.25rem 0.65rem; border-radius: 99px; font-size: 0.7rem; font-weight: 600; }
-.tbadge-blue   { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
-.tbadge-orange { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-html.dark .tbadge-blue   { background: rgba(21,101,192,0.2); color: #90caf9; border-color: rgba(21,101,192,0.4); }
-html.dark .tbadge-orange { background: rgba(230,81,0,0.2); color: #ffb74d; border-color: rgba(230,81,0,0.4); }
 .take-qinfo { margin-left: auto; font-size: 0.82rem; color: var(--t-text3); font-weight: 600; }
 
 .take-start-card {
@@ -320,15 +259,6 @@ html.dark .tbadge-orange { background: rgba(230,81,0,0.2); color: #ffb74d; borde
 .pal-btn:hover { border-color: var(--t-accent); color: var(--t-text1); }
 .pal-answered { background: #4caf50 !important; color: white !important; border-color: #4caf50 !important; }
 .pal-current { outline: 2px solid var(--t-accent); outline-offset: 1px; }
-.pal-legend {
-  display: flex; gap: 0.75rem; margin-top: 0.65rem;
-  font-size: 0.65rem; color: var(--t-text3); align-items: center; flex-wrap: wrap;
-}
-.pal-leg-item {
-  width: 12px; height: 12px; border-radius: 3px; display: inline-block;
-  background: var(--t-hover); border: 1px solid var(--t-border);
-}
-.pal-answered-item { background: #4caf50; border-color: #4caf50; }
 
 .timer-section {
   background: #1a2235; border-radius: 12px; padding: 1rem;

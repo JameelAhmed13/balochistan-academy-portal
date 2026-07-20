@@ -98,10 +98,15 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { GraduationCap, CalendarDays, ListChecks, Gauge, Users, Sparkles, Send, User, AlertTriangle, Cpu } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
+import { useStudentStore } from '@/stores/student'
+import { useCatalogStore } from '@/stores/catalog'
+import api from '@/services/api'
 import { chatWithFallback, getLastEngine, ollamaConfig } from '@/services/ollamaService'
 import { buildPrompt } from '@/services/studentAssistantPrompts'
 
 const auth = useAuthStore()
+const student = useStudentStore()
+const catalog = useCatalogStore()
 const grade = computed(() => auth.user?.gradeCode ?? 9)
 const board = computed(() => (auth.user?.board ? `${auth.user.board} Board` : 'Balochistan Board') + ' (BISE)')
 
@@ -154,7 +159,70 @@ function formatResponse(text) {
     .replace(/\n/g, '<br/>')
 }
 
-onMounted(() => { messages.value = loadModeMessages(mode.value) })
+onMounted(() => {
+  messages.value = loadModeMessages(mode.value)
+  student.fetchAttempts() // populates testRecords so Exam Readiness/Parent Report can use real scores
+})
+
+// Real per-subject performance from the student's own attempt history — replaces the
+// old always-empty {} placeholders so Exam Readiness/Parent Report can actually analyze
+// something instead of always saying "not enough data yet".
+function computeProgressJson() {
+  const bySubject = {}
+  student.testRecords.forEach((r) => {
+    if (!r.subject || !r.total) return
+    if (!bySubject[r.subject]) bySubject[r.subject] = { subject: r.subject, tests: 0, totalScore: 0, totalMax: 0 }
+    bySubject[r.subject].tests++
+    bySubject[r.subject].totalScore += r.score || 0
+    bySubject[r.subject].totalMax += r.total || 0
+  })
+  return Object.values(bySubject).map((s) => ({
+    subject: s.subject,
+    tests: s.tests,
+    avgScorePct: s.totalMax ? Math.round((s.totalScore / s.totalMax) * 100) : 0,
+  }))
+}
+function computeActivityLogJson() {
+  return student.testRecords.slice(0, 15).map((r) => ({
+    date: r.date, subject: r.subject, type: r.type, score: r.score, total: r.total,
+  }))
+}
+
+// Real syllabus scope per enrolled subject (unit/topic counts) — Saathi has no per-subject
+// picker, so this covers every subject in the student's grade rather than asking which one.
+async function computeSyllabusJson() {
+  const code = auth.user?.gradeCode
+  if (!code) return []
+  if (!catalog.subjectsForGrade(code).length) {
+    await catalog.fetchSubjectsForGrade(code).catch(() => {})
+  }
+  const subjects = catalog.subjectsForGrade(code)
+  return Promise.all(subjects.map(async (s) => {
+    try {
+      const units = await catalog.fetchSyllabus(code, s.id)
+      return { subject: s.name, unitCount: units.length, topicCount: units.reduce((n, u) => n + (u.topics?.length || 0), 0) }
+    } catch {
+      return { subject: s.name, unitCount: 0, topicCount: 0 }
+    }
+  }))
+}
+
+// Real upcoming institute-scheduled exams (kind="monthly"/"entrance" Test rows) — the closest
+// thing to "the exam" this backend actually models; empty array (not invented) if none exist.
+async function computeExamJson() {
+  const code = auth.user?.gradeCode
+  try {
+    const { data } = await api.get('/tests', { params: { kind: 'monthly', gradeCode: code, published: true, pageSize: 20 } })
+    const now = Date.now()
+    return (data?.items || [])
+      .filter((t) => t.scheduledAt && new Date(t.scheduledAt).getTime() >= now)
+      .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt))
+      .slice(0, 3)
+      .map((t) => ({ title: t.title, subjectId: t.subjectId, scheduledAt: t.scheduledAt, endsAt: t.endsAt }))
+  } catch {
+    return []
+  }
+}
 
 function selectMode(key) {
   if (mode.value === key) return
@@ -167,20 +235,20 @@ function today() {
   try { return new Date().toISOString().slice(0, 10) } catch { return '' }
 }
 
-function injectedFor() {
+async function injectedFor() {
   const base = { student_name: auth.user?.name || 'Student', language: lang.value, grade: grade.value, board: board.value, today_date: today() }
   switch (mode.value) {
     case 'study_planner':
-      return { ...base, study_days_per_week: 5, preferred_study_time: '17:00', syllabus_json: {}, progress_json: {} }
+      return { ...base, study_days_per_week: 5, preferred_study_time: '17:00', syllabus_json: await computeSyllabusJson(), progress_json: computeProgressJson() }
     case 'quiz_generator':
       return { ...base, quiz_topic: topic.value || 'the current chapter', question_count: 5 }
     case 'exam_readiness_report':
-      return { ...base, exam_json: {}, syllabus_json: {}, progress_json: {}, activity_log_json: {} }
+      return { ...base, exam_json: await computeExamJson(), syllabus_json: await computeSyllabusJson(), progress_json: computeProgressJson(), activity_log_json: computeActivityLogJson() }
     case 'parent_report':
-      return { ...base, report_period_days: 30, progress_json: {}, activity_log_json: {} }
+      return { ...base, report_period_days: 30, progress_json: computeProgressJson(), activity_log_json: computeActivityLogJson() }
     case 'tutor_session':
     default:
-      return { ...base, current_topic: topic.value || 'the next topic in the syllabus', progress_json: {} }
+      return { ...base, current_topic: topic.value || 'the next topic in the syllabus', progress_json: computeProgressJson() }
   }
 }
 
@@ -200,7 +268,7 @@ async function send(forceText) {
   loading.value = true
   await scrollThread()
   try {
-    const system = buildPrompt(mode.value, grade.value, injectedFor())
+    const system = buildPrompt(mode.value, grade.value, await injectedFor())
     const reply = await chatWithFallback({
       system,
       messages: [...history, { role: 'user', content: text }],
