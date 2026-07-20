@@ -8,10 +8,13 @@ build_property.ProjectTypeGuids =
 build_property.InvariantGlobalization = 
 build_property.PlatformNeutralAssembly = 
 build_property.EnforceExtendedAnalyzerRules = 
-build_property.EntryPointFilePath = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = BalochiAcademy.Application
+<<<<<<< HEAD
 build_property.ProjectDir = C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\
+=======
+build_property.ProjectDir = D:\Development\Source Code\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Application\
+>>>>>>> f5dbce9e6009a7742495f0b0f493cd9caa18794f
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.EffectiveAnalysisLevelStyle = 10.0

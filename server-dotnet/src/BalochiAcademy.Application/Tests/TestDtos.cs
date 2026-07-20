@@ -3,28 +3,47 @@ using System.ComponentModel.DataAnnotations;
 namespace BalochiAcademy.Application.Tests;
 
 public record TestDto(
-    int      Id,
-    string   Title,
-    string?  GradeCode,
-    int?     SubjectId,
-    int?     UnitId,
-    string   Kind,
-    int      DurationMin,
-    int?     TotalMarks,
-    bool     IsPublished,
-    int      QuestionCount,
-    DateTime CreatedAt
+    int       Id,
+    string    Title,
+    string?   GradeCode,
+    int?      SubjectId,
+    int?      UnitId,
+    string    Kind,
+    int       DurationMin,
+    int?      TotalMarks,
+    bool      IsPublished,
+    bool      IsScheduled,
+    DateTime? ScheduledAt,
+    DateTime? EndsAt,
+    int       QuestionCount,
+    DateTime  CreatedAt
 );
 
 public record CreateTestRequest(
     [Required] string Title,
     [Required] string Kind,
-    string? GradeCode   = null,
-    int?    SubjectId   = null,
-    int?    UnitId      = null,
-    int     DurationMin = 30,
-    int?    TotalMarks  = null,
-    int[]?  QuestionIds = null
+    string?   GradeCode   = null,
+    int?      SubjectId   = null,
+    int?      UnitId      = null,
+    int       DurationMin = 30,
+    int?      TotalMarks  = null,
+    bool      IsScheduled = false,
+    DateTime? ScheduledAt = null,
+    DateTime? EndsAt      = null,
+    int[]?    QuestionIds = null
+);
+
+public record UpdateTestRequest(
+    string?   Title       = null,
+    string?   Kind        = null,
+    string?   GradeCode   = null,
+    int?      SubjectId   = null,
+    int?      UnitId      = null,
+    int       DurationMin = 30,
+    int?      TotalMarks  = null,
+    bool      IsScheduled = false,
+    DateTime? ScheduledAt = null,
+    DateTime? EndsAt      = null
 );
 
 public record SubmitAttemptRequest(

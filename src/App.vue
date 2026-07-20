@@ -1,18 +1,20 @@
 <template>
+  <HttpLoader />
   <PageLoader />
   <CursorEffect />
   <RouterView />
   <Toast position="top-right" />
-  <ConfirmDialog />
+  <ConfirmModal />
 </template>
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
-import ConfirmDialog from 'primevue/confirmdialog'
 import PageLoader from '@/components/effects/PageLoader.vue'
+import HttpLoader from '@/components/effects/HttpLoader.vue'
 import CursorEffect from '@/components/effects/CursorEffect.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'

@@ -74,6 +74,48 @@ router.put('/me/grade', requireAuth, (req, res) => {
   res.json({ user: publicUser(u) })
 })
 
+// any logged-in user updates their own profile (+ optional password change)
+const updateMeSchema = z.object({
+  name: z.string().min(1).optional(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+  medium: z.string().optional(),
+  institute: z.string().optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().min(4).optional(),
+})
+
+router.put('/me', requireAuth, (req, res) => {
+  const b = parse(updateMeSchema, req.body)
+  const u = db.prepare('SELECT * FROM users WHERE id = ? AND active = 1').get(req.user.id)
+  if (!u) return res.status(401).json({ error: 'User not found' })
+
+  let passwordHash = null
+  if (b.newPassword) {
+    if (!b.currentPassword || !bcrypt.compareSync(b.currentPassword, u.password_hash)) {
+      return res.status(400).json({ error: 'Current password is incorrect' })
+    }
+    passwordHash = bcrypt.hashSync(b.newPassword, 10)
+  }
+
+  // COALESCE keeps the existing value when a field is omitted (undefined → null)
+  db.prepare(
+    `UPDATE users SET
+       name          = COALESCE(?, name),
+       phone         = COALESCE(?, phone),
+       email         = COALESCE(?, email),
+       medium        = COALESCE(?, medium),
+       institute     = COALESCE(?, institute),
+       password_hash = COALESCE(?, password_hash)
+     WHERE id = ?`,
+  ).run(
+    b.name ?? null, b.phone ?? null, b.email ?? null,
+    b.medium ?? null, b.institute ?? null, passwordHash, req.user.id,
+  )
+  const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id)
+  res.json({ user: publicUser(updated) })
+})
+
 router.post('/logout', requireAuth, (req, res) => {
   db.prepare('INSERT INTO login_history (user_id, status) VALUES (?, ?)').run(req.user.id, 'logout')
   res.json({ ok: true })

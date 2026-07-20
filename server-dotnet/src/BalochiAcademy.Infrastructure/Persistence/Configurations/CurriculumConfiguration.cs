@@ -75,6 +75,29 @@ public class LearningObjectiveConfiguration : IEntityTypeConfiguration<LearningO
     }
 }
 
+public class GradeBandConfiguration : IEntityTypeConfiguration<GradeBand>
+{
+    public void Configure(EntityTypeBuilder<GradeBand> b)
+    {
+        b.HasKey(e => e.Id);
+        b.HasIndex(e => e.Name).IsUnique();
+        b.Property(e => e.Name).HasMaxLength(50).IsRequired();
+        b.ToTable("GradeBands");
+    }
+}
+
+public class MediumConfiguration : IEntityTypeConfiguration<Medium>
+{
+    public void Configure(EntityTypeBuilder<Medium> b)
+    {
+        b.HasKey(e => e.Id);
+        b.HasIndex(e => e.Name).IsUnique();
+        b.Property(e => e.Name).HasMaxLength(50).IsRequired();
+        b.Property(e => e.Label).HasMaxLength(100).IsRequired();
+        b.ToTable("Mediums");
+    }
+}
+
 public class AiTutorConfiguration : IEntityTypeConfiguration<AiTutor>
 {
     public void Configure(EntityTypeBuilder<AiTutor> b)

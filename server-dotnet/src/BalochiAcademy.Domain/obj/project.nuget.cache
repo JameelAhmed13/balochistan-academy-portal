@@ -1,8 +1,14 @@
 {
   "version": 2,
+<<<<<<< HEAD
   "dgSpecHash": "AfyE9ru2QUY=",
   "success": true,
   "projectFilePath": "C:\\Users\\Administrator\\source\\repos\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj",
+=======
+  "dgSpecHash": "5qTlelvhHic=",
+  "success": true,
+  "projectFilePath": "D:\\Development\\Source Code\\BAP\\balochistan-academy-portal\\server-dotnet\\src\\BalochiAcademy.Domain\\BalochiAcademy.Domain.csproj",
+>>>>>>> f5dbce9e6009a7742495f0b0f493cd9caa18794f
   "expectedPackageFiles": [],
   "logs": []
 }

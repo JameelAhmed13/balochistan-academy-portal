@@ -72,7 +72,10 @@
       </div>
     </div>
 
-    <!-- Mobile drawer -->
+  </header>
+
+  <!-- Mobile drawer — teleported outside header to escape backdrop-filter containing block -->
+  <Teleport to="body">
     <Transition name="atn-slide">
       <div v-if="mobileOpen" class="atn-mobile">
         <div class="atn-mobile-hd">
@@ -91,7 +94,7 @@
     <Transition name="atn-fade">
       <div v-if="mobileOpen" class="atn-mobile-scrim" @click="mobileOpen = false" />
     </Transition>
-  </header>
+  </Teleport>
 </template>
 
 <script setup>
@@ -101,7 +104,7 @@ import { onClickOutside } from '@vueuse/core'
 import {
   LayoutDashboard, BookOpen, ClipboardList, Users, BarChart2, Settings, Bell,
   Menu, X, ChevronDown, ExternalLink, LogOut, Sun, Moon,
-  FileText, FolderTree, GraduationCap, Coins, MessageSquareWarning, BellRing,
+  FileText, FolderTree, GraduationCap, Coins, MessageSquareWarning, BellRing, Layers, Globe,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -124,10 +127,12 @@ const initial = computed(() => (auth.user?.name || 'A').charAt(0).toUpperCase())
 const menus = [
   { key: 'curriculum', label: 'Curriculum', icon: BookOpen, items: [
     { label: 'Dashboard',          path: '/app/admin',          icon: LayoutDashboard, desc: 'Overview & quick stats' },
+    { label: 'Grade Bands',        path: '/app/admin/bands',    icon: Layers,          desc: 'Primary, Middle, Secondary…' },
+    { label: 'Mediums',            path: '/app/admin/mediums',  icon: Globe,           desc: 'English Medium, اردو میڈیم…' },
     { label: 'Grades',             path: '/app/admin/grades',   icon: GraduationCap,   desc: 'Define grades & their subjects' },
+    { label: 'Subjects & Content', path: '/app/admin/content',  icon: FolderTree,      desc: 'Subjects, books, units & topics' },
     { label: 'Syllabus',           path: '/app/admin/syllabus', icon: FolderTree,      desc: 'Units, topics & learning objectives' },
     { label: 'AI Tutors',          path: '/app/admin/tutors',   icon: Users,           desc: 'Persona tutors per subject/grade' },
-    { label: 'Subjects & Content', path: '/app/admin/content',  icon: FolderTree,      desc: 'Subjects, books, units & topics' },
   ] },
   { key: 'assessments', label: 'Assessments', icon: ClipboardList, items: [
     { label: 'Question Bank',  path: '/app/admin/questions', icon: FileText,      desc: 'Manage MCQ & subjective items' },
@@ -215,9 +220,9 @@ function signOut() { auth.logout(); router.push('/login') }
 .atn-burger { display: none; width: 38px; height: 38px; border-radius: 10px; align-items: center; justify-content: center; background: none; border: 1px solid var(--t-border); color: var(--t-text2); cursor: pointer; }
 
 /* Mobile drawer */
-.atn-mobile { position: fixed; top: 0; right: 0; bottom: 0; width: 280px; max-width: 85vw; z-index: 70; background: var(--t-sidebar); border-left: 1px solid var(--t-sidebar-border); backdrop-filter: var(--t-blur); overflow-y: auto; padding: 0.75rem; }
+.atn-mobile { position: fixed; top: 0; right: 0; bottom: 0; height: 100dvh; height: 100vh; width: 280px; max-width: 85vw; z-index: 9998; background: var(--t-sidebar); border-left: 1px solid var(--t-sidebar-border); backdrop-filter: var(--t-blur); overflow-y: auto; padding: 0.75rem; }
 .atn-mobile-hd { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.5rem 0.85rem; border-bottom: 1px solid var(--t-border); margin-bottom: 0.5rem; }
-.atn-mobile-scrim { position: fixed; inset: 0; z-index: 65; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+.atn-mobile-scrim { position: fixed; inset: 0; height: 100dvh; height: 100vh; z-index: 9997; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
 .atn-acc { border-bottom: 1px solid var(--t-border); }
 .atn-acc-sum { display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 0.5rem; font-size: 0.82rem; font-weight: 700; color: var(--t-text1); cursor: pointer; list-style: none; }
 .atn-acc-sum::-webkit-details-marker { display: none; }

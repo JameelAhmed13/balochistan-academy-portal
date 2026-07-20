@@ -14,6 +14,7 @@ public class Test : AuditableEntity
     public bool     IsPublished { get; set; }
     public bool     IsScheduled { get; set; }
     public DateTime? ScheduledAt { get; set; }
+    public DateTime? EndsAt      { get; set; }
     public int?     CreatedById { get; set; }
 
     public Grade?   Grade     { get; set; }

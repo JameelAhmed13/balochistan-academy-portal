@@ -62,6 +62,9 @@
             </div>
           </div>
           <div class="hdr-drop-body">
+            <router-link to="/app/profile" class="hdr-drop-item" @click="dropOpen=false">
+              <UserCog class="w-4 h-4" /> Edit Profile
+            </router-link>
             <router-link to="/app/reports" class="hdr-drop-item" @click="dropOpen=false">
               <BarChart2 class="w-4 h-4" /> My Reports
             </router-link>
@@ -114,11 +117,11 @@
         <li class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> AI-graded subjective answers</li>
         <li class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Coin rewards &amp; withdrawals</li>
       </ul>
-      <div class="p-3 rounded-xl text-sm" style="background:var(--t-hover);border:1px solid var(--t-border);color:var(--t-text2)">
-        <strong>Payment:</strong> Transfer to Easypaisa/JazzCash and send screenshot via WhatsApp for activation.
-      </div>
-      <a href="https://wa.me/923001234567" target="_blank" class="btn-primary w-full justify-center">
-        <MessageCircle class="w-4 h-4" /> Activate via WhatsApp
+      <button type="button" class="btn-primary w-full justify-center" @click="goCheckout">
+        <Sparkles class="w-4 h-4" /> Activate Now — Pay Securely
+      </button>
+      <a href="https://wa.me/923703153540" target="_blank" class="btn-secondary w-full justify-center">
+        <MessageCircle class="w-4 h-4" /> Or activate via WhatsApp
       </a>
     </div>
   </Dialog>
@@ -128,7 +131,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
-import { Menu, ChevronDown, LogOut, BarChart2, History, Sparkles, CheckCircle, MessageCircle, Sun, Moon } from '@lucide/vue'
+import { Menu, ChevronDown, LogOut, BarChart2, History, Sparkles, CheckCircle, MessageCircle, Sun, Moon, UserCog } from '@lucide/vue'
 import Dialog from 'primevue/dialog'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -226,6 +229,10 @@ function showHistory() {
   auth.loadLoginHistory()
   historyModal.value = true
   dropOpen.value = false
+}
+function goCheckout() {
+  subModal.value = false
+  router.push('/app/checkout')
 }
 function logout() {
   auth.logout()

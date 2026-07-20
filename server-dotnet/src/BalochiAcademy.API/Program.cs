@@ -26,21 +26,34 @@ builder.Host.UseSerilog((ctx, lc) =>
 {
     lc.ReadFrom.Configuration(ctx.Configuration)
       .Enrich.FromLogContext()
-      .WriteTo.Console();
+      .WriteTo.Console()
+      .WriteTo.File(
+          Path.Combine(AppContext.BaseDirectory, "logs", "app-.log"),
+          rollingInterval: Serilog.RollingInterval.Day,
+          retainedFileCountLimit: 7,
+          outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}");
 
-    // Only add SQL Server structured logging in non-Development environments
-    // where the sink will reliably connect. In Development, console is enough.
-    if (!ctx.HostingEnvironment.IsDevelopment())
+    // SQL Server sink — only in Production, wrapped so a bad connection string
+    // or missing SQL login does not crash the process on startup.
+    if (ctx.HostingEnvironment.IsDevelopment())
     {
         var connStr = ctx.Configuration.GetConnectionString("Default");
         if (!string.IsNullOrWhiteSpace(connStr))
         {
-            lc.WriteTo.MSSqlServer(connStr,
-                sinkOptions: new Serilog.Sinks.MSSqlServer.MSSqlServerSinkOptions
-                {
-                    TableName = "AppLogs",
-                    AutoCreateSqlTable = true,
-                });
+            try
+            {
+                lc.WriteTo.MSSqlServer(connStr,
+                    sinkOptions: new Serilog.Sinks.MSSqlServer.MSSqlServerSinkOptions
+                    {
+                        TableName          = "AppLogs",
+                        AutoCreateSqlTable = true,
+                    });
+            }
+            catch (Exception ex)
+            {
+                // Bootstrap logger is still active here — this surfaces in the IIS stdout log.
+                Log.Warning(ex, "SQL Server log sink failed to initialize — file sink is active");
+            }
         }
     }
 });
@@ -81,6 +94,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime         = true,
             ClockSkew                = TimeSpan.Zero,
         };
+        // SignalR passes the token as ?access_token= because WebSocket/SSE can't send headers.
+        opts.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(token) &&
+                    context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization(opts =>
@@ -100,7 +127,11 @@ builder.Services.AddCors(opts => opts.AddDefaultPolicy(p =>
      .AllowCredentials()));
 
 // ── AutoMapper ───────────────────────────────────────────────────────────────
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+// Scan both assemblies: API (future profiles) + Application (MappingProfile)
+builder.Services.AddAutoMapper(cfg => {
+    cfg.AddMaps(typeof(Program));       // API assembly
+    cfg.AddMaps(typeof(MappingProfile)); // Application assembly — contains User→UserDto etc.
+});
 
 // ── FluentValidation ─────────────────────────────────────────────────────────
 builder.Services.AddFluentValidationAutoValidation();
@@ -188,18 +219,29 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseCors();
+app.UseStaticFiles(); // serves wwwroot/uploads/* publicly (auth handled at upload endpoint)
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<BalochiAcademy.API.Middleware.ExceptionMiddleware>();
 app.MapControllers();
 app.MapHub<BalochiAcademy.API.Hubs.NotificationHub>("/hubs/notifications");
 
-// ── Seed initial data ────────────────────────────────────────────────────────
+// ── Migrate database + Seed initial data ────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
-    var db        = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
-    var passwords = scope.ServiceProvider.GetRequiredService<IPasswordService>();
-    await BalochiAcademy.API.Infrastructure.DatabaseSeeder.SeedAsync(db, passwords);
+    try
+    {
+        // MigrateAsync creates the DB if missing and applies any pending migrations.
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await context.Database.MigrateAsync();
+
+        var passwords = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+        await BalochiAcademy.API.Infrastructure.DatabaseSeeder.SeedAsync(context, passwords);
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Database migration/seeding failed — fix the connection string and restart");
+    }
 }
 
 app.Run();

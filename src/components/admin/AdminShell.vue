@@ -22,8 +22,8 @@ import AdminTopNav from './AdminTopNav.vue'
 <style scoped>
 .admin-shell { min-height: 100vh; background: var(--t-bg); color: var(--t-text1); }
 .admin-main { min-height: calc(100vh - 64px); overflow-y: auto; }
-.admin-main-inner { max-width: 1400px; margin: 0 auto; padding: 1.5rem 1rem; }
-@media (min-width: 768px) { .admin-main-inner { padding: 1.75rem 1.5rem; } }
+.admin-main-inner { max-width: none; width: 100%; margin: 0; padding: 1.5rem 1rem; }
+@media (min-width: 768px) { .admin-main-inner { padding: 1.75rem 2rem; } }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(6px); }
 </style>
