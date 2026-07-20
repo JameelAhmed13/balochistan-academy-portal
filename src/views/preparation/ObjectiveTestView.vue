@@ -36,22 +36,21 @@
     <!-- In progress -->
     <div v-else-if="!finished" class="take-body">
       <!-- Question area -->
-      <div class="take-main">
+      <div class="take-main" ref="testEl">
         <div class="take-q-header">
           <CognitiveBadge :level="currentQ.cognitiveLevel" />
           <DifficultyBadge :level="currentQ.difficulty" />
         </div>
         <div class="take-q-text"
              :class="subject.medium === 'urdu' ? 'urdu' : ''"
-             :dir="subject.medium === 'urdu' ? 'rtl' : 'ltr'">
-          {{ currentQ.stem }}
-        </div>
+             :dir="subject.medium === 'urdu' ? 'rtl' : 'ltr'"
+             v-html="prepareMath(currentQ.stem)" />
         <div class="take-options" :dir="subject.medium === 'urdu' ? 'rtl' : 'ltr'">
           <label v-for="(opt, oi) in currentQ.options" :key="oi"
             class="take-opt" :class="{ selected: answers[currentIdx] === oi }">
             <input type="radio" :name="'q' + currentIdx" :value="oi"
               v-model="answers[currentIdx]" class="take-radio" />
-            {{ ['A','B','C','D'][oi] }}. {{ opt }}
+            {{ ['A','B','C','D'][oi] }}. <span v-html="prepareMath(opt)" />
           </label>
         </div>
         <div class="take-nav">
@@ -97,7 +96,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, nextTick, watch } from 'vue'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
 import { ArrowLeft, Play } from '@lucide/vue'
 import { useRouter } from 'vue-router'
 import { useContentStore } from '@/stores/content'
@@ -116,6 +117,11 @@ const auth = useAuthStore()
 const subject = computed(() => findPrepSubject(props.bookId))
 const gradeCode = computed(() => auth.user?.gradeCode || 9)
 
+const testEl = ref(null)
+const KATEX_OPTS = { delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }, { left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false }
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(t) { if (!t) return ''; return String(t).replace(ENV_RE, (m) => `\\[${m}\\]`) }
+
 const questions = ref(content.getQuestions(+props.bookId, { limit: 35 }))
 const currentIdx = ref(0)
 const answers = ref({})
@@ -125,6 +131,7 @@ const timeLeft = ref(35 * 60)
 let timer = null
 
 const currentQ = computed(() => questions.value[currentIdx.value])
+watch(currentQ, () => nextTick(() => { if (testEl.value) renderMathInElement(testEl.value, KATEX_OPTS) }), { deep: true })
 
 function startTest() {
   started.value = true

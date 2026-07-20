@@ -108,7 +108,7 @@
         <div v-if="aiLoading" class="card p-16 flex flex-col items-center" style="color:var(--t-text3)">
           <Sparkles class="w-16 h-16 mb-4 op-spin" style="color:var(--t-accent)" />
           <p class="text-sm">{{ aiMode === 'board' ? 'Loading real board questions…' : (boardName + ' paper setter is generating your ' + (aiMode === 'predicted' ? 'predicted ' : '') + 'questions…') }}</p>
-          <p v-if="aiMode !== 'board'" class="text-xs mt-1">Running {{ ollamaConfig.MODEL }} locally — this can take a moment.</p>
+          <p v-if="aiMode !== 'board'" class="text-xs mt-1" style="color:var(--t-accent)">Using llama3 AI — generating questions takes 3–4 minutes. Please wait, do not navigate away.</p>
         </div>
 
         <div v-else-if="!generated" class="card p-16 flex flex-col items-center" style="color:var(--t-text3)">

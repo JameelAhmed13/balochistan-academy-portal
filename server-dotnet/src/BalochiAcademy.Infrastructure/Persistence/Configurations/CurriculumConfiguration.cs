@@ -172,3 +172,16 @@ public class SystemSettingConfiguration : IEntityTypeConfiguration<SystemSetting
         b.Property(e => e.Key).HasMaxLength(100);
     }
 }
+
+public class PastPaperConfiguration : IEntityTypeConfiguration<PastPaper>
+{
+    public void Configure(EntityTypeBuilder<PastPaper> b)
+    {
+        b.HasKey(e => e.Id);
+        b.Property(e => e.GradeCode).HasMaxLength(10).IsRequired();
+        b.Property(e => e.Board).HasMaxLength(120).IsRequired();
+        b.Property(e => e.PaperType).HasMaxLength(30).IsRequired();
+        b.HasOne(e => e.Subject).WithMany().HasForeignKey(e => e.SubjectId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(e => new { e.SubjectId, e.GradeCode, e.Year, e.Board, e.PaperType }).IsUnique();
+    }
+}

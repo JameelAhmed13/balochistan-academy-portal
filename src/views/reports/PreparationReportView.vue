@@ -94,13 +94,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { FileBarChart, Printer, ClipboardList, Play, AlertTriangle, CheckCircle2, Sparkles } from '@lucide/vue'
 import { useStudentStore } from '@/stores/student'
 import { useAuthStore } from '@/stores/auth'
 import { saathiChat } from '@/services/ollamaService'
 
 const student = useStudentStore()
+onMounted(() => { student.fetchAttempts() })
 const auth = useAuthStore()
 const grade = computed(() => auth.user?.gradeCode ?? 9)
 const board = computed(() => (auth.user?.board ? `${auth.user.board} Board` : 'Balochistan Board') + ' (BISE)')

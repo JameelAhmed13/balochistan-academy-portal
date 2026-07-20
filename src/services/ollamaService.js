@@ -16,7 +16,6 @@
 
 import { buildPrompt } from './studentAssistantPrompts'
 import { buildRolePrompt } from './saathiRoles'
-import api from '@/services/api'
 
 // ----------------------------------------------------------------------
 // CONFIG (browser / Vite)
@@ -25,11 +24,14 @@ import api from '@/services/api'
 // VITE_OLLAMA_URL only if you want to hit a host directly (CORS permitting).
 const BASE = (import.meta.env.VITE_OLLAMA_URL || '/ollama').replace(/\/$/, '')
 const DEFAULT_MODEL = import.meta.env.VITE_OLLAMA_MODEL || 'llama3'
+// Separate model for JSON generation — cloud models respond instantly; llama3 8B times out
+const DEFAULT_JSON_MODEL = (import.meta.env.VITE_OLLAMA_JSON_MODEL || '').trim() || DEFAULT_MODEL
 const TIMEOUT_MS = Number(import.meta.env.VITE_OLLAMA_TIMEOUT_MS || 30000)
 const OLLAMA_API_KEY = (import.meta.env.VITE_OLLAMA_API_KEY || '').trim()
+const GEMINI_API_KEY = (import.meta.env.VITE_GEMINI_API_KEY || '').trim()
 const DEFAULT_OPTIONS = { temperature: 0.3, top_p: 0.9, num_predict: 1500 }
 
-const GEMINI_MODEL = 'gemini-2.5-flash-lite'
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash-lite'
 
 let lastError = null
 let _idSeq = 700000
@@ -168,7 +170,7 @@ function userMessage(ctx, question) {
  * @returns {Promise<string>} raw model text (JSON string for json use-cases)
  */
 export async function llmCall(mode, useCase, ctx = {}, opts = {}) {
-  const { question = null, history = null, model = DEFAULT_MODEL, options = {}, numPredict } = opts
+  const { question = null, history = null, model = DEFAULT_MODEL, options = {}, numPredict, timeoutMs } = opts
   const cfg = USE_CASES[useCase]
   if (!cfg) throw new Error(`Unknown useCase '${useCase}'. Available: ${Object.keys(USE_CASES).join(', ')}`)
   const mergedOptions = { ...DEFAULT_OPTIONS, ...(numPredict ? { num_predict: numPredict } : {}), ...options }
@@ -179,7 +181,10 @@ export async function llmCall(mode, useCase, ctx = {}, opts = {}) {
     if (history?.length) messages.push(...history)
     messages.push({ role: 'user', content: userMessage(ctx, question) })
     endpoint = '/api/chat'
-    payload = { model, messages, stream: false, options: mergedOptions, ...(cfg.json ? { format: 'json' } : {}) }
+    // Do NOT add format:'json' — Ollama's JSON-constrained mode silently fails on some
+    // servers/models. The system prompt already says "Return ONLY valid JSON..." and
+    // extractJson handles markdown-fenced responses just fine.
+    payload = { model, messages, stream: false, options: mergedOptions }
     extract = (j) => j.message?.content || ''
   } else if (mode === 'generate') {
     endpoint = '/api/generate'
@@ -189,7 +194,7 @@ export async function llmCall(mode, useCase, ctx = {}, opts = {}) {
     throw new Error(`mode must be 'chat' or 'generate', got '${mode}'`)
   }
 
-  return extract(await _ollamaPost(endpoint, payload))
+  return extract(await _ollamaPost(endpoint, payload, timeoutMs))
 }
 
 // Shared POST with timeout + friendly error mapping (used by llmCall and chat).
@@ -240,8 +245,9 @@ export async function chat({ system, messages = [], model = DEFAULT_MODEL, optio
   return json.message?.content || ''
 }
 
-// Cloud fallback: same chat shape, via backend Gemini proxy (key stays server-side).
+// Cloud fallback: calls Gemini API directly using VITE_GEMINI_API_KEY from .env.
 async function geminiChat({ system, messages = [], options = {} }) {
+  if (!GEMINI_API_KEY) throw new Error('Gemini API key is not configured (set VITE_GEMINI_API_KEY in .env)')
   const contents = messages.map((m) => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }],
@@ -249,8 +255,14 @@ async function geminiChat({ system, messages = [], options = {} }) {
   const body = { contents }
   if (system) body.systemInstruction = { parts: [{ text: system }] }
   if (options.temperature != null) body.generationConfig = { temperature: options.temperature }
-  const { data } = await api.post('/ai/gemini', body)
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`Gemini HTTP ${res.status}: ${errBody.slice(0, 200)}`)
+  }
+  const json = await res.json()
+  return json.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
 /**
@@ -260,12 +272,14 @@ async function geminiChat({ system, messages = [], options = {} }) {
 export let lastEngine = null
 export async function chatWithFallback({ system, messages = [], model, options = {}, format } = {}) {
   // 1. Try Ollama (normal timeout)
+  let ollamaTimedOut = false
   try {
     const out = await chat({ system, messages, model, options, format })
     lastEngine = 'ollama'
     return out
   } catch (ollamaErr) {
     lastError = ollamaErr?.message || String(ollamaErr)
+    ollamaTimedOut = lastError.includes('timed out')
   }
 
   // 2. Try Gemini
@@ -278,9 +292,9 @@ export async function chatWithFallback({ system, messages = [], model, options =
     gemErr = e
   }
 
-  // 3. If Gemini failed with billing/quota (429), retry Ollama with 3× timeout
+  // 3. If Ollama timed out AND Gemini failed for any reason, retry Ollama with 3× timeout
   const gemMsg = gemErr?.message || ''
-  if (gemMsg.includes('429') || /quota|billing/i.test(gemMsg)) {
+  if (ollamaTimedOut) {
     try {
       const out = await chat({ system, messages, model, options, format, timeoutMs: TIMEOUT_MS * 3 })
       lastEngine = 'ollama'
@@ -372,10 +386,26 @@ export function getLastEngine() {
 // ----------------------------------------------------------------------
 function extractJson(txt) {
   if (!txt) return null
-  let s = String(txt).trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim()
+  let s = String(txt).trim()
+  // Strip <think>...</think> reasoning blocks (DeepSeek R1, Qwen-thinking, etc.)
+  s = s.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
+  // Strip markdown code fences
+  s = s.replace(/```json\s*/gi, '').replace(/```/g, '').trim()
+  // Direct parse
   try { return JSON.parse(s) } catch { /* fall through */ }
-  const m = s.match(/[[{][\s\S]*[\]}]/)
-  if (m) { try { return JSON.parse(m[0]) } catch { /* noop */ } }
+  // Bracket-depth scan: find the first complete JSON object/array even with preamble text
+  for (let i = 0; i < s.length; i++) {
+    const open = s[i]
+    if (open !== '{' && open !== '[') continue
+    const close = open === '{' ? '}' : ']'
+    let depth = 0
+    for (let j = i; j < s.length; j++) {
+      if (s[j] === open) depth++
+      else if (s[j] === close && --depth === 0) {
+        try { return JSON.parse(s.slice(i, j + 1)) } catch { break }
+      }
+    }
+  }
   return null
 }
 function asQuestionArray(parsed) {
@@ -429,25 +459,70 @@ function normalizeSubjective(q, ctx) {
 // ----------------------------------------------------------------------
 // PUBLIC: high-level generators (return [] on failure → caller falls back)
 // ----------------------------------------------------------------------
-// One-shot JSON generation via backend Gemini proxy (key stays server-side).
-async function geminiGenerate(prompt, json = true) {
+// One-shot JSON generation via Gemini API directly.
+// Intentionally avoids responseMimeType:'application/json' — gemini-2.5-flash-lite
+// rejects that constraint on free-tier keys. The prompt already says "Return ONLY
+// valid JSON" and extractJson() handles any surrounding text.
+async function geminiGenerate(prompt) {
+  if (!GEMINI_API_KEY) throw new Error('Gemini API key is not configured (set VITE_GEMINI_API_KEY in .env)')
   const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }] }
-  if (json) body.generationConfig = { responseMimeType: 'application/json' }
-  const { data } = await api.post('/ai/gemini', body)
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`Gemini HTTP ${res.status}: ${errBody.slice(0, 200)}`)
+  }
+  const json = await res.json()
+  return json.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
-// Generate JSON: try local Ollama, fall back to Gemini so generation completes
-// even when Ollama is slow/unreachable. Same prompt (incl. real-data grounding) either way.
+// Generate JSON — 3-stage fallback chain:
+//   1. Ollama cloud model (near-instant if auth token configured)
+//   2. Gemini REST (if Ollama cloud fails)
+//   3. Ollama llama3 with 5-min timeout — same model as AI Tutor/Saathi, always works
 async function generateJSON(useCase, ctx, opts = {}) {
   const cfg = USE_CASES[useCase]
+  const jsonOpts = { ...opts, model: opts.model || DEFAULT_JSON_MODEL }
+  let ollamaTimedOut = false
+  let ollamaErr = null
+
+  // Stage 1 — Ollama cloud model (skip if same as local model to avoid duplicate attempt)
+  if (DEFAULT_JSON_MODEL !== DEFAULT_MODEL) {
+    try {
+      const txt = await llmCall('chat', useCase, ctx, jsonOpts)
+      if (txt && extractJson(txt)) { lastEngine = 'ollama'; return txt }
+      ollamaErr = 'Ollama returned a non-JSON response'
+    } catch (e) {
+      ollamaErr = e?.message || String(e)
+      ollamaTimedOut = ollamaErr.includes('timed out')
+    }
+    lastError = ollamaErr
+  }
+
+  // Stage 2 — Gemini
+  let gemErr = null
   try {
-    const txt = await llmCall('generate', useCase, ctx, opts)
+    const txt = await geminiGenerate(flatPrompt(cfg, ctx))
+    lastEngine = 'gemini'
+    return txt
+  } catch (e) { gemErr = e }
+
+  // Stage 3 — llama3 with 5-minute timeout (same model as AI Tutor/Saathi).
+  // Triggers whenever cloud model or Gemini failed for any reason (auth, timeout, bad key).
+  // Strip realExamplesToMatch — large RAG strings overflow llama3's context window
+  // and cause it to generate placeholder/empty content instead of real questions.
+  try {
+    const { realExamplesToMatch: _dropped, ...localCtx } = ctx
+    const localOpts = { ...opts, model: DEFAULT_MODEL, timeoutMs: 5 * 60 * 1000 }
+    const txt = await llmCall('chat', useCase, localCtx, localOpts)
     if (txt && extractJson(txt)) { lastEngine = 'ollama'; return txt }
-  } catch (e) { lastError = e?.message || String(e) }
-  const txt = await geminiGenerate(flatPrompt(cfg, ctx), cfg.json)
-  lastEngine = 'gemini'
-  return txt
+  } catch (retryErr) {
+    lastEngine = null
+    throw new Error(`All engines failed — Ollama cloud: ${ollamaErr}; Gemini: ${gemErr?.message}; llama3: ${retryErr?.message}`)
+  }
+
+  lastEngine = null
+  throw new Error(`All engines failed — Ollama: ${ollamaErr}; Gemini: ${gemErr?.message}`)
 }
 
 export async function generateObjectiveQuestions({ subject, topic, unit, grade, board, count = 10, difficulty, examples } = {}) {
@@ -456,10 +531,16 @@ export async function generateObjectiveQuestions({ subject, topic, unit, grade, 
     const ctx = { subject, grade, board, topic: topic || 'the full syllabus', count, difficulty }
     if (examples) ctx.realExamplesToMatch = examples
     const txt = await generateJSON('objective_questions', ctx,
-      { numPredict: Math.min(2048, 180 * count) })
+      { numPredict: Math.min(4096, 300 * count) })
     return asQuestionArray(extractJson(txt))
       .map((q) => normalizeObjective(q, { subject, unit, topic }))
-      .filter((q) => q.stem && q.options.length === 4)
+      .filter((q) => {
+        if (!q.stem || q.stem === 'Question' || q.stem === 'string') return false
+        if (q.options.length !== 4) return false
+        // Reject if all options are placeholders (—, opt1…opt4, or schema examples)
+        const placeholder = /^(—|opt\d+|string)$/i
+        return !q.options.every(o => placeholder.test(String(o).trim()))
+      })
   } catch (e) { lastError = e?.message || String(e); return [] }
 }
 
@@ -468,7 +549,7 @@ export async function generateSubjectiveQuestions({ subject, topic, unit, grade,
     lastError = null
     const txt = await generateJSON('subjective_questions',
       { subject, grade, board, topic: topic || 'the full syllabus', count, type, difficulty },
-      { numPredict: Math.min(2048, 220 * count) })
+      { numPredict: Math.min(4096, 350 * count) })
     return asQuestionArray(extractJson(txt))
       .map((q) => normalizeSubjective(q, { subject, unit, topic, type }))
       .filter((q) => q.stem)
@@ -480,10 +561,10 @@ export async function generatePredictedPaper({ subject, grade, board, count = 10
   try {
     lastError = null
     if (kind === 'subjective') {
-      const txt = await generateJSON('predicted_subjective', { subject, grade, board, count }, { numPredict: Math.min(2048, 220 * count) })
+      const txt = await generateJSON('predicted_subjective', { subject, grade, board, count }, { numPredict: Math.min(4096, 350 * count) })
       return asQuestionArray(extractJson(txt)).map((q) => ({ ...normalizeSubjective(q, { subject }), predicted: true }))
     }
-    const txt = await generateJSON('predicted_objective', { subject, grade, board, count }, { numPredict: Math.min(2048, 180 * count) })
+    const txt = await generateJSON('predicted_objective', { subject, grade, board, count }, { numPredict: Math.min(4096, 300 * count) })
     return asQuestionArray(extractJson(txt))
       .map((q) => ({ ...normalizeObjective(q, { subject }), entranceExam: true }))
       .filter((q) => q.options.length === 4)

@@ -59,24 +59,30 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="label">Type</label>
-                <select v-model="form.type" class="input">
-                  <option>Complaint</option>
-                  <option>Suggestion</option>
-                  <option>Bug Report</option>
-                  <option>Feature Request</option>
-                  <option>General Feedback</option>
-                </select>
+                <div class="cp-select-wrap">
+                  <select v-model="form.type" class="cp-select">
+                    <option>Complaint</option>
+                    <option>Suggestion</option>
+                    <option>Bug Report</option>
+                    <option>Feature Request</option>
+                    <option>General Feedback</option>
+                  </select>
+                  <svg class="cp-select-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                </div>
               </div>
               <div>
                 <label class="label">Subject / Module</label>
-                <select v-model="form.module" class="input">
-                  <option>General</option>
-                  <option>AI Tutor</option>
-                  <option>Preparation</option>
-                  <option>Tests</option>
-                  <option>Coins &amp; Rewards</option>
-                  <option>Admin Panel</option>
-                </select>
+                <div class="cp-select-wrap">
+                  <select v-model="form.module" class="cp-select">
+                    <option>General</option>
+                    <option>AI Tutor</option>
+                    <option>Preparation</option>
+                    <option>Tests</option>
+                    <option>Coins &amp; Rewards</option>
+                    <option>Admin Panel</option>
+                  </select>
+                  <svg class="cp-select-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                </div>
               </div>
             </div>
             <div>
@@ -267,6 +273,43 @@ function formatDateTime(iso) { return new Date(iso).toLocaleString('en-PK', { da
 </script>
 
 <style scoped>
+/* Custom select — hides native arrow, applies theme colours */
+.cp-select-wrap {
+  position: relative;
+  display: block;
+}
+.cp-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.55rem 2.5rem 0.55rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--t-border);
+  background: var(--t-surface);
+  color: var(--t-text1);
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.cp-select:focus { border-color: var(--t-accent); box-shadow: 0 0 0 3px var(--t-acc-alpha-sm); }
+/* Style the options list itself as dark — works on Firefox; Chrome/Edge use OS picker */
+.cp-select option {
+  background: var(--t-surface);
+  color: var(--t-text1);
+}
+.cp-select-arrow {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--t-text3);
+  pointer-events: none;
+}
+
 .cp-item {
   display: block; width: 100%; text-align: left; font: inherit; cursor: pointer;
   padding: 0.75rem; border-radius: 12px;

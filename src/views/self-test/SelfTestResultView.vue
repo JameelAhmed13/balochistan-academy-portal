@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="animate-fade-in str-wrap">
     <!-- Score summary -->
     <div class="card str-score">
@@ -21,6 +21,7 @@
 
     <!-- Per-question review -->
     <div class="str-review-title">Answer Review <span class="str-review-hint">{{ correctCount }} correct · {{ questions.length - correctCount }} incorrect</span></div>
+    <div ref="reviewEl">
     <div v-for="(q, i) in questions" :key="q.id || i" class="card str-q">
       <div class="str-q-head">
         <span class="str-q-no">Q{{ i + 1 }}</span>
@@ -29,17 +30,18 @@
         </span>
         <span v-if="q.topic" class="str-q-topic">{{ q.topic }}</span>
       </div>
-      <p class="str-q-stem" :class="medium === 'urdu' ? 'urdu' : ''" :dir="medium === 'urdu' ? 'rtl' : 'ltr'">{{ q.stem }}</p>
+      <p class="str-q-stem" :class="medium === 'urdu' ? 'urdu' : ''" :dir="medium === 'urdu' ? 'rtl' : 'ltr'" v-html="prepareMath(q.stem)" />
       <div class="str-opts" :dir="medium === 'urdu' ? 'rtl' : 'ltr'">
         <div v-for="(opt, oi) in q.options" :key="oi" class="str-opt"
           :class="{ 'str-opt-correct': oi === q.correct, 'str-opt-wrong': answers[i] === oi && oi !== q.correct }">
           <span class="str-opt-key">{{ ['A','B','C','D','E'][oi] }}</span>
-          <span class="str-opt-text">{{ opt }}</span>
+          <span class="str-opt-text" v-html="prepareMath(opt)" />
           <Check v-if="oi === q.correct" class="w-4 h-4 str-ic-ok" />
           <X v-else-if="answers[i] === oi" class="w-4 h-4 str-ic-no" />
         </div>
       </div>
-      <div v-if="q.reason" class="str-reason"><strong>Why:</strong> {{ q.reason }}</div>
+      <div v-if="q.reason" class="str-reason"><strong>Why:</strong> <span v-html="prepareMath(q.reason)" /></div>
+    </div>
     </div>
 
     <div class="flex gap-3 justify-center pt-1">
@@ -51,20 +53,54 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, nextTick, onMounted, watch } from 'vue'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
 import { useRoute } from 'vue-router'
 import { Check, X, RotateCcw, FileBarChart } from '@lucide/vue'
-import { SUBJECTS, useContentStore } from '@/stores/content'
 import { useStudentStore } from '@/stores/student'
+import { useCatalogStore } from '@/stores/catalog'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const route = useRoute()
-const content = useContentStore()
 const student = useStudentStore()
+const catalog = useCatalogStore()
+
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(html) {
+  if (!html) return ''
+  const s = String(html)
+  return s.replace(ENV_RE, (match, _env, offset) => {
+    const before = s.slice(0, offset)
+    const opens = (before.match(/\\\[/g) || []).length
+    const closes = (before.match(/\\\]/g) || []).length
+    return opens > closes ? match : `\\[${match}\\]`
+  })
+}
+
+const KATEX_OPTS = {
+  delimiters: [
+    { left: '\\[', right: '\\]', display: true },
+    { left: '\\(', right: '\\)', display: false },
+    { left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false },
+  ],
+  throwOnError: false,
+}
+
+const reviewEl = ref(null)
+function renderMath() {
+  nextTick(() => { if (reviewEl.value) renderMathInElement(reviewEl.value, KATEX_OPTS) })
+}
 
 const bookId = computed(() => +route.params.bookId)
-const subjectName = computed(() => SUBJECTS.find(s => s.id === bookId.value)?.name || 'Subject')
-const medium = computed(() => SUBJECTS.find(s => s.id === bookId.value)?.medium || 'english')
+
+const subject = computed(() => {
+  const all = Object.values(catalog.gradeSubjects).flat()
+  return all.find(s => String(s.id) === String(bookId.value)) || null
+})
+const subjectName = computed(() => subject.value?.name || 'Subject')
+const medium = computed(() => subject.value?.medium || 'english')
 
 const record = computed(() =>
   student.testRecords.find(t => t.bookId === bookId.value && (t.type || '').includes('Self Test')) || null)
@@ -82,8 +118,11 @@ const verdict = computed(() => {
   if (p >= 85) return { label: 'Excellent', cls: 'str-v-good', msg: 'Outstanding — you have strong command of this topic.' }
   if (p >= 60) return { label: 'Passed', cls: 'str-v-ok', msg: 'Good work. Review the ones you missed to push higher.' }
   if (p >= 40) return { label: 'Needs Work', cls: 'str-v-warn', msg: 'Keep going — revise the weak areas and retake.' }
-  return { label: 'Keep Practising', cls: 'str-v-bad', msg: 'Revisit the lessons, then try again — you’ll improve fast.' }
+  return { label: 'Keep Practising', cls: 'str-v-bad', msg: "Revisit the lessons, then try again — you will improve fast." }
 })
+
+watch(questions, renderMath)
+onMounted(renderMath)
 </script>
 
 <style scoped>

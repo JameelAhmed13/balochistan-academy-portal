@@ -250,7 +250,8 @@ using (var scope = app.Services.CreateScope())
         await context.Database.MigrateAsync();
 
         var passwords = scope.ServiceProvider.GetRequiredService<IPasswordService>();
-        await BalochiAcademy.API.Infrastructure.DatabaseSeeder.SeedAsync(context, passwords);
+        var cfg       = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        await BalochiAcademy.API.Infrastructure.DatabaseSeeder.SeedAsync(context, passwords, cfg);
     }
     catch (Exception ex)
     {

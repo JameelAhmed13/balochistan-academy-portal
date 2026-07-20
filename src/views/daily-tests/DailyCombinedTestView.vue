@@ -7,7 +7,7 @@
         <div class="dct-setup-section">
           <div class="dct-setup-label">Select Subjects</div>
           <div class="dct-subject-grid">
-            <label v-for="s in SUBJECTS" :key="s.id" class="dct-subj-item"
+            <label v-for="s in subjects" :key="s.id" class="dct-subj-item"
               :class="{ 'dct-subj-active': selectedSubjects.includes(s.id) }">
               <input type="checkbox" v-model="selectedSubjects" :value="s.id" />
               <span class="dct-subj-icon">{{ s.icon }}</span>
@@ -44,6 +44,11 @@
       </div>
     </div>
 
+    <!-- Loading -->
+    <div v-if="phase === 'loading'" class="dct-loading">
+      <div class="dct-loading-text">⏳ Loading questions…</div>
+    </div>
+
     <!-- Objective MCQ phase -->
     <div v-if="phase === 'objective'">
       <div class="dct-exam-header">
@@ -63,16 +68,17 @@
           </div>
         </div>
       </div>
-      <div class="dct-q-card">
+      <div class="dct-q-card" ref="mathContainer">
         <div class="dct-q-num">Question {{ currentQIdx + 1 }}</div>
         <CognitiveBadge :level="currentQ.cognitiveLevel" />
         <DifficultyBadge :level="currentQ.difficulty" />
-        <div class="dct-q-stem" :dir="currentQ.isUrdu ? 'rtl' : 'ltr'">{{ currentQ.stem }}</div>
+        <div class="dct-q-stem" :dir="currentQ.isUrdu ? 'rtl' : 'ltr'" v-html="prepareMath(currentQ.stem)" />
         <div class="dct-options">
           <label v-for="(opt, oi) in currentQ.options" :key="oi" class="dct-opt"
             :class="{ 'dct-opt-sel': objAnswers[currentSubjectIdx]?.[currentQIdx] === oi }">
             <input type="radio" :name="`obj_${currentSubjectIdx}_${currentQIdx}`" :value="oi"
-              @change="setObjAnswer(oi)" /> {{ opt }}
+              @change="setObjAnswer(oi)" />
+            <span v-html="prepareMath(opt)" />
           </label>
         </div>
       </div>
@@ -99,7 +105,7 @@
         <div class="dct-q-num">Q{{ qi + 1 }}</div>
         <CognitiveBadge :level="q.cognitiveLevel" />
         <DifficultyBadge :level="q.difficulty" />
-        <div class="dct-q-stem">{{ q.stem }}</div>
+        <div class="dct-q-stem" v-html="prepareMath(q.stem)" />
         <div class="dct-subj-input-row">
           <textarea v-model="subjAnswers[currentSubjectIdx][qi]" placeholder="Write your answer here..."
             class="dct-subj-textarea" rows="3" />
@@ -118,11 +124,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { SUBJECTS, useContentStore } from '@/stores/content'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
+import { useContentStore } from '@/stores/content'
 import { useStudentStore } from '@/stores/student'
 import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
+import api from '@/services/api'
 import CognitiveBadge from '@/components/platform/CognitiveBadge.vue'
 import DifficultyBadge from '@/components/platform/DifficultyBadge.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
@@ -131,6 +141,51 @@ const router = useRouter()
 const content = useContentStore()
 const student = useStudentStore()
 const auth = useAuthStore()
+const catalog = useCatalogStore()
+
+const mathContainer = ref(null)
+const KATEX_OPTS = {
+  delimiters: [
+    { left: '\\[', right: '\\]', display: true },
+    { left: '\\(', right: '\\)', display: false },
+    { left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false },
+  ],
+  throwOnError: false,
+}
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(text) {
+  if (!text) return ''
+  return String(text).replace(ENV_RE, (m) => `\\[${m}\\]`)
+}
+function renderMath() {
+  nextTick(() => { if (mathContainer.value) renderMathInElement(mathContainer.value, KATEX_OPTS) })
+}
+
+const gradeCode = computed(() => auth.user?.gradeCode || auth.user?.grade || '9')
+const subjects = computed(() => catalog.subjectsForGrade(gradeCode.value))
+
+onMounted(async () => {
+  if (!subjects.value.length) {
+    await catalog.fetchSubjectsForGrade(gradeCode.value).catch(() => {})
+  }
+})
+
+function normalizeObjQ(q) {
+  if (q.optionsJson !== undefined) {
+    let opts = []
+    try { opts = JSON.parse(q.optionsJson || '[]') } catch { opts = [] }
+    return { stem: q.stem, options: opts, correct: q.correctIndex ?? 0, cognitiveLevel: 'Knowledge', difficulty: 'Medium', isUrdu: false }
+  }
+  return {
+    stem: q.stem || q.question,
+    options: q.options || [],
+    correct: q.correct ?? 0,
+    cognitiveLevel: q.cognitiveLevel || 'Knowledge',
+    difficulty: q.difficulty || 'Medium',
+    isUrdu: q.isUrdu || false,
+  }
+}
 
 const phase = ref('setup')
 const selectedSubjects = ref([])
@@ -149,19 +204,26 @@ const allObjQs = ref({})
 const allSubjQs = ref({})
 
 const currentSubjectId = computed(() => selectedSubjects.value[currentSubjectIdx.value])
-const currentSubjectName = computed(() => SUBJECTS.find(s => s.id === currentSubjectId.value)?.name || '')
+const currentSubjectName = computed(() => subjects.value.find(s => s.id === currentSubjectId.value)?.name || '')
 const currentObjectiveQs = computed(() => allObjQs.value[currentSubjectId.value] || [])
 const currentSubjectiveQs = computed(() => allSubjQs.value[currentSubjectId.value] || [])
 const currentQ = computed(() => currentObjectiveQs.value[currentQIdx.value] || {})
 const hasMoreSubjects = computed(() => currentSubjectIdx.value < selectedSubjects.value.length - 1)
+watch(currentQ, renderMath, { deep: true })
 
 async function startExam() {
+  phase.value = 'loading'
   for (const id of selectedSubjects.value) {
-    allObjQs.value[id] = await content.getQuestionsReal(id, {
-      grade: auth.user?.gradeCode || 9,
-      subjectName: SUBJECTS.find(s => s.id === id)?.name,
-      limit: mcqCount.value,
-    })
+    const subjectName = subjects.value.find(s => s.id === id)?.name || ''
+    let qs = []
+    try {
+      const res = await api.get('/questions/random', { params: { subjectId: id, grade: gradeCode.value, limit: mcqCount.value } })
+      qs = (res.data || []).map(normalizeObjQ)
+    } catch { /* fall through */ }
+    if (!qs.length) {
+      qs = (await content.getQuestionsReal(id, { grade: gradeCode.value, subjectName, limit: mcqCount.value })).map(normalizeObjQ)
+    }
+    allObjQs.value[id] = qs
     allSubjQs.value[id] = content.getSubjectiveQuestions(id, { limit: subjCount.value })
     objAnswers.value[id] = {}
     subjAnswers.value[id] = {}
@@ -259,4 +321,9 @@ onUnmounted(() => clearInterval(timer))
 .dct-subj-input-row { display: flex; gap: 0.75rem; align-items: flex-start; }
 .dct-subj-textarea { flex: 1; padding: 0.75rem; border: 1px solid var(--t-border); border-radius: 8px; background: var(--t-bg); color: var(--t-text1); font-size: 0.875rem; resize: vertical; }
 .dct-mic-btn { padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--t-border); background: var(--t-surface); cursor: pointer; font-size: 1.1rem; flex-shrink: 0; }
+.dct-loading { text-align: center; padding: 3rem 1rem; }
+.dct-loading-text { font-size: 1.1rem; color: var(--t-text3); }
+
+.dct-q-card :deep(.katex-display) { margin: 0.4rem 0; overflow-x: auto; }
+.dct-q-card :deep(.katex) { font-size: 1em; color: var(--t-text1); }
 </style>

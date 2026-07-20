@@ -128,7 +128,7 @@ import { useRouter, useRoute } from 'vue-router'
 import {
   ChevronRight,
   FolderOpen, Video, FileText, FlaskConical,
-  TestTube2, CheckSquare, PenLine, FileStack,
+  TestTube2, CheckSquare, PenLine, FileStack, BookOpenText,
 } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCatalogStore } from '@/stores/catalog'
@@ -200,6 +200,11 @@ onMounted(async () => {
     (id && filteredSubjects.value.find((s) => String(s.id) === String(id))) ||
     filteredSubjects.value[0] ||
     null
+  // Auto-navigate to the first subject when arriving at the bare /app/preparation route
+  // (skip for MySyllabus — it has no bookId param but is its own standalone page)
+  if (!id && selectedBook.value && route.name !== 'MySyllabus') {
+    router.replace(`/app/preparation/${selectedBook.value.id}`)
+  }
 })
 
 watch(() => route.params.bookId, (id) => {
@@ -210,6 +215,7 @@ watch(() => route.params.bookId, (id) => {
 
 // ── Study options ──────────────────────────────────────────────
 const studyOptions = [
+  { title: 'Syllabus',             action: 'syllabus',    icon: BookOpenText, bg: 'rgba(99,102,241,0.15)'  },
   { title: 'Academic Resources',  action: 'resources',   icon: FolderOpen,   bg: 'rgba(59,130,246,0.15)'  },
   { title: 'Video Lectures',      action: 'videos',      icon: Video,        bg: 'rgba(124,58,237,0.15)'  },
   { title: 'Key Notes',           action: 'keynotes',    icon: FileText,     bg: 'rgba(20,184,166,0.15)'  },
@@ -226,6 +232,7 @@ const activeOption = computed(() => {
   const p = route.path
   if (p.includes('/test/objective')  || p.endsWith('/objective'))  return 'objective'
   if (p.includes('/test/subjective') || p.endsWith('/subjective')) return 'subjective'
+  if (p.endsWith('/syllabus'))     return 'syllabus'
   if (p.endsWith('/resources'))   return 'resources'
   if (p.endsWith('/videos'))      return 'videos'
   if (p.endsWith('/keynotes'))    return 'keynotes'

@@ -161,10 +161,8 @@ import { ref, computed, nextTick } from 'vue'
 import { SUBJECTS } from '@/stores/content'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import AiTokenPill from '@/components/platform/AiTokenPill.vue'
-import { useStudentStore } from '@/stores/student'
-import { aiErrorMessage } from '@/composables/useAiTokens'
+import { chatWithFallback } from '@/services/ollamaService'
 
-const student = useStudentStore()
 
 const subjects = SUBJECTS || []
 const activeTab = ref('groups')
@@ -243,12 +241,13 @@ async function askAIForGroup() {
   const msgs = JSON.parse(localStorage.getItem(key) || '[]')
   msgs.push({ id: Date.now()-1, from: 'You', text: `@AI Give a study tip for ${chatGroup.value.subject}`, time: new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}), isMine: true })
   try {
-    const reply = await student.generateAi(
-      `Give one concise study tip for ${chatGroup.value.subject} for Pakistani board exams. Make it practical and actionable. Under 3 sentences.`
-    )
+    const reply = await chatWithFallback({
+      system: 'You are a helpful AI study assistant for Pakistani board exam students.',
+      messages: [{ role: 'user', content: `Give one concise study tip for ${chatGroup.value.subject} for Pakistani board exams. Make it practical and actionable. Under 3 sentences.` }],
+    })
     msgs.push({ id: Date.now(), from: '🤖 AI Tutor', text: reply, time: new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}), isMine: false })
-  } catch (e) {
-    msgs.push({ id: Date.now(), from: '🤖 AI Tutor', text: aiErrorMessage(e), time: new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}), isMine: false })
+  } catch {
+    msgs.push({ id: Date.now(), from: '🤖 AI Tutor', text: 'AI is unavailable right now. Please try again.', time: new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}), isMine: false })
   }
   localStorage.setItem(key, JSON.stringify(msgs.slice(-50)))
   nextTick(()=>{ if(msgArea.value) msgArea.value.scrollTop = msgArea.value.scrollHeight })

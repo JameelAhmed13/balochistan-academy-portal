@@ -20,11 +20,11 @@
         >
           <MessageSquare class="w-3.5 h-3.5" /> Chat
         </RouterLink>
-        <RouterLink :to="`/app/ai-tutor/${tutor.slug}/video`"
+        <!-- <RouterLink :to="`/app/ai-tutor/${tutor.slug}/video`"
           class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 hover:bg-purple-600 hover:text-white text-slate-700 text-xs font-medium transition-all"
         >
           <Video class="w-3.5 h-3.5" /> Video
-        </RouterLink>
+        </RouterLink> -->
       </div>
     </div>
   </div>

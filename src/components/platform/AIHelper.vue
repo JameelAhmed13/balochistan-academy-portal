@@ -36,7 +36,7 @@
 
 <script setup>
 import { ref, nextTick, watch } from 'vue'
-import api from '@/services/api'
+import { chatWithFallback } from '@/services/ollamaService'
 
 const props = defineProps({
   context: { type: String, default: '' },
@@ -61,11 +61,8 @@ async function ask(prompt) {
   loading.value = true
   await nextTick(); scrollBottom()
   try {
-    const systemPrompt = `You are an AI study helper for Pakistani board exam students (Grade 9-12). ${props.context ? 'Current context: ' + props.context : ''} Keep answers concise (3-5 sentences), use simple language, and relate to the Pakistan curriculum where possible. Use Urdu words occasionally for warmth.`
-    const { data } = await api.post('/ai/gemini', {
-      contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\nStudent: ' + text }] }]
-    })
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I couldn\'t get a response. Try again.'
+    const system = `You are an AI study helper for Pakistani board exam students (Grade 9-12). ${props.context ? 'Current context: ' + props.context : ''} Keep answers concise (3-5 sentences), use simple language, and relate to the Pakistan curriculum where possible. Use Urdu words occasionally for warmth.`
+    const reply = await chatWithFallback({ system, messages: [{ role: 'user', content: text }] })
     messages.value.push({ role: 'ai', text: reply })
   } catch {
     messages.value.push({ role: 'ai', text: 'AI is unavailable right now. Please try again later.' })

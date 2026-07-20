@@ -43,6 +43,7 @@ public interface IApplicationDbContext
     DbSet<SystemSetting>      SystemSettings      { get; }
     DbSet<SubscriptionPlan>   SubscriptionPlans   { get; }
     DbSet<UserSubscription>   UserSubscriptions   { get; }
+    DbSet<PastPaper>          PastPapers          { get; }
 
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

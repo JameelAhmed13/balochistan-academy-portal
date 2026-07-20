@@ -44,8 +44,8 @@
           <div class="cq-info-item"><span>🏆</span> {{ config.count * 10 }} max points</div>
           <div class="cq-info-item"><span>⚡</span> {{ config.difficulty }}</div>
         </div>
-        <button @click="startQuiz" :disabled="!config.subjectId" class="cq-start-btn">
-          ⚔️ Start Challenge
+        <button @click="startQuiz" :disabled="!config.subjectId || loadingQ" class="cq-start-btn">
+          {{ loadingQ ? '⏳ Loading questions…' : '⚔️ Start Challenge' }}
         </button>
       </div>
 
@@ -78,9 +78,9 @@
         <div class="cq-take-score">🏆 {{ liveScore }}</div>
       </div>
 
-      <div v-if="currentQ" class="cq-question-card">
+      <div v-if="currentQ" class="cq-question-card" ref="questionEl">
         <div class="cq-q-subject">{{ currentSubjectName }}</div>
-        <div class="cq-q-text">{{ currentQ.question }}</div>
+        <div class="cq-q-text" v-html="prepareMath(currentQ.question)" />
         <div class="cq-q-options">
           <button v-for="(opt, i) in currentQ.options" :key="i"
             @click="selectAnswer(i)"
@@ -92,7 +92,7 @@
             }"
             :disabled="answered">
             <span class="cq-option-letter">{{ 'ABCD'[i] }}</span>
-            {{ opt }}
+            <span v-html="prepareMath(opt)" />
           </button>
         </div>
         <div v-if="answered" class="cq-feedback">
@@ -100,7 +100,7 @@
             {{ lastCorrect ? '✅ Correct! +' + pointsEarned + ' pts' : '❌ Wrong!' }}
           </div>
           <div v-if="!lastCorrect" class="cq-feedback-explain">
-            ✓ Correct answer: {{ currentQ.options[currentQ.correct] }}
+            ✓ Correct answer: <span v-html="prepareMath(currentQ.options[currentQ.correct])" />
           </div>
           <button @click="nextQuestion" class="cq-next-btn">
             {{ currentIdx < questions.length - 1 ? 'Next Question →' : 'See Results →' }}
@@ -137,8 +137,8 @@
         <div v-for="(q, i) in questions" :key="i" class="cq-review-item" :class="{ correct: answers[i] === q.correct }">
           <div class="cq-review-icon">{{ answers[i] === q.correct ? '✅' : '❌' }}</div>
           <div>
-            <div class="cq-review-q">{{ i+1 }}. {{ q.question }}</div>
-            <div v-if="answers[i] !== q.correct" class="cq-review-correct">Correct: {{ q.options[q.correct] }}</div>
+            <div class="cq-review-q" v-html="(i+1) + '. ' + prepareMath(q.question)" />
+            <div v-if="answers[i] !== q.correct" class="cq-review-correct">Correct: <span v-html="prepareMath(q.options[q.correct])" /></div>
           </div>
         </div>
       </div>
@@ -152,16 +152,58 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
-import { SUBJECTS } from '@/stores/content'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
+import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 import { useStudentStore } from '@/stores/student'
+import api from '@/services/api'
+import { getRealQuestions } from '@/services/assessmentBank'
 import AIHelper from '@/components/platform/AIHelper.vue'
 
+const auth = useAuthStore()
+const catalog = useCatalogStore()
 const student = useStudentStore()
-const subjects = SUBJECTS || []
+
+const gradeCode = computed(() => auth.user?.gradeCode || '9')
+const subjects = computed(() => catalog.gradeSubjects[gradeCode.value] || [])
+
+onMounted(async () => {
+  if (!subjects.value.length) {
+    try { await catalog.fetchSubjectsForGrade(gradeCode.value) } catch { /* offline */ }
+  }
+})
+
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(html) {
+  if (!html) return ''
+  const s = String(html)
+  return s.replace(ENV_RE, (match, _env, offset) => {
+    const before = s.slice(0, offset)
+    const opens = (before.match(/\\\[/g) || []).length
+    const closes = (before.match(/\\\]/g) || []).length
+    return opens > closes ? match : `\\[${match}\\]`
+  })
+}
+const KATEX_OPTS = {
+  delimiters: [
+    { left: '\\[', right: '\\]', display: true },
+    { left: '\\(', right: '\\)', display: false },
+    { left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false },
+  ],
+  throwOnError: false,
+}
+const questionEl = ref(null)
+function renderMath() {
+  nextTick(() => { if (questionEl.value) renderMathInElement(questionEl.value, KATEX_OPTS) })
+}
+
 const phase = ref('setup')
 const config = ref({ subjectId: '', difficulty: 'medium', count: 10, timePerQ: 45 })
 const questions = ref([])
+const loadingQ = ref(false)
 const currentIdx = ref(0)
 const selectedAnswer = ref(null)
 const answered = ref(false)
@@ -174,73 +216,44 @@ const startTime = ref(0)
 let timer = null
 
 const currentQ = computed(() => questions.value[currentIdx.value])
-const currentSubjectName = computed(() => subjects.find(s=>s.id===config.value.subjectId)?.name || '')
+const currentSubjectName = computed(() => subjects.value.find(s => String(s.id) === String(config.value.subjectId))?.name || '')
 const pastAttempts = computed(() => JSON.parse(localStorage.getItem('bap_challenges') || '[]'))
 const resultData = computed(() => {
-  const correct = answers.value.filter((a,i)=>a===questions.value[i]?.correct).length
+  const correct = answers.value.filter((a, i) => a === questions.value[i]?.correct).length
   const total = questions.value.length
-  const pct = total ? Math.round(correct/total*100) : 0
-  return { score: liveScore.value, correct, total, pct, time: Math.round((Date.now()-startTime.value)/1000) }
+  const pct = total ? Math.round(correct / total * 100) : 0
+  return { score: liveScore.value, correct, total, pct, time: Math.round((Date.now() - startTime.value) / 1000) }
 })
 
-function generateQuestions(subjectId, count) {
-  const banks = {
-    physics: [
-      { question:'What is the SI unit of force?', options:['Joule','Newton','Watt','Pascal'], correct:1 },
-      { question:'An object at rest stays at rest unless acted upon by an external force. This is Newton\'s:', options:['Second law','Third law','First law','Law of Gravitation'], correct:2 },
-      { question:'Speed of light in vacuum is approximately:', options:['3 × 10⁶ m/s','3 × 10⁸ m/s','3 × 10¹⁰ m/s','3 × 10⁴ m/s'], correct:1 },
-      { question:'Work done = Force × ___', options:['Time','Velocity','Displacement','Acceleration'], correct:2 },
-      { question:'The unit of electrical resistance is:', options:['Volt','Ampere','Ohm','Watt'], correct:2 },
-      { question:'Power = Work done / ___', options:['Force','Distance','Time','Mass'], correct:2 },
-      { question:'Frequency is measured in:', options:['Meters','Seconds','Hertz','Joules'], correct:2 },
-      { question:'In a simple electric circuit, V = IR is:', options:['Kirchhoff\'s law','Ohm\'s law','Faraday\'s law','Lenz\'s law'], correct:1 },
-      { question:'The bending of light at a surface is called:', options:['Reflection','Diffraction','Refraction','Dispersion'], correct:2 },
-      { question:'Kinetic energy formula is:', options:['mgh','mv','½mv²','Fd'], correct:2 },
-    ],
-    chemistry: [
-      { question:'The atomic number of Hydrogen is:', options:['1','2','3','4'], correct:0 },
-      { question:'Chemical formula of water is:', options:['H₂O₂','HO','H₂O','HO₂'], correct:2 },
-      { question:'Which gas is produced at the cathode during electrolysis of water?', options:['Oxygen','Carbon dioxide','Hydrogen','Nitrogen'], correct:2 },
-      { question:'pH of a neutral solution is:', options:['0','7','14','1'], correct:1 },
-      { question:'NaCl is an example of a(n):', options:['Acid','Base','Salt','Oxide'], correct:2 },
-      { question:'Oxidation involves the ___ of electrons:', options:['Gain','Loss','Transfer','Sharing'], correct:1 },
-      { question:'The number of protons in an atom defines its:', options:['Mass number','Atomic mass','Atomic number','Valence'], correct:2 },
-      { question:'Which is a noble gas?', options:['Chlorine','Neon','Sodium','Oxygen'], correct:1 },
-      { question:'Acids have pH ___ than 7:', options:['Greater','Equal','Less','Independent'], correct:2 },
-      { question:'Organic compounds always contain:', options:['Nitrogen','Hydrogen','Carbon','Oxygen'], correct:2 },
-    ],
-    biology: [
-      { question:'The powerhouse of the cell is the:', options:['Nucleus','Ribosome','Mitochondria','Vacuole'], correct:2 },
-      { question:'Photosynthesis produces:', options:['CO₂ and water','Glucose and O₂','Protein and fat','ATP only'], correct:1 },
-      { question:'DNA stands for:', options:['Deoxyribonucleic Acid','Diribonucleic Acid','Deoxyribose Amino Acid','Dynamic Nucleic Acid'], correct:0 },
-      { question:'The number of chromosomes in a normal human cell is:', options:['23','46','44','48'], correct:1 },
-      { question:'Which blood cells fight infection?', options:['Red blood cells','Platelets','White blood cells','Plasma'], correct:2 },
-      { question:'Osmosis is the movement of ___ molecules:', options:['Glucose','Protein','Water','Salt'], correct:2 },
-      { question:'Mitosis produces ___ daughter cells:', options:['One','Two','Three','Four'], correct:1 },
-      { question:'The study of heredity is called:', options:['Ecology','Genetics','Taxonomy','Physiology'], correct:1 },
-      { question:'Insulin is produced by the:', options:['Liver','Kidney','Pancreas','Thyroid'], correct:2 },
-      { question:'The main function of red blood cells is to carry:', options:['Nutrients','Hormones','Oxygen','Waste'], correct:2 },
-    ],
-    mathematics: [
-      { question:'The value of π (pi) is approximately:', options:['3.14','2.71','1.41','1.73'], correct:0 },
-      { question:'Quadratic formula solves ax² + bx + c = 0. The discriminant is:', options:['a² - 4bc','b² - 4ac','b - 4ac','a - 4bc'], correct:1 },
-      { question:'log₁₀(100) = ?', options:['1','10','2','100'], correct:2 },
-      { question:'sin(90°) = ?', options:['0','1','-1','√2/2'], correct:1 },
-      { question:'The area of a circle with radius r is:', options:['πr','2πr','πr²','2πr²'], correct:2 },
-      { question:'If f(x) = x², then f\'(x) (derivative) = ?', options:['x','2x','x²','2'], correct:1 },
-      { question:'What is the sum of angles in a triangle?', options:['90°','180°','270°','360°'], correct:1 },
-      { question:'√(-1) is represented by:', options:['i','e','π','∞'], correct:0 },
-      { question:'5! (5 factorial) = ?', options:['25','100','120','60'], correct:2 },
-      { question:'The hypotenuse² = ?', options:['base + height','base × height','base² + height²','(base+height)²'], correct:2 },
-    ],
+function normalizeQ(q) {
+  if (q.optionsJson !== undefined) {
+    let options = []
+    try { options = JSON.parse(q.optionsJson || '[]') } catch { options = [] }
+    return { question: q.stem, options, correct: q.correctIndex ?? 0 }
   }
-  const bank = banks[subjectId] || banks.physics
-  const shuffled = [...bank].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, Math.min(count, bank.length))
+  return { question: q.stem || q.question, options: q.options || [], correct: q.correct ?? 0 }
 }
 
-function startQuiz() {
-  questions.value = generateQuestions(config.value.subjectId, config.value.count)
+async function startQuiz() {
+  loadingQ.value = true
+  try {
+    const { data } = await api.get('/questions/random', {
+      params: { gradeCode: gradeCode.value, subjectId: config.value.subjectId, kind: 'objective', count: config.value.count },
+    })
+    if (data?.length) {
+      questions.value = data.map(normalizeQ)
+      loadingQ.value = false
+    } else throw new Error('empty')
+  } catch {
+    try {
+      const raw = await getRealQuestions({ grade: gradeCode.value, subject: currentSubjectName.value, limit: config.value.count })
+      questions.value = raw.map(normalizeQ)
+    } catch {
+      questions.value = []
+    }
+    loadingQ.value = false
+  }
+  if (!questions.value.length) { loadingQ.value = false; return }
   answers.value = new Array(questions.value.length).fill(null)
   currentIdx.value = 0; selectedAnswer.value = null; answered.value = false; liveScore.value = 0
   startTime.value = Date.now()
@@ -286,11 +299,13 @@ function nextQuestion() {
 
 function saveAttempt() {
   const attempts = JSON.parse(localStorage.getItem('bap_challenges') || '[]')
-  const subj = subjects.find(s=>s.id===config.value.subjectId)?.name || config.value.subjectId
+  const subj = subjects.value.find(s => String(s.id) === String(config.value.subjectId))?.name || config.value.subjectId
   attempts.unshift({ id: Date.now(), subject: subj, score: resultData.value.score, total: resultData.value.total, pct: resultData.value.pct, date: new Date().toLocaleDateString('en-PK') })
   localStorage.setItem('bap_challenges', JSON.stringify(attempts.slice(0,20)))
-  student.saveTest({ subject: config.value.subjectId, type: 'challenge', score: resultData.value.correct, total: resultData.value.total, bookId: 'challenge' })
+  student.saveTest({ subject: subj, type: 'challenge', score: resultData.value.correct, total: resultData.value.total, bookId: 'challenge' })
 }
+watch(currentIdx, renderMath)
+watch(phase, renderMath)
 onUnmounted(() => clearInterval(timer))
 </script>
 

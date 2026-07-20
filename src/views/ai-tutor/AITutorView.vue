@@ -11,10 +11,10 @@
 
     <!-- Entry buttons -->
     <div class="flex gap-3 justify-center flex-wrap">
-      <RouterLink :to="`/app/ai-tutor/${defaultSlug}/video`" class="btn-primary px-6 py-3 text-base rounded-xl flex items-center gap-2">
+      <!-- <RouterLink :to="`/app/ai-tutor/${defaultSlug}/video`" class="btn-primary px-6 py-3 text-base rounded-xl flex items-center gap-2">
         <Video class="w-5 h-5" /> Learn from AI Live
-      </RouterLink>
-      <RouterLink :to="`/app/ai-tutor/${defaultSlug}/chat`" class="btn-secondary px-6 py-3 text-base rounded-xl flex items-center gap-2">
+      </RouterLink> -->
+      <RouterLink :to="`/app/ai-tutor/${defaultSlug}/chat`" class="btn-primary px-6 py-3 text-base rounded-xl flex items-center gap-2">
         <MessageSquare class="w-5 h-5" /> Try Text Chat
       </RouterLink>
     </div>

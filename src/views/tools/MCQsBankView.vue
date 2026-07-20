@@ -17,7 +17,7 @@
       <input v-model="search" type="text" placeholder="Search question..." class="mcqb-search" />
     </div>
     <div class="mcqb-count">Showing {{ filtered.length }} questions</div>
-    <div class="mcqb-list">
+    <div class="mcqb-list" ref="listEl">
       <div v-for="(q, i) in filtered.slice(0, 50)" :key="q.id" class="mcqb-item">
         <div class="mcqb-item-header">
           <div class="mcqb-badges">
@@ -26,14 +26,14 @@
           </div>
           <div class="mcqb-num">#{{ i + 1 }}</div>
         </div>
-        <div class="mcqb-stem">{{ q.stem }}</div>
+        <div class="mcqb-stem" v-html="prepareMath(q.stem)" />
         <div class="mcqb-opts">
           <div v-for="(opt, oi) in q.options" :key="oi"
             :class="['mcqb-opt', oi === q.correct ? 'mcqb-correct' : '']">
-            {{ String.fromCharCode(65 + oi) }}) {{ opt }}
+            {{ String.fromCharCode(65 + oi) }}) <span v-html="prepareMath(opt)" />
           </div>
         </div>
-        <div v-if="q.reason" class="mcqb-reason">📝 {{ q.reason }}</div>
+        <div v-if="q.reason" class="mcqb-reason">📝 <span v-html="prepareMath(q.reason)" /></div>
       </div>
     </div>
     <div v-if="filtered.length > 50" class="mcqb-more">Showing first 50 of {{ filtered.length }} results</div>
@@ -42,13 +42,21 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { SUBJECTS, useContentStore } from '@/stores/content'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
 import CognitiveBadge from '@/components/platform/CognitiveBadge.vue'
 import DifficultyBadge from '@/components/platform/DifficultyBadge.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const content = useContentStore()
+const listEl = ref(null)
+const KATEX_OPTS = { delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }, { left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false }
+const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matrix|pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g
+function prepareMath(t) { if (!t) return ''; return String(t).replace(ENV_RE, (m) => `\\[${m}\\]`) }
+function renderMath() { nextTick(() => { if (listEl.value) renderMathInElement(listEl.value, KATEX_OPTS) }) }
+
 const selectedSubject = ref(null)
 const filterDifficulty = ref('')
 const filterCognitive = ref('')
@@ -65,6 +73,7 @@ const filtered = computed(() => allQuestions.value.filter(q => {
   if (search.value && !q.stem.toLowerCase().includes(search.value.toLowerCase())) return false
   return true
 }))
+watch(filtered, renderMath)
 </script>
 
 <style scoped>

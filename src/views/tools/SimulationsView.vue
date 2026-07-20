@@ -123,11 +123,9 @@ import { ref, computed } from 'vue'
 import AIHelper from '@/components/platform/AIHelper.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 import AiTokenPill from '@/components/platform/AiTokenPill.vue'
-import { useStudentStore } from '@/stores/student'
-import { aiErrorMessage } from '@/composables/useAiTokens'
+import { chatWithFallback } from '@/services/ollamaService'
 import { simulations } from '@/assets/data/phet'
 
-const student = useStudentStore()
 
 const activeSim = ref(null)
 const activeFilter = ref('All')
@@ -145,10 +143,11 @@ async function getAIExplanation() {
   if (!activeSim.value) return
   aiLoading.value = true; aiText.value = ''
   try {
-    aiText.value = await student.generateAi(
-      `Explain the concept of "${activeSim.value.title}" in depth for a Pakistani board exam student (Grade 9-12). Cover: 1) Core concept in simple language, 2) Key formulas with explanation, 3) Real-world examples from Pakistan, 4) Common mistakes students make, 5) Tips to remember for exams. Make it engaging and educational.`
-    )
-  } catch (e) { aiText.value = aiErrorMessage(e) }
+    aiText.value = await chatWithFallback({
+      system: 'You are an educational AI helper for Pakistani Grade 9-12 board exam students.',
+      messages: [{ role: 'user', content: `Explain the concept of "${activeSim.value.title}" in depth for a Pakistani board exam student (Grade 9-12). Cover: 1) Core concept in simple language, 2) Key formulas with explanation, 3) Real-world examples from Pakistan, 4) Common mistakes students make, 5) Tips to remember for exams. Make it engaging and educational.` }],
+    })
+  } catch { aiText.value = 'AI is unavailable right now. Please try again.' }
   aiLoading.value = false
 }
 </script>

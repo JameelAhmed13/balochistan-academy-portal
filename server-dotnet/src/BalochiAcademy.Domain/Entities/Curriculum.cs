@@ -132,3 +132,18 @@ public class AiTutor : AuditableEntity
     public Subject? Subject { get; set; }
     public Grade?   Grade   { get; set; }
 }
+
+public class PastPaper : AuditableEntity
+{
+    public int    SubjectId        { get; set; }
+    public string GradeCode        { get; set; } = string.Empty;
+    public int    Year             { get; set; }
+    public string Board            { get; set; } = "Balochistan Board (BISE)";
+    public string PaperType        { get; set; } = "Annual";  // Annual | Supplementary | Model
+    public int    TotalMarks       { get; set; } = 75;
+    public int    TimeLimitMinutes { get; set; } = 180;
+    public bool   IsActive         { get; set; } = true;
+    public int    SortOrder        { get; set; }
+
+    public Subject? Subject { get; set; }
+}

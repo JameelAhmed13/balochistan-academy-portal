@@ -1,8 +1,8 @@
 <template>
   <div class="animate-fade-in space-y-5" v-if="subject">
     <!-- Header banner -->
-    <div class="config-banner" :style="{ background: `linear-gradient(135deg, ${subjectColor}, ${subjectColor}cc)` }">
-      <span class="config-icon">{{ subject.icon }}</span>
+    <div class="config-banner">
+      <span class="config-icon">{{ subject?.icon || '📘' }}</span>
       <div>
         <div class="config-title">Self Test — {{ typeName }}</div>
         <div class="config-sub">{{ subject.name }}</div>
@@ -40,7 +40,7 @@
       </div>
     </div>
 
-    <!-- Units/topics (Urdu RTL) -->
+    <!-- Units/topics -->
     <div class="units-section">
       <div class="units-header">
         Select units and topics
@@ -52,16 +52,19 @@
           <span class="font-semibold">All Units</span>
         </label>
       </div>
-      <div v-for="unit in units" :key="unit.id" class="unit-group">
+      <div v-if="!units.length" class="unit-group" style="color:var(--t-text3);font-size:0.82rem">
+        No units available — all questions will be included.
+      </div>
+      <div v-for="(unit, i) in units" :key="unit.id" class="unit-group">
         <label class="unit-row unit-header-row">
-          <input type="checkbox" v-model="selectedUnits" :value="unit.id" class="check-input" />
-          <span class="urdu unit-name" dir="rtl">{{ getUnitNameUr(unit.id) }}</span>
-          <span class="unit-name-en">Unit {{ unit.id }}</span>
+          <input type="checkbox" v-model="selectedUnits" :value="unit.id" class="check-input" :disabled="allUnits" />
+          <span class="unit-name">{{ unit.name }}</span>
+          <span class="unit-name-en">Unit {{ i + 1 }}</span>
         </label>
-        <div class="topics-grid">
-          <label v-for="topic in unit.topics.slice(0,7)" :key="topic.id" class="topic-item">
-            <input type="checkbox" v-model="selectedTopics" :value="unit.id + '_' + topic.id" class="check-input" />
-            <span class="urdu text-xs" dir="rtl">{{ getTopicNameUr(unit.id, topic.id) }}</span>
+        <div v-if="unit.topics?.length" class="topics-grid">
+          <label v-for="topic in unit.topics.slice(0, 7)" :key="topic.id" class="topic-item">
+            <input type="checkbox" v-model="selectedTopics" :value="unit.id + '_' + topic.id" class="check-input" :disabled="allUnits" />
+            <span class="text-xs">{{ topic.name }}</span>
           </label>
         </div>
       </div>
@@ -73,21 +76,27 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { SUBJECTS, useContentStore } from '@/stores/content'
+import { useAuthStore } from '@/stores/auth'
+import { useCatalogStore } from '@/stores/catalog'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const route = useRoute()
 const router = useRouter()
-const content = useContentStore()
+const auth = useAuthStore()
+const catalog = useCatalogStore()
 
 const bookId = computed(() => +route.params.bookId)
+const gradeCode = computed(() => auth.user?.gradeCode || '9')
 const testType = computed(() => route.query.type || 'general')
-const subject = computed(() => SUBJECTS.find(s => s.id === bookId.value))
-const units = computed(() => content.units[bookId.value] || [])
 
-const subjectColor = '#6c5ce7'
+const subject = computed(() => {
+  const all = Object.values(catalog.gradeSubjects).flat()
+  return all.find(s => String(s.id) === String(bookId.value)) || null
+})
+const units = ref([])
+
 const typeName = computed(() => ({ general: 'General Self Test', past: 'Past Paper', predicted: 'Predicted Exam' }[testType.value] || 'Self Test'))
 
 const timeLimit = ref(30)
@@ -98,14 +107,12 @@ const objConfig = ref({ types: ['Exercise', 'Conceptual'], difficulty: ['Easy', 
 
 watch(allUnits, v => { if (v) selectedUnits.value = [] })
 
-// Sample Urdu unit/topic names for demo
-const URDU_UNITS = ['بجرت نبوی', 'سیرت صحابہ', 'اسلامی اخلاق', 'عبادات', 'قرآن فہمی', 'حدیث', 'معاملات', 'سماجی زندگی', 'اسلامی تاریخ', 'اسلامی ادب']
-const URDU_TOPICS = ['خلاصہ', 'کتابی مشقی سوالات', 'غیر مشقی سوالات', 'کثیر لانتخابی سوالات', 'سیاق و سباق', 'اردو قواعد اردو گرامر', 'مفہوم', 'تشریح', 'ترکیب', 'حوالہ']
-
-function getUnitNameUr(id) { return URDU_UNITS[(id - 1) % URDU_UNITS.length] }
-function getTopicNameUr(uid, tid) { return URDU_TOPICS[(tid - 1) % URDU_TOPICS.length] }
+onMounted(async () => {
+  try { units.value = await catalog.fetchSyllabus(gradeCode.value, bookId.value) } catch { units.value = [] }
+})
 
 function startTest() {
+  const unitParam = allUnits.value ? '' : selectedUnits.value.join(',')
   router.push({
     path: `/app/self-test/${bookId.value}/take`,
     query: {
@@ -113,6 +120,7 @@ function startTest() {
       time: timeLimit.value,
       types: objConfig.value.types.join(','),
       difficulty: objConfig.value.difficulty.join(','),
+      ...(unitParam ? { units: unitParam } : {}),
     }
   })
 }
