@@ -12,6 +12,7 @@
         <span class="ag-banner-stat">🔴 {{ stats.open }} Open</span>
         <span class="ag-banner-stat">🟡 {{ stats.inProgress }} In Progress</span>
         <span class="ag-banner-stat">🟢 {{ stats.resolved }} Resolved</span>
+        <span class="ag-banner-stat">🟣 {{ stats.closed }} Closed</span>
         <span class="ag-banner-stat">📋 {{ stats.total }} Total</span>
       </div>
       <RouterLink to="/app/admin" class="btn-ghost" style="cursor:pointer;">
