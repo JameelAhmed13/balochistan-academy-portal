@@ -10,3 +10,15 @@ D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcade
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\refint\BalochiAcademy.Domain.dll
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\BalochiAcademy.Domain.pdb
 D:\office\USS\Projects\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\ref\BalochiAcademy.Domain.dll
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\bin\Debug\net10.0\BalochiAcademy.Domain.deps.json
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\bin\Debug\net10.0\BalochiAcademy.Domain.dll
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\bin\Debug\net10.0\BalochiAcademy.Domain.pdb
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\BalochiAcademy.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\BalochiAcademy.Domain.AssemblyInfoInputs.cache
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\BalochiAcademy.Domain.AssemblyInfo.cs
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\BalochiAcademy.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\BalochiAcademy.Domain.sourcelink.json
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\BalochiAcademy.Domain.dll
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\refint\BalochiAcademy.Domain.dll
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\BalochiAcademy.Domain.pdb
+C:\Users\Administrator\source\repos\BAP\balochistan-academy-portal\server-dotnet\src\BalochiAcademy.Domain\obj\Debug\net10.0\ref\BalochiAcademy.Domain.dll
