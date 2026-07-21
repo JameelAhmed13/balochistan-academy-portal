@@ -64,7 +64,12 @@ const ENV_RE = /\\begin\{(align\*?|equation\*?|gather\*?|multline\*?|cases|matri
 function prepareMath(t) { if (!t) return ''; return String(t).replace(ENV_RE, (m) => `\\[${m}\\]`) }
 onMounted(() => nextTick(() => { if (resultEl.value) renderMathInElement(resultEl.value, KATEX_OPTS) }))
 
-const record = computed(() => route.params.id === 'new' ? null : student.testRecords.find(r => String(r.id) === String(route.params.id)))
+const record = computed(() => {
+  if (route.params.id === 'new') return null
+  const rid = route.params.id
+  // Match by local record id (generated Monthly Exam) or by real testId (institute-scheduled test).
+  return student.testRecords.find(r => String(r.id) === String(rid) || String(r.testId) === String(rid))
+})
 const questions = computed(() => {
   const qs = record.value?.questions || []
   return qs.map((q, i) => ({ ...q, userAnswer: record.value?.answers?.[i] }))

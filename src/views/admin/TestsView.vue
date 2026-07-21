@@ -28,6 +28,7 @@
               <option value="mixed">Mixed</option>
               <option value="daily">Daily Challenge</option>
               <option value="weekly">Weekly Test</option>
+              <option value="monthly">Monthly Exam</option>
               <option value="entrance">Entrance Exam</option>
             </select>
           </div>
@@ -712,6 +713,7 @@ function kindGrad(kind) {
     mixed: 'grad-violet',
     daily: 'grad-amber',
     weekly: 'grad-blue',
+    monthly: 'grad-rose',
     entrance: 'grad-green',
   }
   return map[kind] ?? 'grad-violet'

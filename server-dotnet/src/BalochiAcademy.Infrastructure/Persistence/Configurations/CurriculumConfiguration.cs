@@ -126,6 +126,9 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
         b.Property(e => e.GradeCode).HasMaxLength(10);
         b.HasIndex(e => new { e.GradeCode, e.SubjectId, e.UnitId });
         b.HasIndex(e => e.Kind);
+        // SetNull so deleting a past paper detaches its questions instead of deleting them.
+        b.HasOne(e => e.PastPaper).WithMany().HasForeignKey(e => e.PastPaperId).OnDelete(DeleteBehavior.SetNull);
+        b.HasIndex(e => e.PastPaperId);
     }
 }
 

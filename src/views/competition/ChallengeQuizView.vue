@@ -302,7 +302,14 @@ function saveAttempt() {
   const subj = subjects.value.find(s => String(s.id) === String(config.value.subjectId))?.name || config.value.subjectId
   attempts.unshift({ id: Date.now(), subject: subj, score: resultData.value.score, total: resultData.value.total, pct: resultData.value.pct, date: new Date().toLocaleDateString('en-PK') })
   localStorage.setItem('bap_challenges', JSON.stringify(attempts.slice(0,20)))
-  student.saveTest({ subject: subj, type: 'challenge', score: resultData.value.correct, total: resultData.value.total, bookId: 'challenge' })
+  student.saveTest({
+    subject: subj,
+    subjectId: config.value.subjectId ? +config.value.subjectId : null,
+    type: 'challenge',
+    score: resultData.value.correct,
+    total: resultData.value.total,
+    bookId: 'challenge',
+  })
 }
 watch(currentIdx, renderMath)
 watch(phase, renderMath)

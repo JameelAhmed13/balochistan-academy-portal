@@ -20,7 +20,8 @@ public record QuestionDto(
     string? SloCode,
     bool    IsEntranceExam,
     bool    IsAiGenerated,
-    string? Feedback
+    string? Feedback,
+    int?    PastPaperId
 );
 
 public record CreateQuestionRequest(
@@ -40,7 +41,8 @@ public record CreateQuestionRequest(
     string? Feedback     = null,
     string? SloCode      = null,
     bool    IsEntranceExam = false,
-    bool    IsAiGenerated  = false
+    bool    IsAiGenerated  = false,
+    int?    PastPaperId    = null
 );
 
 public record UpdateQuestionRequest(
@@ -51,7 +53,9 @@ public record UpdateQuestionRequest(
     string? Difficulty    = null,
     string? CognitiveLevel = null,
     string? Feedback      = null,
-    int?    Marks         = null
+    int?    Marks         = null,
+    int?    PastPaperId   = null,
+    bool    ClearPastPaper = false
 );
 
 public record QuestionFilterQuery(

@@ -166,7 +166,7 @@ async function loadQuestions() {
   try {
     // Try backend first (questions ingested from board docs)
     const { data } = await api.get('/questions/random', {
-      params: { gradeCode: gradeCode.value, subjectId: bookId.value, kind: 'objective', count: 30 },
+      params: { gradeCode: gradeCode.value, subjectId: bookId.value, kind: 'objective', count: 35 },
     })
     if (data?.length) {
       questions.value = data.map(normalizeQuestion)
@@ -180,7 +180,7 @@ async function loadQuestions() {
     questions.value = await getRealQuestions({
       grade: gradeCode.value,
       subject: subject.value?.name,
-      limit: 30,
+      limit: 35,
     })
   } catch {
     questions.value = []
@@ -216,6 +216,7 @@ function finishTest() {
   const elapsed = ((+route.query.time || 30) * 60) - timeLeft.value
   student.saveTest({
     subject:     subject.value?.name,
+    subjectId:   bookId.value,
     type:        'Objective Self Test',
     score,
     total:       questions.value.length,

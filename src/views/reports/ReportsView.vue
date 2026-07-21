@@ -124,7 +124,7 @@ const serverRecords = ref([])
 
 onMounted(async () => {
   try {
-    const res = await api.get('/tests/me/attempts', { params: { pageSize: 200 } })
+    const res = await api.get('/tests/attempts', { params: { pageSize: 200 } })
     const items = res.data?.items || res.data || []
     serverRecords.value = items.map(r => ({
       id: r.id,

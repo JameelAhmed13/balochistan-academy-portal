@@ -162,10 +162,24 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
     public async Task<IActionResult> SubmitAttempt([FromBody] SubmitAttemptRequest req, CancellationToken ct)
     {
         var coins = 0;
-        if (req.Total >= 35 && req.AttemptType is "self-test" or "parent-test")
+        if (req.Total >= 35 && req.AttemptType is "self-test" or "parent-test" or "daily" or "monthly" or "challenge" or "weekly")
         {
-            var alreadyEarned = req.TestId.HasValue && await uow.Repository<TestAttempt>().Query().AnyAsync(
-                a => a.UserId == cu.UserId && a.TestId == req.TestId && a.CoinsEarned > 0, ct);
+            bool alreadyEarned;
+            if (req.TestId.HasValue)
+            {
+                alreadyEarned = await uow.Repository<TestAttempt>().Query().AnyAsync(
+                    a => a.UserId == cu.UserId && a.TestId == req.TestId && a.CoinsEarned > 0, ct);
+            }
+            else
+            {
+                // Self-test/daily/monthly/challenge/weekly attempts are generated on the fly and have no
+                // TestId to dedupe against — cap coin-earning to once per day per attempt type so the same
+                // generated test can't be replayed for infinite coins.
+                var todayStart = DateTime.UtcNow.Date;
+                alreadyEarned = await uow.Repository<TestAttempt>().Query().AnyAsync(
+                    a => a.UserId == cu.UserId && a.AttemptType == req.AttemptType
+                      && a.CoinsEarned > 0 && a.SubmittedAt >= todayStart, ct);
+            }
             if (!alreadyEarned)
             {
                 var pct  = req.Total > 0 ? (double)req.Score / req.Total : 0;
@@ -180,6 +194,7 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         var attempt = new TestAttempt
         {
             UserId      = cu.UserId!.Value, TestId      = req.TestId,
+            SubjectId   = req.SubjectId,
             Score       = req.Score,        Total       = req.Total,
             Percent     = req.Total > 0 ? (decimal)req.Score / req.Total * 100 : 0,
             DurationSec = req.DurationSec,  AnswersJson = req.AnswersJson,
@@ -201,7 +216,8 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
             await uow.SaveChangesAsync(ct);
         }
 
-        return Ok(mapper.Map<AttemptResultDto>(attempt));
+        var result = (await AttachSubjectNames([mapper.Map<AttemptResultDto>(attempt)], ct))[0];
+        return Ok(result);
     }
 
     /// <summary>GET /api/tests/attempts — student's own attempts</summary>
@@ -214,7 +230,8 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
         var items = await q.OrderByDescending(a => a.SubmittedAt)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync(ct);
-        return Ok(new { items = mapper.Map<List<AttemptResultDto>>(items), total, page, pageSize });
+        var dtos = await AttachSubjectNames(mapper.Map<List<AttemptResultDto>>(items), ct);
+        return Ok(new { items = dtos, total, page, pageSize });
     }
 
     /// <summary>GET /api/tests/attempts/{id}</summary>
@@ -223,7 +240,21 @@ public class TestsController(IUnitOfWork uow, ICurrentUserService cu, IMapper ma
     {
         var a = await uow.Repository<TestAttempt>().FindAsync([id], ct);
         if (a == null || a.UserId != cu.UserId) return NotFound();
-        return Ok(mapper.Map<AttemptResultDto>(a));
+        var result = (await AttachSubjectNames([mapper.Map<AttemptResultDto>(a)], ct))[0];
+        return Ok(result);
+    }
+
+    /// <summary>Batch-fills SubjectName by looking up the distinct SubjectIds in one query — AttemptResultDto
+    /// has no Subject navigation to map directly, since TestAttempt.SubjectId is a bare column, not a real FK.</summary>
+    private async Task<List<AttemptResultDto>> AttachSubjectNames(List<AttemptResultDto> dtos, CancellationToken ct)
+    {
+        var subjectIds = dtos.Where(d => d.SubjectId.HasValue).Select(d => d.SubjectId!.Value).Distinct().ToList();
+        if (subjectIds.Count == 0) return dtos;
+        var names = await uow.Repository<Subject>().Query()
+            .Where(s => subjectIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, s => s.Name, ct);
+        return dtos.Select(d => d.SubjectId.HasValue && names.TryGetValue(d.SubjectId.Value, out var name)
+            ? d with { SubjectName = name } : d).ToList();
     }
 
     /// <summary>GET /api/tests/me/stats</summary>

@@ -93,7 +93,9 @@ onMounted(() => nextTick(() => { if (resultEl.value) renderMathInElement(resultE
 
 const record = computed(() => {
   if (route.params.id === 'new') return null
-  return student.testRecords.find(r => String(r.id) === String(route.params.id))
+  const rid = route.params.id
+  // Match by local record id (generated Daily Challenge) or by real testId (institute-scheduled test).
+  return student.testRecords.find(r => String(r.id) === String(rid) || String(r.testId) === String(rid))
 })
 
 const questions = computed(() => {

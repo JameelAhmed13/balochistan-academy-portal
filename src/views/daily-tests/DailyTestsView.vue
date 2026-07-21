@@ -45,6 +45,43 @@
       <RouterLink to="/app/daily-tests/combined" class="dph-cc-btn">Generate Now</RouterLink>
     </div>
 
+    <!-- Scheduled Daily Tests (institute/admin-authored, in addition to the on-the-fly generator above) -->
+    <div class="dph-table-card">
+      <div class="dph-table-header">
+        <div class="dph-table-title">Scheduled Daily Tests</div>
+        <div class="dph-table-sub">From Teacher / Institute</div>
+      </div>
+      <div class="dph-table-wrap">
+        <table class="dph-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Test Title</th><th>Opens</th><th>Closes</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loadingScheduled">
+              <td colspan="6" style="text-align:center;padding:1.5rem;color:var(--t-text3)">Loading scheduled tests…</td>
+            </tr>
+            <tr v-else-if="!scheduledTests.length">
+              <td colspan="6" style="text-align:center;padding:1.5rem;color:var(--t-text3)">No scheduled daily tests yet.</td>
+            </tr>
+            <tr v-for="(t, i) in scheduledTests" :key="t.id">
+              <td>{{ i + 1 }}</td>
+              <td>{{ t.title }}</td>
+              <td>{{ formatDate(t.opens) }}</td>
+              <td>{{ formatDate(t.closes) }}</td>
+              <td>{{ t.taken ? 'Taken' : isAvailable(t) ? 'Available' : 'Upcoming' }}</td>
+              <td>
+                <RouterLink v-if="!t.taken && isAvailable(t)" :to="`/app/daily-tests/scheduled/${t.id}`" class="btn-attempt">ATTEMPT</RouterLink>
+                <RouterLink v-else-if="t.taken" :to="`/app/daily-tests/result/${t.id}`" class="btn-view">VIEW DETAILS</RouterLink>
+                <span v-else class="status-notq">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Test History -->
     <TestTable :empty="!allRecords.length">
       <template #rows>
@@ -72,14 +109,53 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStudentStore } from '@/stores/student'
+import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 import StatCards from '@/components/platform/StatCards.vue'
 import TestTable from '@/components/platform/TestTable.vue'
 import PageFooter from '@/components/platform/PageFooter.vue'
 
 const student = useStudentStore()
+const auth = useAuthStore()
 onMounted(() => { student.fetchAttempts() })
+
+// Real institute/admin-authored kind="daily" tests, alongside the generated challenge above.
+const scheduledTests = ref([])
+const loadingScheduled = ref(false)
+
+async function loadScheduledTests() {
+  loadingScheduled.value = true
+  try {
+    await student.fetchAttempts()
+    const takenTestIds = new Set(student.testRecords.filter(r => r.testId).map(r => String(r.testId)))
+    const res = await api.get('/tests', {
+      params: { kind: 'daily', gradeCode: auth.user?.gradeCode || undefined, published: true, pageSize: 50 },
+    })
+    const items = res.data?.items || []
+    scheduledTests.value = items.map(t => ({
+      id: t.id,
+      title: t.title,
+      opens: t.scheduledAt || null,
+      closes: t.endsAt || null,
+      taken: takenTestIds.has(String(t.id)),
+    }))
+  } catch {
+    scheduledTests.value = []
+  } finally {
+    loadingScheduled.value = false
+  }
+}
+onMounted(loadScheduledTests)
+
+function isAvailable(t) {
+  if (!t.opens && !t.closes) return true // no schedule window set — always available
+  const now = new Date()
+  if (t.opens && now < new Date(t.opens)) return false
+  if (t.closes && now > new Date(t.closes)) return false
+  return true
+}
 
 const allRecords = computed(() => student.testRecords)
 const taken = computed(() => allRecords.value.filter(r => r.score !== undefined).length)
@@ -140,4 +216,14 @@ function formatDate(iso) {
   display: inline-block; padding: 0.6rem 1.5rem; border-radius: 9px; font-weight: 700; font-size: 0.85rem;
   background: #00bcd4; color: white; text-decoration: none; white-space: nowrap; flex-shrink: 0;
 }
+
+.dph-table-card { background: var(--t-surface); border: 1px solid var(--t-border); border-radius: 12px; overflow: hidden; }
+.dph-table-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--t-border); }
+.dph-table-title { font-size: 0.95rem; font-weight: 700; color: var(--t-text1); }
+.dph-table-sub { font-size: 0.75rem; color: var(--t-text3); margin-top: 0.15rem; }
+.dph-table-wrap { overflow-x: auto; }
+.dph-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.dph-table thead th { background: #00838f; color: white; padding: 0.75rem 1rem; text-align: left; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
+.dph-table td { padding: 0.8rem 1rem; color: var(--t-text1); border-bottom: 1px solid var(--t-border); }
+.dph-table tr:hover td { background: var(--t-hover); }
 </style>
