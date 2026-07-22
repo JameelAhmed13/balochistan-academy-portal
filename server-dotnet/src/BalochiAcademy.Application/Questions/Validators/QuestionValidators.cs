@@ -15,7 +15,9 @@ public class CreateQuestionRequestValidator : AbstractValidator<CreateQuestionRe
             .Must(k => ValidKinds.Contains(k, StringComparer.OrdinalIgnoreCase))
             .WithMessage("Kind must be 'objective' or 'subjective'.");
 
-        RuleFor(x => x.Stem).NotEmpty().MaximumLength(2000);
+        // Stem has no MaximumLength — DB column is nvarchar(max) and stems can contain
+        // embedded base64 images (100 KB+) after the inline-images migration.
+        RuleFor(x => x.Stem).NotEmpty();
 
         RuleFor(x => x.GradeCode).MaximumLength(10).When(x => x.GradeCode != null);
 
@@ -24,8 +26,8 @@ public class CreateQuestionRequestValidator : AbstractValidator<CreateQuestionRe
             .WithMessage("Difficulty must be Easy, Medium, or Hard.");
 
         RuleFor(x => x.Marks).InclusiveBetween(1, 100).When(x => x.Marks.HasValue);
-        RuleFor(x => x.ModelAnswer).MaximumLength(4000).When(x => x.ModelAnswer != null);
-        RuleFor(x => x.Feedback).MaximumLength(1000).When(x => x.Feedback != null);
+        RuleFor(x => x.ModelAnswer).MaximumLength(500_000).When(x => x.ModelAnswer != null);
+        RuleFor(x => x.Feedback).MaximumLength(500_000).When(x => x.Feedback != null);
         RuleFor(x => x.SloCode).MaximumLength(50).When(x => x.SloCode != null);
 
         // Objective questions must have options and a correct index
@@ -46,9 +48,9 @@ public class UpdateQuestionRequestValidator : AbstractValidator<UpdateQuestionRe
 
     public UpdateQuestionRequestValidator()
     {
-        RuleFor(x => x.Stem).MaximumLength(2000).When(x => x.Stem != null);
-        RuleFor(x => x.ModelAnswer).MaximumLength(4000).When(x => x.ModelAnswer != null);
-        RuleFor(x => x.Feedback).MaximumLength(1000).When(x => x.Feedback != null);
+        RuleFor(x => x.Stem).MaximumLength(500_000).When(x => x.Stem != null);
+        RuleFor(x => x.ModelAnswer).MaximumLength(500_000).When(x => x.ModelAnswer != null);
+        RuleFor(x => x.Feedback).MaximumLength(500_000).When(x => x.Feedback != null);
         RuleFor(x => x.Marks).InclusiveBetween(1, 100).When(x => x.Marks.HasValue);
         RuleFor(x => x.Difficulty)
             .Must(d => d == null || ValidDifficulties.Contains(d, StringComparer.OrdinalIgnoreCase))

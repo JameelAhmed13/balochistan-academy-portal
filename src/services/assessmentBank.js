@@ -1,113 +1,147 @@
 /**
- * assessmentBank.js — access to the REAL question bank ingested from
- * docs/Digital Assessments (see scripts/ingest_assessments.py).
+ * assessmentBank.js — access to the real question bank.
  *
- * 17.5k+ real Balochistan board questions, grouped per grade+subject and
- * lazy-loaded on demand (each bank file is a separate Vite chunk, fetched
- * only when that grade+subject is opened). This is the source of truth that
- * replaces the old mock/dummy question banks, and the corpus the AI grounds
- * on (RAG) for generating new, on-syllabus tests.
+ * Questions are stored in the backend database (seeded via `npm run seed-bank`).
+ * This module calls the API instead of loading static JSON files.
+ *
+ * The index.json catalogue (grades/subjects/topics available) is still read
+ * from the bundled asset — it is small metadata that never changes without a
+ * new deployment.
  */
 import index from '../assets/data/assessments/index.json'
-
-// Lazy importers for every per-grade-subject bank file.
-const loaders = import.meta.glob('../assets/data/assessments/bank/*.json')
-const cache = {}
-
-function slug(s) {
-  return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-}
-function shuffle(arr) {
-  const r = arr.slice()
-  for (let i = r.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[r[i], r[j]] = [r[j], r[i]]
-  }
-  return r
-}
+import api from './api'
 
 export const assessmentCatalogue = index
 
-export function gradesAvailable() { return Object.keys(index) }
-export function subjectsForGrade(grade) { return Object.keys(index[String(grade)] || {}) }
-export function hasRealBank(grade, subject) { return !!index[String(grade)]?.[subject] }
-export function unitsFor(grade, subject) { return index[String(grade)]?.[subject]?.units || [] }
-export function topicsFor(grade, subject) { return index[String(grade)]?.[subject]?.topics || [] }
-export function countFor(grade, subject) { return index[String(grade)]?.[subject]?.count || 0 }
+export function gradesAvailable()          { return Object.keys(index) }
+export function subjectsForGrade(grade)    { return Object.keys(index[String(grade)] || {}) }
+export function hasRealBank(grade, subject){ return !!index[String(grade)]?.[resolveSubject(grade, subject)] }
+export function unitsFor(grade, subject)   { return index[String(grade)]?.[resolveSubject(grade, subject)]?.units  || [] }
+export function topicsFor(grade, subject)  { return index[String(grade)]?.[resolveSubject(grade, subject)]?.topics || [] }
+export function countFor(grade, subject)   { return index[String(grade)]?.[resolveSubject(grade, subject)]?.count  || 0 }
 
-// Map app subject names → ingested bank subject names where they differ.
+// Map frontend subject names → backend DB subject names where they differ.
 const SUBJECT_ALIASES = {
-  Math: 'Mathematics',
-  'Pakistan Studies': 'Pak Studies',
-  'Mutalia Pakistan': 'Pak Studies',
-  'Islamiyat Lazmi': 'Islamiat',
+  'Math':              'Mathematics',
+  'Pakistan Studies':  'Pakistan Studies',
+  'Mutalia Pakistan':  'Pakistan Studies',
+  'Islamiyat Lazmi':   'Islamiat',
+  'Science':           'General Science',
+  'General Knowledge': 'General Science',
+  'Pak Studies':       'Pakistan Studies',
 }
+
 export function resolveSubject(grade, subject) {
   const g = index[String(grade)] || {}
   if (g[subject]) return subject
   if (SUBJECT_ALIASES[subject] && g[SUBJECT_ALIASES[subject]]) return SUBJECT_ALIASES[subject]
-  // case-insensitive match
-  const hit = Object.keys(g).find((k) => k.toLowerCase() === String(subject).toLowerCase())
-  return hit || null
+  const hit = Object.keys(g).find(k => k.toLowerCase() === String(subject).toLowerCase())
+  return hit || SUBJECT_ALIASES[subject] || subject
 }
 
-/** Load (and cache) the raw bank array for a grade+subject. */
-export async function loadBank(grade, subject) {
-  const g = String(grade)
-  const subj = resolveSubject(g, subject)
-  if (!subj) return []
-  const key = `${g}__${subj}`
-  if (cache[key]) return cache[key]
-  const file = `${slug(g)}__${slug(subj)}.json`
-  const path = Object.keys(loaders).find((p) => p.endsWith('/' + file))
-  if (!path) return []
+// ── Subject ID cache (name → id, resolved via public /api/grades/{code}/subjects) ──
+
+const _subjectIdCache  = new Map()   // subjectName.toLowerCase() → id
+const _fetchedGrades   = new Set()   // grades already fetched
+
+function _applyAliases() {
+  const gs = _subjectIdCache.get('general science')
+  if (gs) { _subjectIdCache.set('science', gs); _subjectIdCache.set('general knowledge', gs) }
+  const ps = _subjectIdCache.get('pakistan studies')
+  if (ps) { _subjectIdCache.set('pak studies', ps); _subjectIdCache.set('mutalia pakistan', ps) }
+  const is = _subjectIdCache.get('islamiat')
+  if (is) _subjectIdCache.set('islamiyat lazmi', is)
+  const ma = _subjectIdCache.get('mathematics')
+  if (ma) _subjectIdCache.set('math', ma)
+}
+
+async function ensureGradeSubjects(grade) {
+  const key = String(grade || '9')
+  if (_fetchedGrades.has(key)) return
+  _fetchedGrades.add(key)
   try {
-    const mod = await loaders[path]()
-    cache[key] = mod.default || mod
-    return cache[key]
+    const { data } = await api.get(`/grades/${key}/subjects`)
+    const list = Array.isArray(data) ? data : []
+    list.forEach(s => { if (s.id && s.name) _subjectIdCache.set(s.name.toLowerCase(), s.id) })
+    _applyAliases()
+  } catch { /* fall through — subjectId will be null */ }
+}
+
+async function resolveSubjectId(subject, grade) {
+  if (!subject) return null
+  await ensureGradeSubjects(grade)
+  const id = _subjectIdCache.get(subject.toLowerCase())
+  if (id) return id
+  // If still not found, fetch a broader grade (9 covers most subjects)
+  await ensureGradeSubjects('9')
+  return _subjectIdCache.get(subject.toLowerCase()) ?? null
+}
+
+/** Normalize a QuestionDto from the backend into the app's question shape. */
+function normalize(dto) {
+  let options = []
+  try { options = JSON.parse(dto.optionsJson || dto.OptionsJson || '[]') } catch { /**/ }
+  return {
+    id:             dto.id            || dto.Id,
+    subject:        dto.gradeCode     || dto.GradeCode || '',
+    unit:           null,
+    topic:          null,
+    stem:           dto.stem          || dto.Stem          || '',
+    options,
+    correct:        dto.correctIndex  ?? dto.CorrectIndex  ?? 0,
+    type:           'Exercise',
+    difficulty:     dto.difficulty    || dto.Difficulty    || 'Medium',
+    cognitiveLevel: dto.cognitiveLevel|| dto.CognitiveLevel|| 'Understanding',
+    slo:            dto.sloCode       || dto.SloCode       || '',
+    entranceExam:   dto.isEntranceExam|| dto.IsEntranceExam|| false,
+    reason:         dto.feedback      || dto.Feedback      || 'Refer to your textbook for the detailed explanation.',
+    real:           true,
+  }
+}
+
+/**
+ * Fetch random questions for a grade+subject from the backend.
+ * Falls back to an empty array (caller in content.js will use the local mock bank).
+ */
+export async function getRealQuestions({ grade, subject, unit, topic, limit = 20 } = {}) {
+  const resolved   = resolveSubject(grade, subject) || subject
+  const subjectId  = await resolveSubjectId(resolved, grade)
+  const params = new URLSearchParams({ kind: 'objective', count: String(limit) })
+  if (grade)      params.set('gradeCode',  String(grade))
+  if (subjectId)  params.set('subjectId',  String(subjectId))
+
+  try {
+    const { data } = await api.get(`/questions/random?${params}`)
+    const questions = Array.isArray(data) ? data : (data.items || [])
+    return questions.map(normalize)
   } catch {
     return []
   }
 }
 
 /**
- * Get real questions normalized to the app's objective-question shape.
- * @param {object} o { grade, subject, unit?, topic?, limit? }
- * @returns {Promise<Array>} normalized questions (empty if no real bank)
+ * Load all questions for a grade+subject (paginated, up to 200).
+ * Used by MCQsBank and similar views that want the full list.
  */
-export async function getRealQuestions({ grade, subject, unit, topic, limit = 20 } = {}) {
-  let qs = await loadBank(grade, subject)
-  if (!qs.length) return []
-  if (unit) qs = qs.filter((q) => q.unit === unit)
-  if (topic) {
-    const t = String(topic).toLowerCase()
-    qs = qs.filter((q) => (q.topic || '').toLowerCase().includes(t))
+export async function loadBank(grade, subject) {
+  const resolved   = resolveSubject(grade, subject) || subject
+  const subjectId  = await resolveSubjectId(resolved, grade)
+  const params = new URLSearchParams({ kind: 'objective', pageSize: '200', page: '1' })
+  if (grade)     params.set('gradeCode',  String(grade))
+  if (subjectId) params.set('subjectId',  String(subjectId))
+
+  try {
+    const { data } = await api.get(`/questions?${params}`)
+    const items = Array.isArray(data) ? data : (data.items || [])
+    return items.map(normalize)
+  } catch {
+    return []
   }
-  qs = shuffle(qs)
-  if (limit) qs = qs.slice(0, limit)
-  return qs.map((q, i) => ({
-    id: 9000000 + i,
-    subject: q.subject,
-    unit: q.unit,
-    topic: q.topic || q.unit || q.subject,
-    stem: q.q,
-    options: q.options,
-    correct: q.correct,
-    type: 'Exercise',
-    difficulty: 'Medium',
-    cognitiveLevel: 'Understanding',
-    slo: q.skill || '',
-    entranceExam: false,
-    reason: q.feedback || 'Refer to your textbook for the detailed explanation.',
-    article: q.article || null,
-    real: true,
-  }))
 }
 
 /**
- * A compact, plain-text knowledge snippet for grounding the AI (RAG):
- * a sample of real questions for a grade+subject(+unit/topic) the LLM can
- * imitate in style and stay on-syllabus.
+ * A compact knowledge snippet for AI grounding (RAG).
+ * Returns a plain-text sample of real questions to keep the LLM on-syllabus.
  */
 export async function realContextSnippet({ grade, subject, unit, topic, sample = 8 } = {}) {
   const qs = await getRealQuestions({ grade, subject, unit, topic, limit: sample })
@@ -115,6 +149,6 @@ export async function realContextSnippet({ grade, subject, unit, topic, sample =
   const lines = qs.map((q, i) =>
     `${i + 1}. ${q.stem}\n   Options: ${q.options.join(' | ')}\n   Correct: ${q.options[q.correct]}` +
     (q.topic ? `\n   Topic: ${q.topic}` : ''))
-  return `Here are real ${subject} board questions for Grade ${grade}${unit ? ' (' + unit + ')' : ''}. ` +
+  return `Here are real ${subject} board questions for Grade ${grade}. ` +
     `Match THIS style, difficulty and topic coverage:\n\n${lines.join('\n\n')}`
 }

@@ -67,5 +67,31 @@ public record QuestionFilterQuery(
     bool?   IsEntranceExam = null,
     string? Search       = null,
     int     Page         = 1,
-    int     PageSize     = 30
+    int     PageSize     = 30,
+    string? SubjectName  = null
 );
+
+public record BulkCreateQuestionItem(
+    string  Kind,
+    string  Stem,
+    string? GradeCode      = null,
+    int?    SubjectId      = null,
+    string? SubjectName    = null,
+    string? Unit           = null,
+    string? Topic          = null,
+    string? OptionsJson    = null,
+    int?    CorrectIndex   = null,
+    string? Difficulty     = null,
+    string? CognitiveLevel = null,
+    string? Feedback       = null,
+    string? SloCode        = null,
+    bool    IsEntranceExam = false
+);
+
+public record BulkCreateResponse(int Inserted, int Skipped, int Total);
+
+/// <summary>
+/// Used by PATCH /api/questions/{id}/inline — no FluentValidation registered for this type,
+/// so it bypasses the MaximumLength limits that block base64-embedded images.
+/// </summary>
+public record InlinePatchRequest(string? Stem = null, string? OptionsJson = null);

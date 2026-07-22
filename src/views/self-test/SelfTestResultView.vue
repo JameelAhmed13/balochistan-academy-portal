@@ -12,6 +12,10 @@
         <div class="str-verdict" :class="verdict.cls">{{ verdict.label }}</div>
         <h2 class="str-title">{{ subjectName }} — Self Test Result</h2>
         <p class="str-msg">{{ verdict.msg }}</p>
+        <div v-if="coinsEarned > 0" class="str-coins">
+          <span class="str-coins-icon">🪙</span>
+          <span class="str-coins-val">+{{ coinsEarned }} coins earned!</span>
+        </div>
         <div class="str-actions">
           <RouterLink :to="`/app/self-test/${bookId}/config`" class="btn-secondary text-sm"><RotateCcw class="w-4 h-4" /> Retake</RouterLink>
           <RouterLink to="/app/report" class="btn-primary text-sm"><FileBarChart class="w-4 h-4" /> View Full Report</RouterLink>
@@ -113,6 +117,8 @@ const correctCount = computed(() =>
 const score = computed(() => record.value?.score ?? +route.query.score ?? correctCount.value)
 const pct = computed(() => total.value ? Math.round((score.value / total.value) * 100) : 0)
 
+const coinsEarned = computed(() => record.value?.coins ?? 0)
+
 const verdict = computed(() => {
   const p = pct.value
   if (p >= 85) return { label: 'Excellent', cls: 'str-v-good', msg: 'Outstanding — you have strong command of this topic.' }
@@ -144,6 +150,9 @@ onMounted(renderMath)
 .str-v-bad { background: var(--t-danger-bg); color: var(--t-danger); }
 .str-title { font-size: 1.15rem; font-weight: 800; color: var(--t-text1); font-family: 'Syne', sans-serif; }
 .str-msg { font-size: 0.84rem; color: var(--t-text3); margin: 0.25rem 0 0.75rem; }
+.str-coins { display: inline-flex; align-items: center; gap: 0.4rem; background: color-mix(in srgb, var(--t-gold) 15%, transparent); border: 1px solid color-mix(in srgb, var(--t-gold) 40%, transparent); padding: 0.3rem 0.75rem; border-radius: 99px; margin-bottom: 0.65rem; }
+.str-coins-icon { font-size: 1rem; line-height: 1; }
+.str-coins-val { font-size: 0.8rem; font-weight: 700; color: var(--t-warn); }
 .str-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
 .str-review-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; font-weight: 700; color: var(--t-text1); }

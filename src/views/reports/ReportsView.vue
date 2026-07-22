@@ -23,6 +23,7 @@
               <th class="px-3 py-2 text-left">Type</th>
               <th class="px-3 py-2 text-left">Score</th>
               <th class="px-3 py-2 text-left">%</th>
+              <th class="px-3 py-2 text-left">🪙 Coins</th>
               <th class="px-3 py-2 text-left">Date</th>
             </tr>
           </thead>
@@ -33,6 +34,10 @@
               <td class="px-3 py-2"><span class="badge-indigo text-xs">{{ t.type }}</span></td>
               <td class="px-3 py-2">{{ t.score }}/{{ t.total }}</td>
               <td class="px-3 py-2"><span :class="perf(t) >= 50 ? 'badge-green' : 'badge-red'">{{ perf(t) }}%</span></td>
+              <td class="px-3 py-2">
+                <span v-if="(t.coins ?? 0) > 0" class="inline-flex items-center gap-1 font-semibold text-amber-600">+{{ t.coins }}</span>
+                <span v-else class="text-slate-300">—</span>
+              </td>
               <td class="px-3 py-2 text-xs text-slate-500">{{ fmt(t.date) }}</td>
             </tr>
           </tbody>
@@ -70,6 +75,7 @@
             <th class="px-3 py-2 text-left">Subject</th>
             <th class="px-3 py-2 text-left">Score</th>
             <th class="px-3 py-2 text-left">%</th>
+            <th class="px-3 py-2 text-left">🪙 Coins</th>
             <th class="px-3 py-2 text-left">Date</th>
           </tr>
         </thead>
@@ -79,6 +85,10 @@
             <td class="px-3 py-2 font-medium text-slate-700">{{ t.subject }}</td>
             <td class="px-3 py-2">{{ t.score }}/{{ t.total }}</td>
             <td class="px-3 py-2"><span :class="perf(t) >= 50 ? 'badge-green' : 'badge-red'">{{ perf(t) }}%</span></td>
+            <td class="px-3 py-2">
+              <span v-if="(t.coins ?? 0) > 0" class="inline-flex items-center gap-1 font-semibold text-amber-600">+{{ t.coins }}</span>
+              <span v-else class="text-slate-300">—</span>
+            </td>
             <td class="px-3 py-2 text-xs text-slate-500">{{ fmt(t.date) }}</td>
           </tr>
         </tbody>
@@ -95,6 +105,7 @@
             <th class="px-3 py-2 text-left">Subject</th>
             <th class="px-3 py-2 text-left">Score</th>
             <th class="px-3 py-2 text-left">%</th>
+            <th class="px-3 py-2 text-left">🪙 Coins</th>
             <th class="px-3 py-2 text-left">Date</th>
           </tr>
         </thead>
@@ -104,6 +115,10 @@
             <td class="px-3 py-2 font-medium text-slate-700">{{ t.subject }}</td>
             <td class="px-3 py-2">{{ t.score }}/{{ t.total }}</td>
             <td class="px-3 py-2"><span :class="perf(t) >= 50 ? 'badge-green' : 'badge-red'">{{ perf(t) }}%</span></td>
+            <td class="px-3 py-2">
+              <span v-if="(t.coins ?? 0) > 0" class="inline-flex items-center gap-1 font-semibold text-amber-600">+{{ t.coins }}</span>
+              <span v-else class="text-slate-300">—</span>
+            </td>
             <td class="px-3 py-2 text-xs text-slate-500">{{ fmt(t.date) }}</td>
           </tr>
         </tbody>
@@ -133,6 +148,7 @@ onMounted(async () => {
       type: r.attemptType || r.type || 'self-test',
       score: r.score || 0,
       total: r.total || 0,
+      coins: r.coinsEarned ?? r.coins ?? 0,
       date: r.createdAt || r.submittedAt || r.date || new Date().toISOString(),
     }))
   } catch { /* keep local-only data */ }

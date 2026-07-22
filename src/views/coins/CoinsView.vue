@@ -20,11 +20,24 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <div class="card p-5">
         <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2"><Info class="w-4 h-4 text-blue-500" /> How to Earn Coins</h3>
-        <div class="space-y-2 text-sm text-slate-600">
-          <div class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Earn from Objective Self Tests, Parent Tests, and Follow-up Tests</div>
-          <div class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Test must contain at least <strong>35 questions</strong> to be eligible</div>
-          <div class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Each test type per book earns coins for only the <strong>first qualifying attempt</strong></div>
-          <div class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Coins awarded scale with your <strong>score percentage</strong></div>
+        <div class="space-y-2 text-sm text-slate-600 mb-4">
+          <div class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Earn from <strong>Self Tests, Daily Tests, Monthly Tests</strong> &amp; Parent Tests</div>
+          <div class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Test must have at least <strong>35 questions</strong> to be eligible</div>
+          <div class="flex gap-2"><CheckCircle class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Coins are awarded <strong>once per day</strong> per test type — retake tomorrow to earn again</div>
+        </div>
+        <!-- Tier table -->
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Coin tiers by score</div>
+        <div class="rounded-lg overflow-hidden border border-slate-100 text-sm">
+          <div class="grid grid-cols-3 bg-slate-50 text-xs font-semibold text-slate-500 uppercase px-3 py-2">
+            <span>Score</span><span>Result</span><span class="text-amber-600">Coins</span>
+          </div>
+          <div v-for="tier in coinTiers" :key="tier.label"
+            class="grid grid-cols-3 px-3 py-2 border-t border-slate-100 items-center"
+            :class="tier.highlight ? 'bg-amber-50' : ''">
+            <span class="font-medium text-slate-700">{{ tier.range }}</span>
+            <span :class="tier.cls">{{ tier.label }}</span>
+            <span class="font-bold text-amber-600">+{{ tier.coins }} 🪙</span>
+          </div>
         </div>
       </div>
 
@@ -86,6 +99,13 @@ import { useStudentStore } from '@/stores/student'
 const student = useStudentStore()
 
 const totalCoins = computed(() => student.totalCoins)
+
+const coinTiers = [
+  { range: '90% – 100%', label: 'Excellent',       coins: 50, cls: 'text-emerald-600 font-medium', highlight: true },
+  { range: '70% – 89%',  label: 'Good',             coins: 30, cls: 'text-blue-600 font-medium',    highlight: false },
+  { range: '50% – 69%',  label: 'Pass',             coins: 15, cls: 'text-slate-600 font-medium',   highlight: false },
+  { range: 'Below 50%',  label: 'Participation',    coins:  5, cls: 'text-slate-400',               highlight: false },
+]
 
 onMounted(() => Promise.allSettled([student.fetchCoinData(), student.fetchStats()]))
 

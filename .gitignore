@@ -33,6 +33,7 @@ server/.env
 server-dotnet/**/bin/
 server-dotnet/**/obj/
 server-dotnet/**/.vs/
+server-dotnet/**/publish/
 
 # Editor directories and files
 .vscode/*
@@ -44,3 +45,7 @@ server-dotnet/**/.vs/
 *.njsproj
 *.sw?
 /.vs/slnx.sqlite
+
+# Image inliner cache
+.image-cache.json
+.image-failed.json

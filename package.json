@@ -11,6 +11,8 @@
     "server:dev": "npm --prefix server run dev",
     "db:migrate": "npm --prefix server run migrate",
     "db:seed": "npm --prefix server run seed",
+    "seed-bank": "node scripts/seed-bank.js",
+    "inline-images": "node scripts/inline-images.js",
     "ingest": "python scripts/ingest_assessments.py",
     "dev:all": "concurrently -n web,api -c blue,green \"vite\" \"npm --prefix server run dev\""
   },
