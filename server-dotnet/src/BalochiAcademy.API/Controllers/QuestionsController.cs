@@ -112,12 +112,14 @@ public class QuestionsController(IUnitOfWork uow, ICurrentUserService cu, IMappe
         return NoContent();
     }
 
-    /// <summary>GET /api/questions/random?gradeCode=&amp;subjectId=&amp;count=30</summary>
+    /// <summary>GET /api/questions/random?gradeCode=&amp;subjectId=&amp;difficulty=Hard&amp;count=30
+    /// difficulty accepts a single value or comma-separated list, e.g. "Easy,Hard"</summary>
     [HttpGet("random")]
     public async Task<ActionResult<List<QuestionDto>>> Random(
         [FromQuery] string? gradeCode, [FromQuery] int? subjectId,
         [FromQuery] string? subjectName = null,
         [FromQuery] int? unitId = null, [FromQuery] string kind = "objective",
+        [FromQuery] string? difficulty = null,
         [FromQuery] int count = 30, CancellationToken ct = default)
     {
         var query = uow.Repository<Question>().Query().Where(q => q.Kind == kind);
@@ -130,6 +132,14 @@ public class QuestionsController(IUnitOfWork uow, ICurrentUserService cu, IMappe
             if (sid.HasValue) query = query.Where(q => q.SubjectId == sid.Value);
         }
         if (unitId.HasValue) query = query.Where(q => q.UnitId == unitId);
+        if (!string.IsNullOrEmpty(difficulty))
+        {
+            var levels = difficulty
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(d => d.ToLowerInvariant())
+                .ToArray();
+            query = query.Where(q => q.Difficulty != null && levels.Contains(q.Difficulty.ToLower()));
+        }
 
         var items = await query.OrderBy(_ => EF.Functions.Random()).Take(count).ToListAsync(ct);
         return Ok(mapper.Map<List<QuestionDto>>(items));

@@ -161,15 +161,36 @@ function normalizeQuestion(q) {
 const questions = ref([])
 const loadingQ = ref(true)
 
+// Parse the difficulty query param into a Set for filtering, e.g. "Hard" → {'hard'}
+const difficultyFilter = computed(() => {
+  const raw = difficulty.value || ''
+  const parts = raw.split(',').map(d => d.trim().toLowerCase()).filter(Boolean)
+  return parts.length && parts.length < 3 ? new Set(parts) : null  // null = no filter (all selected)
+})
+
+function applyDifficultyFilter(qs) {
+  if (!difficultyFilter.value) return qs
+  return qs.filter(q => !q.difficulty || difficultyFilter.value.has(q.difficulty.toLowerCase()))
+}
+
 async function loadQuestions() {
   loadingQ.value = true
   try {
-    // Try backend first (questions ingested from board docs)
-    const { data } = await api.get('/questions/random', {
-      params: { gradeCode: gradeCode.value, subjectId: bookId.value, kind: 'objective', count: 35 },
-    })
+    // Try backend first — pass difficulty param when a specific filter is active
+    const params = { gradeCode: gradeCode.value, subjectId: bookId.value, kind: 'objective', count: 35 }
+    if (difficultyFilter.value) params.difficulty = difficulty.value
+    const { data } = await api.get('/questions/random', { params })
     if (data?.length) {
-      questions.value = data.map(normalizeQuestion)
+      let qs = applyDifficultyFilter(data.map(normalizeQuestion))
+      // If the difficulty filter left fewer than 10 questions, the DB doesn't have
+      // enough questions tagged with that difficulty — fall back to all difficulties.
+      if (qs.length < 10 && difficultyFilter.value) {
+        const { data: all } = await api.get('/questions/random', {
+          params: { gradeCode: gradeCode.value, subjectId: bookId.value, kind: 'objective', count: 35 },
+        })
+        qs = (all || []).map(normalizeQuestion)
+      }
+      questions.value = qs
       loadingQ.value = false
       return
     }
@@ -177,11 +198,12 @@ async function loadQuestions() {
 
   // Fallback: static assessment bank (17.5k+ board questions bundled with the app)
   try {
-    questions.value = await getRealQuestions({
+    const qs = await getRealQuestions({
       grade: gradeCode.value,
       subject: subject.value?.name,
       limit: 35,
     })
+    questions.value = applyDifficultyFilter(qs)
   } catch {
     questions.value = []
   }
